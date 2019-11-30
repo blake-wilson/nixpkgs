@@ -855,6 +855,8 @@ in {
 
   nvchecker = callPackage ../development/python-modules/nvchecker { };
 
+  nvr = callPackage ../development/python-modules/nvr { };
+
   numericalunits = callPackage ../development/python-modules/numericalunits { };
 
   oath = callPackage ../development/python-modules/oath { };
