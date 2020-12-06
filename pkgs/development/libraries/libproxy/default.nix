@@ -11,7 +11,6 @@
 , gsettings-desktop-schemas
 , glib
 , makeWrapper
-, python2
 , python3
 , SystemConfiguration
 , CoreFoundation
@@ -29,7 +28,7 @@ stdenv.mkDerivation rec {
     sha256 = "10swd3x576pinx33iwsbd4h15fbh2snmfxzcmab4c56nb08qlbrs";
   };
 
-  outputs = [ "out" "dev" "py2" "py3" ];
+  outputs = [ "out" "dev" "py3" ];
 
   nativeBuildInputs = [
     pkgconfig
@@ -39,7 +38,6 @@ stdenv.mkDerivation rec {
 
   buildInputs = [
     pcre
-    python2
     python3
     zlib
   ] ++ (if stdenv.hostPlatform.isDarwin then [
@@ -55,7 +53,7 @@ stdenv.mkDerivation rec {
 
   cmakeFlags = [
     "-DWITH_MOZJS=ON"
-    "-DPYTHON2_SITEPKG_DIR=${placeholder "py2"}/${python2.sitePackages}"
+    "-DWITH_PYTHON2=OFF"
     "-DPYTHON3_SITEPKG_DIR=${placeholder "py3"}/${python3.sitePackages}"
   ];
 
@@ -73,6 +71,17 @@ stdenv.mkDerivation rec {
       url = "https://github.com/libproxy/libproxy/pull/95.patch";
       sha256 = "18vyr6wlis9zfwml86606jpgb9mss01l9aj31iiciml8p857aixi";
     })
+    (fetchpatch {
+      name = "CVE-2020-25219.patch";
+      url = "https://github.com/libproxy/libproxy/commit/a83dae404feac517695c23ff43ce1e116e2bfbe0.patch";
+      sha256 = "0wdh9qjq99aw0jnf2840237i3hagqzy42s09hz9chfgrw8pyr72k";
+    })
+    (fetchpatch {
+      name = "CVE-2020-26154.patch";
+      url = "https://github.com/libproxy/libproxy/commit/4411b523545b22022b4be7d0cac25aa170ae1d3e.patch";
+      sha256 = "0pdy9sw49lxpaiwq073cisk0npir5bkch70nimdmpszxwp3fv1d8";
+    })
+
   ] ++ stdenv.lib.optionals stdenv.isDarwin [
     (fetchpatch {
       url = "https://github.com/libproxy/libproxy/commit/44158f03f8522116758d335688ed840dfcb50ac8.patch";
@@ -90,7 +99,7 @@ stdenv.mkDerivation rec {
   meta = with stdenv.lib; {
     platforms = platforms.linux ++ platforms.darwin;
     license = licenses.lgpl21;
-    homepage = http://libproxy.github.io/libproxy/;
+    homepage = "http://libproxy.github.io/libproxy/";
     description = "A library that provides automatic proxy configuration management";
   };
 }

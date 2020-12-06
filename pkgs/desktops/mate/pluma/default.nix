@@ -1,17 +1,18 @@
-{ stdenv, fetchurl, pkgconfig, intltool, itstool, isocodes, enchant, libxml2, python3, gnome3, gtksourceview3, libpeas, mate, wrapGAppsHook }:
+{ stdenv, fetchurl, pkgconfig, gettext, perl, itstool, isocodes, enchant, libxml2, python3, gnome3, gtksourceview3, libpeas, mate, wrapGAppsHook }:
 
 stdenv.mkDerivation rec {
   pname = "pluma";
-  version = "1.22.2";
+  version = "1.24.1";
 
   src = fetchurl {
-    url = "http://pub.mate-desktop.org/releases/${stdenv.lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
-    sha256 = "1gsj8grdhzb1jvl5zwd8zjc9cj9ys2ndny04gy4bbh80sjaj6xva";
+    url = "https://pub.mate-desktop.org/releases/${stdenv.lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
+    sha256 = "1sgc5f480icr2ans6gd3akvcax58mr4jp3zjk3xn7bx1mw9i299f";
   };
 
   nativeBuildInputs = [
     pkgconfig
-    intltool
+    gettext
+    perl
     itstool
     isocodes
     wrapGAppsHook
@@ -27,9 +28,11 @@ stdenv.mkDerivation rec {
     mate.mate-desktop
   ];
 
+  enableParallelBuilding = true;
+
   meta = {
     description = "Powerful text editor for the MATE desktop";
-    homepage = https://mate-desktop.org;
+    homepage = "https://mate-desktop.org";
     license = stdenv.lib.licenses.gpl2;
     platforms = stdenv.lib.platforms.unix;
     maintainers = [ stdenv.lib.maintainers.romildo ];

@@ -15,11 +15,11 @@
 
 stdenv.mkDerivation rec {
   pname = "gst-libav";
-  version = "1.16.1";
+  version = "1.18.1";
 
   src = fetchurl {
     url = "${meta.homepage}/src/${pname}/${pname}-${version}.tar.xz";
-    sha256 = "1i31ra0l77cfahb6k5xpx45zwvpskzm848aijsbbx9x4x65799g8";
+    sha256 = "1n1fkkbxxsndblnbm0c2ziqp967hrz5gag6z36xbpvqk4sy1g9rr";
   };
 
   outputs = [ "out" "dev" ];
@@ -36,6 +36,15 @@ stdenv.mkDerivation rec {
     gst-plugins-base
     libav
   ];
+
+  mesonFlags = [
+    "-Ddoc=disabled" # `hotdoc` not packaged in nixpkgs as of writing
+  ];
+
+  postPatch = ''
+    patchShebangs \
+      scripts/extract-release-date-from-doap-file.py
+  '';
 
   meta = with lib; {
     description = "FFmpeg/libav plugin for GStreamer";

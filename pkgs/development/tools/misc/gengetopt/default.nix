@@ -10,6 +10,10 @@ stdenv.mkDerivation rec {
   };
 
   doCheck = true;
+  # attempts to open non-existent file
+  preCheck = ''
+    rm tests/test_conf_parser_save.sh
+  '';
 
   enableParallelBuilding = true;
 
@@ -31,7 +35,7 @@ stdenv.mkDerivation rec {
          fills a struct
       '';
 
-    homepage = https://www.gnu.org/software/gengetopt/;
+    homepage = "https://www.gnu.org/software/gengetopt/";
 
     license = stdenv.lib.licenses.gpl3Plus;
 

@@ -1,15 +1,15 @@
 args @ { fetchurl, ... }:
 rec {
   baseName = ''str'';
-  version = ''cl-20190710-git'';
+  version = ''cl-20200925-git'';
 
   description = ''Modern, consistent and terse Common Lisp string manipulation library.'';
 
-  deps = [ args."cl-ppcre" ];
+  deps = [ args."cl-change-case" args."cl-ppcre" args."cl-ppcre-unicode" args."cl-unicode" args."flexi-streams" ];
 
   src = fetchurl {
-    url = ''http://beta.quicklisp.org/archive/cl-str/2019-07-10/cl-str-20190710-git.tgz'';
-    sha256 = ''1mlnrj9g1d7zbpq6c4vhyw0idhvbm55zpzrbc8iiyv0dzijk70l9'';
+    url = ''http://beta.quicklisp.org/archive/cl-str/2020-09-25/cl-str-20200925-git.tgz'';
+    sha256 = ''06k81x80vjw7qd8gca6lnm5k5ws40c6kl99s7m4z72v7jxwa9ykn'';
   };
 
   packageName = "str";
@@ -19,8 +19,14 @@ rec {
 }
 /* (SYSTEM str DESCRIPTION
     Modern, consistent and terse Common Lisp string manipulation library.
-    SHA256 1mlnrj9g1d7zbpq6c4vhyw0idhvbm55zpzrbc8iiyv0dzijk70l9 URL
-    http://beta.quicklisp.org/archive/cl-str/2019-07-10/cl-str-20190710-git.tgz
-    MD5 d3c72394ea33291347d8c825c153c143 NAME str FILENAME str DEPS
-    ((NAME cl-ppcre FILENAME cl-ppcre)) DEPENDENCIES (cl-ppcre) VERSION
-    cl-20190710-git SIBLINGS (str.test) PARASITES NIL) */
+    SHA256 06k81x80vjw7qd8gca6lnm5k5ws40c6kl99s7m4z72v7jxwa9ykn URL
+    http://beta.quicklisp.org/archive/cl-str/2020-09-25/cl-str-20200925-git.tgz
+    MD5 885f94c2be768818ca2fd5e5d562b789 NAME str FILENAME str DEPS
+    ((NAME cl-change-case FILENAME cl-change-case)
+     (NAME cl-ppcre FILENAME cl-ppcre)
+     (NAME cl-ppcre-unicode FILENAME cl-ppcre-unicode)
+     (NAME cl-unicode FILENAME cl-unicode)
+     (NAME flexi-streams FILENAME flexi-streams))
+    DEPENDENCIES
+    (cl-change-case cl-ppcre cl-ppcre-unicode cl-unicode flexi-streams) VERSION
+    cl-20200925-git SIBLINGS (str.test) PARASITES NIL) */

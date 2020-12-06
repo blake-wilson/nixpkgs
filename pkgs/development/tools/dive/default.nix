@@ -2,24 +2,28 @@
 
 buildGoModule rec {
   pname = "dive";
-  version = "0.9.0";
+  version = "0.9.2";
 
   src = fetchFromGitHub {
     owner = "wagoodman";
     repo = pname;
     rev = "v${version}";
-    sha256 = "0bqmrva7rx6al50fmy4gvf853csascc5mj6ihgg7ydsy0d99j5qn";
+    sha256 = "1v69xbkjmyzm5g4wi9amjk65fs4qgxkqc0dvq55vqjigzrranp22";
   };
 
-  modSha256 = "0hb7bq8v6xr8xqni1iv3zkqdnknfy539sm0vxqal1mhvs5yg06m0";
+  vendorSha256 = "0219q9zjc0i6fbdngqh0wjpmq8wj5bjiz5dls0c1aam0lh4vwkhc";
+
+  doCheck = false;
 
   nativeBuildInputs = [ pkg-config ];
 
   buildInputs = stdenv.lib.optionals stdenv.isLinux [ btrfs-progs gpgme lvm2 ];
 
+  buildFlagsArray = [ "-ldflags=-s -w -X main.version=${version}" ];
+
   meta = with stdenv.lib; {
     description = "A tool for exploring each layer in a docker image";
-    homepage = https://github.com/wagoodman/dive;
+    homepage = "https://github.com/wagoodman/dive";
     license = licenses.mit;
     maintainers = with maintainers; [ marsam spacekookie ];
   };

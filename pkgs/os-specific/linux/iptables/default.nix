@@ -6,12 +6,12 @@
 with stdenv.lib;
 
 stdenv.mkDerivation rec {
-  version = "1.8.3";
+  version = "1.8.6";
   pname = "iptables";
 
   src = fetchurl {
     url = "https://www.netfilter.org/projects/${pname}/files/${pname}-${version}.tar.bz2";
-    sha256 = "106xkkg5crsscjlinxvqvprva23fwwqfgrzl8m2nn841841sqg52";
+    sha256 = "0rvp0k8a72h2snrdx48cfn75bfa0ycrd2xl3kjysbymq7q6gxx50";
   };
 
   nativeBuildInputs = [ pkgconfig pruneLibtoolFiles flex bison ];
@@ -44,7 +44,7 @@ stdenv.mkDerivation rec {
 
   meta = {
     description = "A program to configure the Linux IP packet filtering ruleset";
-    homepage = https://www.netfilter.org/projects/iptables/index.html;
+    homepage = "https://www.netfilter.org/projects/iptables/index.html";
     platforms = platforms.linux;
     maintainers = with maintainers; [ fpletz ];
     license = licenses.gpl2;

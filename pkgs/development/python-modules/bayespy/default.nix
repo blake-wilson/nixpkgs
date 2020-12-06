@@ -1,10 +1,10 @@
 { stdenv, buildPythonPackage, fetchPypi, pythonOlder
-, pytest, glibcLocales
+, pytest, nose, glibcLocales
 , numpy, scipy, matplotlib, h5py }:
 
 buildPythonPackage rec {
   pname = "bayespy";
-  version = "0.5.18";
+  version = "0.5.20";
 
   # Python 2 not supported and not some old Python 3 because MPL doesn't support
   # them properly.
@@ -12,10 +12,10 @@ buildPythonPackage rec {
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "86c453d827b8d6c3574ec306f6fadfc5028614e1cd46676841336e6787a7496a";
+    sha256 = "8c16cdc73bbcd9a1124a0495056065b7ce938dbe6c2c780dc330c83fb4d2640a";
   };
 
-  checkInputs = [ pytest glibcLocales ];
+  checkInputs = [ pytest nose glibcLocales ];
   propagatedBuildInputs = [ numpy scipy matplotlib h5py ];
 
   checkPhase = ''
@@ -23,7 +23,7 @@ buildPythonPackage rec {
   '';
 
   meta = with stdenv.lib; {
-    homepage = http://www.bayespy.org;
+    homepage = "http://www.bayespy.org";
     description = "Variational Bayesian inference tools for Python";
     license = licenses.mit;
     maintainers = with maintainers; [ jluttine ];

@@ -2,23 +2,29 @@
 
 stdenv.mkDerivation rec {
   pname = "libopenaptx";
-  version = "0.1.0";
+  version = "0.2.0";
 
   src = fetchFromGitHub {
     owner = "pali";
     repo = "libopenaptx";
     rev = version;
-    sha256 = "0996qmkmbax7ccknxrd3bx8xibs79a1ffms69scsj59f3kgj6854";
+    sha256 = "nTpw4vWgJ765FM6Es3SzaaaZr0YDydXglb0RWLbiigI=";
   };
 
-  makeFlags = [ "PREFIX=$(out)" ];
+  makeFlags = [
+    "PREFIX=${placeholder "out"}"
+    # disable static builds
+    "ANAME="
+    "AOBJECTS="
+    "STATIC_UTILITIES="
+  ];
 
   enableParallelBuilding = true;
 
   meta = with stdenv.lib; {
     description = "Audio Processing Technology codec (aptX)";
     license = licenses.lgpl21Plus;
-    homepage = https://github.com/pali/libopenaptx;
+    homepage = "https://github.com/pali/libopenaptx";
     platforms = platforms.linux;
     maintainers = with maintainers; [ orivej ];
   };

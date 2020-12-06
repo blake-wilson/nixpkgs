@@ -1,25 +1,33 @@
-{ stdenv, buildGoModule, fetchFromGitHub }:
+{ stdenv, buildGoModule, fetchFromGitHub, installShellFiles }:
 
 buildGoModule rec {
   pname = "helm";
-  version = "3.0.0";
+  version = "3.4.1";
 
   src = fetchFromGitHub {
     owner = "helm";
     repo = "helm";
     rev = "v${version}";
-    sha256 = "0gx5gmj1470q3gj8v043dmm31skf83p1ckzdcfzx8wdjlglsljrj";
+    sha256 = "13w0s11319qg9mmmxc24mlj0hrp0r529p3ny4gfzsl0vn3qzd6i2";
   };
-  modSha256 = "0xjzzwmq3i77anb7w2qfnz7vc0gxq02lylj0xs6dzwl543winshm";
+  vendorSha256 = "0x3dcvnrl7cs8faaiq9ybfgg0lkac5ppf61i724cja270nmpmazl";
 
-  goPackagePath = "k8s.io/helm";
+  doCheck = false;
+
   subPackages = [ "cmd/helm" ];
-  buildFlagsArray = [ "-ldflags=-w -s -X helm.sh/helm/v3/internal/version.gitCommit=v${version}" ];
+  buildFlagsArray = [ "-ldflags=-w -s -X helm.sh/helm/v3/internal/version.version=v${version}" ];
+
+  nativeBuildInputs = [ installShellFiles ];
+  postInstall = ''
+    $out/bin/helm completion bash > helm.bash
+    $out/bin/helm completion zsh > helm.zsh
+    installShellCompletion helm.{bash,zsh}
+  '';
 
   meta = with stdenv.lib; {
-    homepage = https://github.com/kubernetes/helm;
+    homepage = "https://github.com/kubernetes/helm";
     description = "A package manager for kubernetes";
     license = licenses.asl20;
-    maintainers = with maintainers; [ rlupton20 edude03 saschagrunert ];
+    maintainers = with maintainers; [ rlupton20 edude03 saschagrunert Frostman Chili-Man ];
   };
 }

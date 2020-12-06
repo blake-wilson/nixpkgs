@@ -1,18 +1,16 @@
-{ stdenv, fetchurl, coreutils, pam, groff, sssd
+{ stdenv, fetchurl, coreutils, pam, groff, sssd, nixosTests
 , sendmailPath ? "/run/wrappers/bin/sendmail"
 , withInsults ? false
 , withSssd ? false
 }:
 
 stdenv.mkDerivation rec {
-  name = "sudo-1.8.29";
+  pname = "sudo";
+  version = "1.9.4";
 
   src = fetchurl {
-    urls =
-      [ "ftp://ftp.sudo.ws/pub/sudo/${name}.tar.gz"
-        "ftp://ftp.sudo.ws/pub/sudo/OLD/${name}.tar.gz"
-      ];
-    sha256 = "0z4wyadh9cks17gdpfgx4kvbrlnyb6nai2sd6chk7qh4jsngylyf";
+    url = "https://www.sudo.ws/dist/${pname}-${version}.tar.gz";
+    sha256 = "1w03257akspgkkl757vmpq3p30sb2n6y61hll038mw9sqwnbv4cb";
   };
 
   prePatch = ''
@@ -63,6 +61,8 @@ stdenv.mkDerivation rec {
     rm -f $out/share/doc/sudo/ChangeLog
     '';
 
+  passthru.tests = { inherit (nixosTests) sudo; };
+
   meta = {
     description = "A command to run commands as root";
 
@@ -74,11 +74,11 @@ stdenv.mkDerivation rec {
       providing an audit trail of the commands and their arguments.
       '';
 
-    homepage = https://www.sudo.ws/;
+    homepage = "https://www.sudo.ws/";
 
-    license = https://www.sudo.ws/sudo/license.html;
+    license = "https://www.sudo.ws/sudo/license.html";
 
-    maintainers = [ stdenv.lib.maintainers.eelco ];
+    maintainers = with stdenv.lib.maintainers; [ eelco delroth ];
 
     platforms = stdenv.lib.platforms.linux;
   };

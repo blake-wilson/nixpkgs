@@ -2,13 +2,13 @@
 
 stdenv.mkDerivation rec {
   pname = "zuki-themes";
-  version = "3.34-1";
+  version = "3.36-4";
 
   src = fetchFromGitHub {
     owner = "lassekongo83";
     repo = pname;
     rev = "v${version}";
-    sha256 = "19qg60rw5b0caqc542j2nrpkv8d37pai1cr1h0x2nvx0fkc3rmi2";
+    sha256 = "14r8dhfycpmwp2nj6vj0b2cwaaphc9sxbzglc4sr4q566whrhbgd";
   };
 
   nativeBuildInputs = [ meson ninja sassc ];
@@ -19,8 +19,8 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "Themes for GTK, gnome-shell and Xfce";
-    homepage = https://github.com/lassekongo83/zuki-themes;
-    license = licenses.gpl3;
+    homepage = "https://github.com/lassekongo83/zuki-themes";
+    license = licenses.gpl3Only;
     platforms = platforms.linux;
     maintainers = [ maintainers.romildo ];
   };

@@ -1,48 +1,54 @@
 { stdenv
+, lib
 , fetchFromGitHub
 , rustPlatform
 , openssl
+, zlib
 , pkg-config
 , python3
 , xorg
 , libiconv
 , AppKit
 , Security
-, withAllFeatures ? true
+, withStableFeatures ? true
 }:
 
 rustPlatform.buildRustPackage rec {
   pname = "nushell";
-  version = "0.6.0";
+  version = "0.23.0";
 
   src = fetchFromGitHub {
     owner = pname;
     repo = pname;
     rev = version;
-    sha256 = "012fhy7ni4kyxypn25ssj6py1zxwk41bj4xb1ni4zaw47fqsj1nw";
+    sha256 = "0rbg0jchg59x0g4h0xahdm9qah8l8g4i2s8lkaqzdkm4yv29gqx4";
   };
 
-  cargoSha256 = "17r6g80qcy1mb195fl5iwcr83d35q2hs71camhwjbdh8yrs9l1la";
+  cargoSha256 = "1sbgn68n0rqh1m98dm3r2a3pqqqx4v7axw5djw8qlx4gv7xw1ql0";
 
   nativeBuildInputs = [ pkg-config ]
-    ++ stdenv.lib.optionals (withAllFeatures && stdenv.isLinux) [ python3 ];
+    ++ lib.optionals (withStableFeatures && stdenv.isLinux) [ python3 ];
 
-  buildInputs = stdenv.lib.optionals stdenv.isLinux [ openssl ]
-    ++ stdenv.lib.optionals stdenv.isDarwin [ libiconv Security ]
-    ++ stdenv.lib.optionals (withAllFeatures && stdenv.isLinux) [ xorg.libX11 ]
-    ++ stdenv.lib.optionals (withAllFeatures && stdenv.isDarwin) [ AppKit ];
+  buildInputs = [ openssl ]
+    ++ lib.optionals stdenv.isDarwin [ zlib libiconv Security ]
+    ++ lib.optionals (withStableFeatures && stdenv.isLinux) [ xorg.libX11 ]
+    ++ lib.optionals (withStableFeatures && stdenv.isDarwin) [ AppKit ];
 
-  cargoBuildFlags = stdenv.lib.optional withAllFeatures "--all-features";
+  cargoBuildFlags = lib.optional withStableFeatures "--features stable";
 
-  preCheck = ''
-    export HOME=$TMPDIR
+  checkPhase = ''
+    runHook preCheck
+    echo "Running cargo test"
+    HOME=$TMPDIR cargo test
+    runHook postCheck
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "A modern shell written in Rust";
     homepage = "https://www.nushell.sh/";
     license = licenses.mit;
-    maintainers = with maintainers; [ filalex77 marsam ];
+    maintainers = with maintainers; [ Br1ght0ne johntitor marsam ];
+    platforms = [ "x86_64-linux" "i686-linux" "x86_64-darwin" "aarch64-linux" ];
   };
 
   passthru = {

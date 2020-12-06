@@ -3,7 +3,6 @@
 , fetchPypi
 , pytest
 , pytest-repeat
-, pytest-faulthandler
 , pytest-timeout
 , mock
 , joblib
@@ -24,23 +23,26 @@
 , singledispatch
 , mpi4py
 , bokeh
+, pythonOlder
 }:
 
 buildPythonPackage rec {
   pname = "distributed";
-  version = "2.6.0";
+  version = "2.30.1";
 
   # get full repository need conftest.py to run tests
   src = fetchPypi {
     inherit pname version;
-    sha256 = "30b0ca195ace1e39bdd278bf1ad257f7674b3e2b8e7a2a37ce7e2ade4aecccf3";
+    sha256 = "1421d3b84a0885aeb2c4bdc9e8896729c0f053a9375596c9de8864e055e2ac8e";
   };
 
-  checkInputs = [ pytest pytest-repeat pytest-faulthandler pytest-timeout mock joblib ];
+  disabled = pythonOlder "3.6";
+
+  checkInputs = [ pytest pytest-repeat pytest-timeout mock joblib ];
   propagatedBuildInputs = [
       click cloudpickle dask msgpack psutil six
       sortedcontainers tblib toolz tornado zict pyyaml mpi4py bokeh
-  ] ++ lib.optionals (!isPy3k) [ futures singledispatch ];
+  ];
 
   # tests take about 10-15 minutes
   # ignore 5 cli tests out of 1000 total tests that fail due to subprocesses
@@ -54,7 +56,7 @@ buildPythonPackage rec {
 
   meta = {
     description = "Distributed computation in Python.";
-    homepage = https://distributed.readthedocs.io/en/latest/;
+    homepage = "https://distributed.readthedocs.io/en/latest/";
     license = lib.licenses.bsd3;
     platforms = lib.platforms.x86; # fails on aarch64
     maintainers = with lib.maintainers; [ teh costrouc ];

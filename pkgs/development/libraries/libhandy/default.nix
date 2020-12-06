@@ -1,38 +1,71 @@
-{ stdenv, fetchFromGitLab, meson, ninja, pkgconfig, gobject-introspection, vala
-, gtk-doc, docbook_xsl, docbook_xml_dtd_43
-, gtk3, gnome3
-, dbus, xvfb_run, libxml2
+{ stdenv
+, fetchurl
+, meson
+, ninja
+, pkgconfig
+, gobject-introspection
+, vala
+, gtk-doc
+, docbook_xsl
+, docbook_xml_dtd_43
+, gtk3
+, gnome3
+, glade
+, dbus
+, xvfb_run
+, libxml2
+, gdk-pixbuf
+, librsvg
 , hicolor-icon-theme
+, at-spi2-atk
+, at-spi2-core
 }:
 
 stdenv.mkDerivation rec {
   pname = "libhandy";
-  version = "0.0.11";
+  version = "1.0.2";
 
   outputs = [ "out" "dev" "devdoc" "glade" ];
   outputBin = "dev";
 
-  src = fetchFromGitLab {
-    domain = "source.puri.sm";
-    owner = "Librem5";
-    repo = pname;
-    rev = "v${version}";
-    sha256 = "0622zp5wrvn5bvgardijxd11y76g1i54fs32y03dw9nrar7i6vb0";
+  src = fetchurl {
+    url = "mirror://gnome/sources/${pname}/${stdenv.lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
+    sha256 = "0b8wvjabv5mg8jbng8rsd5g84lk571nm0qpna20pwp0njh2qvmrs";
   };
 
   nativeBuildInputs = [
-    meson ninja pkgconfig gobject-introspection vala
-    gtk-doc docbook_xsl docbook_xml_dtd_43
+    docbook_xml_dtd_43
+    docbook_xsl
+    gobject-introspection
+    gtk-doc
+    libxml2
+    meson
+    ninja
+    pkgconfig
+    vala
   ];
-  buildInputs = [ gnome3.gnome-desktop gtk3 gnome3.glade libxml2 ];
-  checkInputs = [ dbus xvfb_run hicolor-icon-theme ];
+
+  buildInputs = [
+    gdk-pixbuf
+    glade
+    gtk3
+    libxml2
+  ];
+
+  checkInputs = [
+    dbus
+    xvfb_run
+    at-spi2-atk
+    at-spi2-core
+    librsvg
+    hicolor-icon-theme
+  ];
 
   mesonFlags = [
     "-Dgtk_doc=true"
-    "-Dglade_catalog=enabled"
-    "-Dintrospection=enabled"
   ];
 
+  # Uses define_variable in pkgconfig, but we still need it to use the glade output
   PKG_CONFIG_GLADEUI_2_0_MODULEDIR = "${placeholder "glade"}/lib/glade/modules";
   PKG_CONFIG_GLADEUI_2_0_CATALOGDIR = "${placeholder "glade"}/share/glade/catalogs";
 
@@ -41,16 +74,18 @@ stdenv.mkDerivation rec {
   checkPhase = ''
     NO_AT_BRIDGE=1 \
     XDG_DATA_DIRS="$XDG_DATA_DIRS:${hicolor-icon-theme}/share" \
+    GDK_PIXBUF_MODULE_FILE="${librsvg.out}/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache" \
     xvfb-run -s '-screen 0 800x600x24' dbus-run-session \
       --config-file=${dbus.daemon}/share/dbus-1/session.conf \
       meson test --print-errorlogs
   '';
 
   meta = with stdenv.lib; {
-    description = "A library full of GTK widgets for mobile phones";
-    homepage = https://source.puri.sm/Librem5/libhandy;
+    changelog = "https://gitlab.gnome.org/GNOME/libhandy/-/tags/${version}";
+    description = "Building blocks for modern adaptive GNOME apps";
+    homepage = "https://gitlab.gnome.org/GNOME/libhandy";
     license = licenses.lgpl21Plus;
-    maintainers = with maintainers; [ jtojnar ];
+    maintainers = teams.gnome.members;
     platforms = platforms.linux;
   };
 }

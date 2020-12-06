@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, nss, python
+{ stdenv, fetchurl, nss, python3
 , blacklist ? []
 , includeEmail ? false
 }:
@@ -13,16 +13,21 @@ let
     sha256 = "1d4q27j1gss0186a5m8bs5dk786w07ccyq0qi6xmd2zr1a8q16wy";
   };
 
+  version = "3.57";
+  underscoreVersion = builtins.replaceStrings ["."] ["_"] version;
 in
 
 stdenv.mkDerivation {
-  name = "nss-cacert-${nss.version}";
+  name = "nss-cacert-${version}";
 
-  src = nss.src;
+  src = fetchurl {
+    url = "mirror://mozilla/security/nss/releases/NSS_${underscoreVersion}_RTM/src/nss-${version}.tar.gz";
+    sha256 = "55a86c01be860381d64bb4e5b94eb198df9b0f098a8af0e58c014df398bdc382";
+  };
 
   outputs = [ "out" "unbundled" ];
 
-  nativeBuildInputs = [ python ];
+  nativeBuildInputs = [ python3 ];
 
   configurePhase = ''
     ln -s nss/lib/ckfw/builtins/certdata.txt
@@ -60,10 +65,13 @@ stdenv.mkDerivation {
 
   setupHook = ./setup-hook.sh;
 
+  passthru.updateScript = ./update.sh;
+
   meta = {
-    homepage = https://curl.haxx.se/docs/caextract.html;
+    homepage = "https://curl.haxx.se/docs/caextract.html";
     description = "A bundle of X.509 certificates of public Certificate Authorities (CA)";
     platforms = platforms.all;
     maintainers = with maintainers; [ fpletz ];
+    license = licenses.mpl20;
   };
 }

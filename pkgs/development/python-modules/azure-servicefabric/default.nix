@@ -7,12 +7,12 @@
 
 buildPythonPackage rec {
   pname = "azure-servicefabric";
-  version = "6.5.0.0";
+  version = "7.2.0.46";
 
   src = fetchPypi {
     inherit pname version;
     extension = "zip";
-    sha256 = "02q32rc3vmg3kpi92s2y2ic47s3mi9qjcvzvrpjdlzji8lhd9w45";
+    sha256 = "c15fd5e8fe33a12295435f16e007edcfd8f660547795742f9b74ef8fb3a431ba";
   };
 
   propagatedBuildInputs = [
@@ -27,6 +27,6 @@ buildPythonPackage rec {
     description = "This project provides a client library in Python that makes it easy to consume Microsoft Azure Storage services";
     homepage = "https://github.com/Azure/azure-sdk-for-python";
     license = licenses.mit;
-    maintainers = with maintainers; [ mwilsoninsight ];
+    maintainers = with maintainers; [ maxwilson ];
   };
 }

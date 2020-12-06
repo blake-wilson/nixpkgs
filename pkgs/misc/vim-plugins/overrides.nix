@@ -1,27 +1,38 @@
 { lib, stdenv
 , python, cmake, meson, vim, ruby
-, which, fetchFromGitHub, fetchgit, fetchurl, fetchzip
-, llvmPackages, rustPlatform
+, which, fetchFromGitHub, fetchgit, fetchurl, fetchzip, fetchpatch
+, llvmPackages, rustPlatform, buildGoModule
+, pkgconfig, curl, openssl, libgit2, libiconv
 , xkb-switch, fzf, skim, stylish-haskell
 , python3, boost, icu, ncurses
 , ycmd, rake
 , gobject-introspection, glib, wrapGAppsHook
 , substituteAll
 , languagetool
+, tabnine
 , Cocoa, CoreFoundation, CoreServices
 , buildVimPluginFrom2Nix
+, nodePackages
+, dasht
 
-# coc-go dependency
-, go
+# deoplete-khard dependency
+, khard
 
-# vim-go denpencies
+# vim-go dependencies
 , asmfmt, delve, errcheck, godef, golint
 , gomodifytags, gotags, gotools, go-motion
-, gnused, reftools, gogetdoc, gometalinter
+, gnused, reftools, gogetdoc, golangci-lint
 , impl, iferr, gocode, gocode-gomod, go-tools
+, gopls
+
+# direnv-vim dependencies
+, direnv
 
 # vCoolor dependency
 , gnome3
+
+# fruzzy dependency
+, nim
 }:
 
 self: super: {
@@ -49,16 +60,19 @@ self: super: {
   };
 
   LanguageClient-neovim = let
-    version = "0.1.154";
-    LanguageClient-neovim-src = fetchurl {
-      url = "https://github.com/autozimu/LanguageClient-neovim/archive/${version}.tar.gz";
-      sha256 = "03sp643nihj9p2s9cx2dcazhz68s30qx7igqprgsmr1040rhg2py";
+    version = "0.1.160";
+    LanguageClient-neovim-src = fetchFromGitHub {
+      owner = "autozimu";
+      repo = "LanguageClient-neovim";
+      rev = version;
+      sha256 = "143cifahav1pfmpx3j1ihx433jrwxf6z27s0wxndgjkd2plkks58";
     };
     LanguageClient-neovim-bin = rustPlatform.buildRustPackage {
-      name = "LanguageClient-neovim-bin";
+      pname = "LanguageClient-neovim-bin";
+      inherit version;
       src = LanguageClient-neovim-src;
 
-      cargoSha256 = "1bvbls2l1xa0s3k11crvd98il4i20z5sn0hqmsc1b915k03qq4zj";
+      cargoSha256 = "0mf94j85awdcqa6cyb89bipny9xg13ldkznjf002fq747f55my2a";
       buildInputs = stdenv.lib.optionals stdenv.isDarwin [ CoreServices ];
 
       # FIXME: Use impure version of CoreFoundation because of missing symbols.
@@ -86,8 +100,6 @@ self: super: {
     # These usually implicitly set by cc-wrapper around clang (pkgs/build-support/cc-wrapper).
     # The linked ruby code shows generates the required '.clang_complete' for cmake based projects
     # https://gist.github.com/Mic92/135e83803ed29162817fce4098dec144
-    # as an alternative you can execute the following command:
-    # $ eval echo $(nix-instantiate --eval --expr 'with (import <nixpkgs>) {}; clang.default_cxx_stdlib_compile')
     preFixup = ''
       substituteInPlace "$out"/share/vim-plugins/clang_complete/plugin/clang_complete.vim \
         --replace "let g:clang_library_path = '' + "''" + ''" "let g:clang_library_path='${llvmPackages.clang.cc.lib}/lib/libclang.so'"
@@ -97,32 +109,20 @@ self: super: {
     '';
   });
 
+  direnv-vim = super.direnv-vim.overrideAttrs(oa: {
+    preFixup = oa.preFixup or "" + ''
+      substituteInPlace $out/share/vim-plugins/direnv-vim/autoload/direnv.vim \
+        --replace "let s:direnv_cmd = get(g:, 'direnv_cmd', 'direnv')" \
+          "let s:direnv_cmd = get(g:, 'direnv_cmd', '${lib.getBin direnv}/bin/direnv')"
+    '';
+  });
+
   clighter8 = super.clighter8.overrideAttrs(old: {
     preFixup = ''
       sed "/^let g:clighter8_libclang_path/s|')$|${llvmPackages.clang.cc.lib}/lib/libclang.so')|" \
         -i "$out"/share/vim-plugins/clighter8/plugin/clighter8.vim
     '';
   });
-
-  coc-go = super.coc-go.overrideAttrs(old: {
-    preFixup = ''
-      substituteInPlace "$out"/share/vim-plugins/coc-go/src/utils/tools.ts \
-        --replace 'const cmd = `GOPATH=''${gopath}; go ''${args}`' 'const cmd = `GOPATH=''${gopath}; ${go}/bin/go ''${args}`'
-    '';
-  });
-
-  # Only official releases contains the required index.js file
-  # NB: Make sure you pick a rev from the release branch!
-  coc-nvim = buildVimPluginFrom2Nix rec {
-    pname = "coc-nvim";
-    version = "2019-11-29";
-    src = fetchFromGitHub {
-      owner = "neoclide";
-      repo = "coc.nvim";
-      rev = "d566fa03807d8d86ce9302680d135198a36c7d4d";
-      sha256 = "0m355w837f61jfpjrhi3h47z7vq16g8yai8kd82v1h71ns5fw9gz";
-    };
-  };
 
   command-t = super.command-t.overrideAttrs(old: {
     buildInputs = [ ruby rake ];
@@ -174,6 +174,17 @@ self: super: {
    '';
   });
 
+  deoplete-khard = super.deoplete-khard.overrideAttrs(old: {
+    dependencies = [ self.deoplete-nvim ];
+    passthru.python3Dependencies = ps: [ (ps.toPythonModule khard) ];
+    meta = {
+      description = "Address-completion for khard via deoplete";
+      homepage = "https://github.com/nicoe/deoplete-khard";
+      license = stdenv.lib.licenses.mit;
+      maintainers = with stdenv.lib.maintainers; [ jorsn ];
+    };
+  });
+
   ensime-vim = super.ensime-vim.overrideAttrs(old: {
     passthru.python3Dependencies = ps: with ps; [ sexpdata websocket_client ];
     dependencies = with super; [ vimproc-vim vimshell-vim super.self forms ];
@@ -183,25 +194,53 @@ self: super: {
     dependencies = with super; [ super.self ];
   });
 
+  fruzzy = let # until https://github.com/NixOS/nixpkgs/pull/67878 is merged, there's no better way to install nim libraries with nix
+    nimpy = fetchFromGitHub {
+      owner = "yglukhov";
+      repo = "nimpy";
+      rev = "4840d1e438985af759ddf0923e7a9250fd8ea0da";
+      sha256 = "0qqklvaajjqnlqm3rkk36pwwnn7x942mbca7nf2cvryh36yg4q5k";
+    };
+    binaryheap = fetchFromGitHub {
+      owner = "bluenote10";
+      repo = "nim-heap";
+      rev = "c38039309cb11391112571aa332df9c55f625b54";
+      sha256 = "05xdy13vm5n8dw2i366ppbznc4cfhq23rdcklisbaklz2jhdx352";
+    };
+  in super.fruzzy.overrideAttrs(old: {
+    buildInputs = [ nim ];
+    patches = [
+      (substituteAll {
+        src = ./patches/fruzzy/get_version.patch;
+        version = old.version;
+      })
+    ];
+    configurePhase = ''
+      substituteInPlace Makefile \
+        --replace \
+          "nim c" \
+          "nim c --nimcache:$TMP --path:${nimpy} --path:${binaryheap}"
+    '';
+    buildPhase = ''
+      make build
+    '';
+  });
+
   ghcid = super.ghcid.overrideAttrs(old: {
     configurePhase = "cd plugins/nvim";
   });
 
-  gist-vim = super.gist-vim.overrideAttrs(old: {
-    dependencies = with super; [ webapi-vim ];
+  vimsence = super.vimsence.overrideAttrs(old: {
+    meta = with stdenv.lib; {
+      description = "Discord rich presence for Vim";
+      homepage = "https://github.com/hugolgst/vimsence";
+      maintainers = with stdenv.lib.maintainers; [ hugolgst ];
+    };
   });
 
-  gruvbox-community = buildVimPluginFrom2Nix {
-    pname = "gruvbox-community";
-    version = "2019-05-31";
-    src = fetchFromGitHub {
-      owner = "gruvbox-community";
-      repo = "gruvbox";
-      rev = "e122091dad968a5524f3e8136615a479c7b6f247";
-      sha256 = "1hncjyfi1gbw62b2pngy5qxyzibrhbyzgfmm9a58sdh1272l8ls8";
-    };
-    meta.maintainers = with stdenv.lib.maintainers; [ minijackson ];
-  };
+  vim-gist = super.vim-gist.overrideAttrs(old: {
+    dependencies = with super; [ webapi-vim ];
+  });
 
   meson = buildVimPluginFrom2Nix {
     inherit (meson) pname version src;
@@ -218,12 +257,32 @@ self: super: {
     passthru.python3Dependencies = ps: with ps; [ jedi ];
   });
 
+  ncm2-neoinclude = super.ncm2-neoinclude.overrideAttrs(old: {
+    dependencies = with super; [ neoinclude-vim ];
+  });
+
+  ncm2-neosnippet = super.ncm2-neosnippet.overrideAttrs(old: {
+    dependencies = with super; [ neosnippet-vim ];
+  });
+
+  ncm2-syntax = super.ncm2-syntax.overrideAttrs(old: {
+    dependencies = with super; [ neco-syntax ];
+  });
+
   ncm2-ultisnips = super.ncm2-ultisnips.overrideAttrs(old: {
     dependencies = with super; [ ultisnips ];
   });
 
+  nvim-lsputils = super.nvim-lsputils.overrideAttrs(old: {
+    dependencies = with super; [ popfix ];
+  });
+
   fzf-vim = super.fzf-vim.overrideAttrs(old: {
     dependencies = [ self.fzfWrapper ];
+  });
+
+  skim-vim = super.skim-vim.overrideAttrs(old: {
+    dependencies = [ self.skim ];
   });
 
   sved = let
@@ -254,6 +313,21 @@ self: super: {
       };
     });
 
+  vimacs = super.vimacs.overrideAttrs(old: {
+    buildPhase = ''
+      substituteInPlace bin/vim \
+        --replace '/usr/bin/vim' 'vim' \
+        --replace '/usr/bin/gvim' 'gvim'
+      # remove unnecessary duplicated bin wrapper script
+      rm -r plugin/vimacs
+    '';
+    meta = with stdenv.lib; {
+      description = "Vim-Improved eMACS: Emacs emulation plugin for Vim";
+      homepage = "http://algorithm.com.au/code/vimacs";
+      license = licenses.gpl2Plus;
+      maintainers = with stdenv.lib.maintainers; [ millerjason ];
+    };
+  });
 
   vimshell-vim = super.vimshell-vim.overrideAttrs(old: {
     dependencies = with super; [ vimproc-vim ];
@@ -317,12 +391,29 @@ self: super: {
     dependencies = with super; [ vim-maktaba ];
   });
 
+  vim-beancount = super.vim-beancount.overrideAttrs(old: {
+    passthru.python3Dependencies = ps: with ps; [ beancount ];
+  });
+
   vim-codefmt = super.vim-codefmt.overrideAttrs(old: {
     dependencies = with super; [ vim-maktaba ];
   });
 
+  vim-dasht = super.vim-dasht.overrideAttrs(old: {
+    preFixup = ''
+      substituteInPlace $out/share/vim-plugins/vim-dasht/autoload/dasht.vim \
+        --replace "['dasht']" "['${dasht}/bin/dasht']"
+    '';
+  });
+
   vim-easytags = super.vim-easytags.overrideAttrs(old: {
     dependencies = with super; [ vim-misc ];
+    patches = [
+      (fetchpatch { # https://github.com/xolox/vim-easytags/pull/170 fix version detection for universal-ctags
+        url = "https://github.com/xolox/vim-easytags/commit/46e4709500ba3b8e6cf3e90aeb95736b19e49be9.patch";
+        sha256 = "0x0xabb56xkgdqrg1mpvhbi3yw4d829n73lsnnyj5yrxjffy4ax4";
+      })
+    ];
   });
 
   # change the go_bin_path to point to a path in the nix store. See the code in
@@ -340,8 +431,9 @@ self: super: {
       godef
       gogetdoc
       golint
-      gometalinter
+      golangci-lint
       gomodifytags
+      gopls
       gotags
       gotools
       iferr
@@ -377,6 +469,21 @@ self: super: {
     postPatch = ''
       substituteInPlace ftplugin/python_vimisort.vim \
         --replace 'import vim' 'import vim; import sys; sys.path.append("${python.pkgs.isort}/${python.sitePackages}")'
+    '';
+  });
+
+  vim-markdown-composer =
+  let
+    vim-markdown-composer-bin = rustPlatform.buildRustPackage rec {
+      pname = "vim-markdown-composer-bin";
+      inherit (super.vim-markdown-composer) src version;
+      cargoSha256 = "iuhq2Zhdkib8hw4uvXBjwE5ZiN1kzairlzufaGuVkWc=";
+    };
+  in super.vim-markdown-composer.overrideAttrs(oldAttrs: rec {
+    preFixup = ''
+      substituteInPlace "$out"/share/vim-plugins/vim-markdown-composer/after/ftplugin/markdown/composer.vim \
+        --replace "let l:args = [s:plugin_root . '/target/release/markdown-composer']" \
+        "let l:args = ['${vim-markdown-composer-bin}/bin/markdown-composer']"
     '';
   });
 
@@ -428,7 +535,7 @@ self: super: {
     sourceRoot = ".";
   });
 
-  youcompleteme = super.youcompleteme.overrideAttrs(old: {
+  YouCompleteMe = super.YouCompleteMe.overrideAttrs(old: {
     buildPhase = ''
       substituteInPlace plugin/youcompleteme.vim \
         --replace "'ycm_path_to_python_interpreter', '''" \
@@ -456,6 +563,10 @@ self: super: {
     };
   });
 
+  lf-vim = super.lf-vim.overrideAttrs(old: {
+    dependencies = with super; [ bclose-vim ];
+  });
+
   vim-stylish-haskell = super.vim-stylish-haskell.overrideAttrs (old: {
     postPatch = old.postPatch or "" + ''
       substituteInPlace ftplugin/haskell/stylish-haskell.vim --replace \
@@ -475,7 +586,7 @@ self: super: {
 
   unicode-vim = let
     unicode-data = fetchurl {
-      url = http://www.unicode.org/Public/UNIDATA/UnicodeData.txt;
+      url = "http://www.unicode.org/Public/UNIDATA/UnicodeData.txt";
       sha256 = "16b0jzvvzarnlxdvs2izd5ia0ipbd87md143dc6lv6xpdqcs75s9";
     };
   in super.unicode-vim.overrideAttrs(old: {
@@ -487,4 +598,101 @@ self: super: {
         ${vim}/bin/vim --cmd ":set rtp^=$PWD" -c 'ru plugin/unicode.vim' -c 'UnicodeCache' -c ':echohl Normal' -c ':q' > /dev/null
       '';
   });
-}
+
+  vim-hexokinase = super.vim-hexokinase.overrideAttrs(old: {
+    preFixup = let
+      hexokinase = buildGoModule {
+        name = "hexokinase";
+        src = old.src + "/hexokinase";
+        vendorSha256 = "pQpattmS9VmO3ZIQUFn66az8GSmB4IvYhTTCFn6SUmo=";
+      };
+    in ''
+      ln -s ${hexokinase}/bin/hexokinase $target/hexokinase/hexokinase
+    '';
+
+    meta.platforms = stdenv.lib.platforms.all;
+  });
+
+  vim-clap = super.vim-clap.overrideAttrs(old: {
+    preFixup = let
+      maple-bin = rustPlatform.buildRustPackage {
+        name = "maple";
+        src = old.src;
+
+        nativeBuildInputs = [
+          pkgconfig
+        ];
+
+        buildInputs = [
+          openssl
+        ] ++ stdenv.lib.optionals stdenv.isDarwin [
+          CoreServices
+          curl
+          libgit2
+          libiconv
+        ];
+
+        cargoSha256 = "QUi3GyAsakAtDQkiVA7ez05s5CixqsVSp92svYmcWdQ=";
+      };
+    in ''
+      ln -s ${maple-bin}/bin/maple $target/bin/maple
+    '';
+
+    meta.platforms = stdenv.lib.platforms.all;
+  });
+
+  completion-tabnine = super.completion-tabnine.overrideAttrs(old: {
+    buildInputs = [ tabnine ];
+
+    postFixup = ''
+      mkdir $target/binaries
+      ln -s ${tabnine}/bin/TabNine $target/binaries/TabNine_$(uname -s)
+    '';
+  });
+} // (
+  let
+    nodePackageNames = [
+      "coc-css"
+      "coc-diagnostic"
+      "coc-emmet"
+      "coc-eslint"
+      "coc-git"
+      "coc-go"
+      "coc-highlight"
+      "coc-html"
+      "coc-imselect"
+      "coc-java"
+      "coc-jest"
+      "coc-json"
+      "coc-lists"
+      "coc-markdownlint"
+      "coc-metals"
+      "coc-pairs"
+      "coc-prettier"
+      "coc-python"
+      "coc-r-lsp"
+      "coc-rls"
+      "coc-rust-analyzer"
+      "coc-smartf"
+      "coc-snippets"
+      "coc-solargraph"
+      "coc-stylelint"
+      "coc-tabnine"
+      "coc-tslint"
+      "coc-tslint-plugin"
+      "coc-tsserver"
+      "coc-vetur"
+      "coc-vimlsp"
+      "coc-vimtex"
+      "coc-wxml"
+      "coc-yaml"
+      "coc-yank"
+    ];
+    nodePackage2VimPackage = name: buildVimPluginFrom2Nix {
+      pname = name;
+      inherit (nodePackages.${name}) version meta;
+      src = "${nodePackages.${name}}/lib/node_modules/${name}";
+    };
+  in
+  lib.genAttrs nodePackageNames nodePackage2VimPackage
+)

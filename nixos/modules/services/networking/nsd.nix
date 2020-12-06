@@ -11,8 +11,6 @@ let
 
   # build nsd with the options needed for the given config
   nsdPkg = pkgs.nsd.override {
-    configFile = "${configFile}/nsd.conf";
-
     bind8Stats = cfg.bind8Stats;
     ipv6 = cfg.ipv6;
     ratelimit = cfg.ratelimit.enable;
@@ -244,7 +242,7 @@ let
       };
 
       data = mkOption {
-        type = types.str;
+        type = types.lines;
         default = "";
         example = "";
         description = ''
@@ -252,7 +250,7 @@ let
           Use imports or pkgs.lib.readFile if you don't want this data in your config file.
         '';
       };
-      
+
       dnssec = mkEnableOption "DNSSEC";
 
       dnssecPolicy = {
@@ -484,7 +482,7 @@ in
     };
 
     extraConfig = mkOption {
-      type = types.str;
+      type = types.lines;
       default = "";
       description = ''
         Extra nsd config.
@@ -897,15 +895,14 @@ in
               + "want, please enable 'services.nsd.rootServer'.";
     };
 
-    environment.systemPackages = [ nsdPkg ];
-
-    users.groups = singleton {
-      name = username;
-      gid = config.ids.gids.nsd;
+    environment = {
+      systemPackages = [ nsdPkg ];
+      etc."nsd/nsd.conf".source = "${configFile}/nsd.conf";
     };
 
-    users.users = singleton {
-      name = username;
+    users.groups.${username}.gid = config.ids.gids.nsd;
+
+    users.users.${username} = {
       description = "NSD service user";
       home = stateDir;
       createHome  = true;
@@ -919,14 +916,14 @@ in
       after = [ "network.target" ];
       wantedBy = [ "multi-user.target" ];
 
+      startLimitBurst = 4;
+      startLimitIntervalSec = 5 * 60;  # 5 mins
       serviceConfig = {
         ExecStart = "${nsdPkg}/sbin/nsd -d -c ${nsdEnv}/nsd.conf";
         StandardError = "null";
         PIDFile = pidFile;
         Restart = "always";
         RestartSec = "4s";
-        StartLimitBurst = 4;
-        StartLimitInterval = "5min";
       };
 
       preStart = ''
@@ -974,7 +971,7 @@ in
       script = signZones;
 
       postStop = ''
-        ${pkgs.systemd}/bin/systemctl kill -s SIGHUP nsd.service
+        /run/current-system/systemd/bin/systemctl kill -s SIGHUP nsd.service
       '';
     };
 

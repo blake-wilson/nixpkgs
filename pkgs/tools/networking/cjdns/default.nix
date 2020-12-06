@@ -1,21 +1,21 @@
-{ stdenv, fetchFromGitHub, nodejs, which, python27, utillinux }:
+{ stdenv, fetchFromGitHub, nodejs, which, python27, util-linux, nixosTests }:
 
-let version = "20.4"; in
-stdenv.mkDerivation {
-  name = "cjdns-"+version;
+stdenv.mkDerivation rec {
+  pname = "cjdns";
+  version = "21";
 
   src = fetchFromGitHub {
     owner = "cjdelisle";
     repo = "cjdns";
     rev = "cjdns-v${version}";
-    sha256 = "1d8li7vws1dmdgs96dmy4vh55gqy2ir4dnkrvgkv3fjq9pffr7vx";
+    sha256 = "1s9d8yrdrj2gviig05jhr0fnzazb88lih0amxfk0av786rvh7ymj";
   };
 
   buildInputs = [ which python27 nodejs ] ++
     # for flock
-    stdenv.lib.optional stdenv.isLinux utillinux;
+    stdenv.lib.optional stdenv.isLinux util-linux;
 
-  CFLAGS = "-O2";
+  CFLAGS = "-O2 -Wno-error=stringop-truncation";
   buildPhase =
     stdenv.lib.optionalString stdenv.isAarch32 "Seccomp_NO=1 "
     + "bash do";
@@ -29,8 +29,10 @@ stdenv.mkDerivation {
     cp -R contrib tools node_build node_modules $out/share/cjdns/
   '';
 
+  passthru.tests.basic = nixosTests.cjdns;
+
   meta = with stdenv.lib; {
-    homepage = https://github.com/cjdelisle/cjdns;
+    homepage = "https://github.com/cjdelisle/cjdns";
     description = "Encrypted networking for regular people";
     license = licenses.gpl3;
     maintainers = with maintainers; [ ehmry ];

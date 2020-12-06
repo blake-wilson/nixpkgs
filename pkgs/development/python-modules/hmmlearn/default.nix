@@ -2,11 +2,11 @@
 
 buildPythonPackage rec {
   pname = "hmmlearn";
-  version = "0.2.2";
+  version = "0.2.4";
 
   src = fetchurl {
     url = "mirror://pypi/h/hmmlearn/${pname}-${version}.tar.gz";
-    sha256 = "081c53xs5wn5vikwslallwdv0am09w9cbbggl5dbkqpnic9zx4h4";
+    sha256 = "0f5cb598a7494b9703c6188246dc89e529d46cbb6700eca70cc895085f0b3cc3";
   };
 
   buildInputs = [ setuptools_scm cython ];
@@ -19,7 +19,7 @@ buildPythonPackage rec {
 
   meta = with lib; {
     description = "Hidden Markov Models in Python with scikit-learn like API";
-    homepage    = https://github.com/hmmlearn/hmmlearn;
+    homepage    = "https://github.com/hmmlearn/hmmlearn";
     license     = licenses.bsd3;
     maintainers = with maintainers; [ abbradar ];
   };

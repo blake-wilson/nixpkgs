@@ -23,25 +23,25 @@
 , libselinux ? null
 , libsepol ? null
 , p11-kit ? null
-, utillinux ? null
+, util-linux ? null
 , qtbase
 , qtx11extras
 , qttools
 , withGstreamer ? true
 , gst_all_1 ? null
 , withVlc ? true
-, vlc ? null
+, libvlc ? null
 }:
 
 mkDerivation rec {
   pname = "strawberry";
-  version = "0.6.6";
+  version = "0.8.4";
 
   src = fetchFromGitHub {
     owner = "jonaski";
     repo = pname;
     rev = version;
-    sha256 = "113z2qdcg0fm6ff2k36nl5zbbj5wsidl94ca1sfnsv9bq9lkvck5";
+    sha256 = "145djlfvbkx2b1wqipk51mz82dhm27vmh9x00lkn24q1xz1y6h5n";
   };
 
   buildInputs = [
@@ -67,7 +67,7 @@ mkDerivation rec {
     libselinux
     libsepol
     p11-kit
-    utillinux
+    util-linux
   ]
   ++ lib.optionals withGstreamer (with gst_all_1; [
     gstreamer
@@ -75,7 +75,7 @@ mkDerivation rec {
     gst-plugins-good
     gst-plugins-ugly
   ])
-  ++ lib.optional withVlc vlc;
+  ++ lib.optional withVlc libvlc;
 
   nativeBuildInputs = [ cmake ninja pkgconfig qttools ];
 

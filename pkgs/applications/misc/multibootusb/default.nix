@@ -1,5 +1,6 @@
-{ fetchFromGitHub, libxcb, mtools, p7zip, parted, procps,
-  python36Packages, qt5, runtimeShell, stdenv, utillinux, wrapQtAppsHook }:
+{ fetchFromGitHub, libxcb, mtools, p7zip, parted, procps, qemu, unzip, zip,
+  coreutils, gnugrep, which, gnused, e2fsprogs, autoPatchelfHook, gptfdisk,
+  python36Packages, qt5, runtimeShell, stdenv, util-linux, wrapQtAppsHook }:
 
 # Note: Multibootusb is tricky to maintain. It relies on the
 # $PYTHONPATH variable containing some of their code, so that
@@ -19,17 +20,30 @@ python36Packages.buildPythonApplication rec {
 
   nativeBuildInputs = [
     wrapQtAppsHook
+    autoPatchelfHook
+    unzip
+    zip
+  ];
+
+  runTimeDeps = [
+    coreutils
+    gnugrep
+    which
+    parted
+    util-linux
+    qemu
+    p7zip
+    gnused
+    mtools
+    procps
+    e2fsprogs
+    gptfdisk
   ];
 
   buildInputs = [
     libxcb
-    mtools
-    p7zip
-    parted
-    procps
     python36Packages.python
     qt5.full
-    utillinux
   ];
 
   src = fetchFromGitHub {
@@ -52,16 +66,19 @@ python36Packages.buildPythonApplication rec {
     python36Packages.six
   ];
 
-  makeWrapperArgs = [
-    # Firstly, add all necessary QT variables
-    "\${qtWrapperArgs[@]}"
-
-    # Then, add the installed scripts/ directory to the python path
-    "--prefix" "PYTHONPATH" ":" "$out/lib/${python36Packages.python.libPrefix}/site-packages"
-
-    # Finally, move to directory that contains data
-    "--run" "\"cd $out/share/${pname}\""
-  ];
+  # multibootusb ships zips with various versions of syslinux, we need to patchelf them
+  postPatch = ''
+    for zip in $(find . -name "*.zip"); do
+      zip=$(readlink -f $zip)
+      target="$(mktemp -d)"
+      pushd $target
+      unzip $zip
+      rm $zip
+      autoPatchelf .
+      zip -r $zip *
+      popd
+    done
+  '';
 
   postInstall = ''
     # This script doesn't work and it doesn't add much anyway
@@ -72,9 +89,25 @@ python36Packages.buildPythonApplication rec {
     cp -r data "$out/share/${pname}/data"
   '';
 
+  preFixup = ''
+    makeWrapperArgs+=(
+      # Firstly, add all necessary QT variables
+      "''${qtWrapperArgs[@]}"
+
+      # Then, add the installed scripts/ directory to the python path
+      --prefix "PYTHONPATH" ":" "$out/lib/${python36Packages.python.libPrefix}/site-packages"
+
+      # Add some runtime dependencies
+      --prefix "PATH" ":" "${stdenv.lib.makeBinPath runTimeDeps}"
+
+      # Finally, move to directory that contains data
+      --run "cd $out/share/${pname}"
+    )
+  '';
+
   meta = with stdenv.lib; {
     description = "Multiboot USB creator for Linux live disks";
-    homepage = http://multibootusb.org/;
+    homepage = "http://multibootusb.org/";
     license = licenses.gpl2;
     maintainers = []; # Looking for a maintainer!
   };

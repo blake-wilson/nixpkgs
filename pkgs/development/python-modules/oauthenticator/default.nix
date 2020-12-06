@@ -16,11 +16,11 @@
 
 buildPythonPackage rec {
   pname = "oauthenticator";
-  version = "0.9.0";
+  version = "0.12.2";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "0ce31c929bb456ad8734b9b8a7f539e44ab3afff07169e25e974ca576f4c836c";
+    sha256 = "a4e8d8c528b0386340fc59ba98118a2aeb668a3741288b7ac15fd35124a91813";
   };
 
   checkPhase = ''
@@ -29,17 +29,17 @@ buildPythonPackage rec {
 
   # No tests in archive
   doCheck = false;
-   
+
   checkInputs = [  globus-sdk mwoauth codecov flake8 pytest
     pytestcov pytest-tornado requests-mock pyjwt ];
-  
+
   propagatedBuildInputs = [ jupyterhub ];
 
   disabled = pythonOlder "3.4";
 
   meta = with lib; {
     description = "Authenticate JupyterHub users with common OAuth providers, including GitHub, Bitbucket, and more.";
-    homepage =  https://github.com/jupyterhub/oauthenticator;
+    homepage =  "https://github.com/jupyterhub/oauthenticator";
     license = licenses.bsd3;
     maintainers = with maintainers; [ ixxie ];
   };

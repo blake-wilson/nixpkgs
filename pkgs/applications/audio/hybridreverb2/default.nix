@@ -4,7 +4,7 @@
 
 let
   pname = "HybridReverb2";
-  version = "2.1.1";
+  version = "2.1.2";
   owner = "jpcima";
   DBversion = "1.0.0";
 in
@@ -21,7 +21,7 @@ stdenv.mkDerivation rec {
     inherit owner;
     repo = pname;
     rev = "v${version}";
-    sha256 = "15mba9qvlis0qrklr50wp3jdysvmk33m7pvclp0k1is9pirj97cb";
+    sha256 = "16r20plz1w068bgbkrydv01a991ygjybdya3ah7bhp3m5xafjwqb";
     fetchSubmodules = true;
   };
 
@@ -40,7 +40,7 @@ stdenv.mkDerivation rec {
   '';
 
   meta = with stdenv.lib; {
-    homepage = http://www2.ika.ruhr-uni-bochum.de/HybridReverb2;
+    homepage = "http://www2.ika.ruhr-uni-bochum.de/HybridReverb2";
     description = "Reverb effect using hybrid impulse convolution";
     license = licenses.gpl2Plus;
     maintainers = [ maintainers.magnetophon ];

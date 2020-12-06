@@ -6,7 +6,7 @@ stdenv.mkDerivation rec {
 
   buildInputs = [ libX11 libXpm libXt motif ];
 
-  NIX_CFLAGS_LINK = [ "-lXpm" ];
+  NIX_CFLAGS_LINK = "-lXpm";
 
   configureFlags = [
     "--with-x"
@@ -19,7 +19,7 @@ stdenv.mkDerivation rec {
   };
 
   meta = with stdenv; {
-    description = "Protect a computer network from getting infected.";
+    description = "Protect a computer network from getting infected";
     homepage = "http://www.xbill.org/";
     license = lib.licenses.gpl1;
     maintainers = with lib.maintainers; [ aw ];

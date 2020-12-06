@@ -11,23 +11,24 @@
 , meson
 , ninja
 , pkgconfig
-, gnome3
+, dconf
 , gst_all_1
 , wrapGAppsHook
 , gobject-introspection
 , glib-networking
+, librest
 , python3
 }:
 
 stdenv.mkDerivation rec {
-  version = "1.0.3.1";
+  version = "1.2.1";
   pname = "cawbird";
 
   src = fetchFromGitHub {
     owner = "IBBoard";
     repo = "cawbird";
     rev = "v${version}";
-    sha256 = "sha256:1v1y4bx0mm518b9vlpsry12fw1qz2j28jfhjqq73blvzd89lgb0y";
+    sha256 = "11s8x48syy5wjj23ab4bn5jxhi7l5sx7aw6q2ggk99v042hxh3h2";
   };
 
   nativeBuildInputs = [
@@ -47,9 +48,10 @@ stdenv.mkDerivation rec {
     sqlite
     libsoup
     gettext
-    gnome3.dconf
+    dconf
     gspell
     glib-networking
+    librest
   ] ++ (with gst_all_1; [
     gstreamer
     gst-plugins-base

@@ -43,6 +43,11 @@ stdenv.mkDerivation rec {
   dontAddPrefix = true;
 
   preConfigure = ''
+    # increase stack space for spacetime variant of the compiler
+    # https://github.com/ocaml/ocaml/issues/7435
+    # but disallowed by darwin sandbox
+    ulimit -s unlimited || true
+
     configureFlagsArray=(
       --bindir=$out/bin
       --libdir=$out/lib/ocaml/${ocaml.version}/site-lib
@@ -55,15 +60,15 @@ stdenv.mkDerivation rec {
     --replace +camlp4 $out/lib/ocaml/${ocaml.version}/site-lib/camlp4
   '';
 
-  makeFlags = "all";
+  makeFlags = [ "all" ];
 
-  installTargets = "install install-META";
+  installTargets = [ "install" "install-META" ];
 
   dontStrip = true;
 
   meta = with stdenv.lib; {
     description = "A software system for writing extensible parsers for programming languages";
-    homepage = https://github.com/ocaml/camlp4;
+    homepage = "https://github.com/ocaml/camlp4";
     platforms = ocaml.meta.platforms or [];
   };
 }

@@ -10,11 +10,11 @@ with stdenv.lib;
 
 perlPackages.buildPerlPackage rec {
   pname = "gscan2pdf";
-  version = "2.5.6";
+  version = "2.9.1";
 
   src = fetchurl {
     url = "mirror://sourceforge/gscan2pdf/${version}/${pname}-${version}.tar.xz";
-    sha256 = "0wp81nsi5jfypabwmjqiamxr739jq5ij79n5fzn5pbw1hg5gcmfz";
+    sha256 = "1ls6n1a8vjgwkb40drpc3rapjligaf9fp218539fnwvhv26div69";
   };
 
   nativeBuildInputs = [ wrapGAppsHook ];
@@ -29,6 +29,7 @@ perlPackages.buildPerlPackage rec {
       Glib
       GlibObjectIntrospection
       GooCanvas2
+      LocaleCodes
       LocaleGettext
       PDFAPI2
       ImageSane
@@ -38,7 +39,7 @@ perlPackages.buildPerlPackage rec {
       ListMoreUtils
       HTMLParser
       ProcProcessTable
-      Log4Perl
+      LogLog4perl
       TryTiny
       DataUUID
       DateCalc
@@ -64,6 +65,7 @@ perlPackages.buildPerlPackage rec {
 
     # Add runtime dependencies
     wrapProgram "$out/bin/gscan2pdf" \
+      --prefix PATH : "${sane-backends}/bin" \
       --prefix PATH : "${imagemagick}/bin" \
       --prefix PATH : "${libtiff}/bin" \
       --prefix PATH : "${djvulibre}/bin" \
@@ -100,7 +102,7 @@ perlPackages.buildPerlPackage rec {
 
   meta = {
     description = "A GUI to produce PDFs or DjVus from scanned documents";
-    homepage = http://gscan2pdf.sourceforge.net/;
+    homepage = "http://gscan2pdf.sourceforge.net/";
     license = licenses.gpl3;
     maintainers = with maintainers; [ pacien ];
   };

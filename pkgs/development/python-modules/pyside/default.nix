@@ -13,15 +13,21 @@ buildPythonPackage rec {
 
   enableParallelBuilding = true;
 
+  outputs = [ "out" "dev" ];
+
+  preConfigure = ''
+    cmakeFlagsArray=("-DCMAKE_INSTALL_PREFIX=$dev")
+  '';
+
   nativeBuildInputs = [ cmake pysideGeneratorrunner pysideShiboken qt4 ];
 
   buildInputs = [ mesa libGL ];
 
-  makeFlags = "QT_PLUGIN_PATH=" + pysideShiboken + "/lib/generatorrunner";
+  makeFlags = [ "QT_PLUGIN_PATH=${pysideShiboken}/lib/generatorrunner" ];
 
   meta = {
     description = "LGPL-licensed Python bindings for the Qt cross-platform application and UI framework";
     license = lib.licenses.lgpl21;
-    homepage = http://www.pyside.org;
+    homepage = "http://www.pyside.org";
   };
 }

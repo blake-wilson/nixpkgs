@@ -13,7 +13,7 @@
 
 let
   pname = "setuptools";
-  version = "41.6.0";
+  version = "47.3.1";
 
   # Create an sdist of setuptools
   sdist = stdenv.mkDerivation rec {
@@ -23,18 +23,27 @@ let
       owner = "pypa";
       repo = pname;
       rev = "v${version}";
-      sha256 = "0j7bfxq9fwa55ijzw8zn9aa2z2zx4lw2n4jbn1662pjg7v62knv1";
+      sha256 = "0sy3p4ibgqx67hzn1f254jh8070a8kl9g2la62p3c74k2x7p0r7f";
       name = "${pname}-${version}-source";
     };
+
+    patches = [
+      ./tag-date.patch
+    ];
 
     buildPhase = ''
       ${python.pythonForBuild.interpreter} bootstrap.py
       ${python.pythonForBuild.interpreter} setup.py sdist --formats=gztar
+
+      # Here we untar the sdist and retar it in order to control the timestamps
+      # of all the files included
+      tar -xzf dist/${pname}-${version}.post0.tar.gz -C dist/
+      tar -czf dist/${name} -C dist/ --mtime="@$SOURCE_DATE_EPOCH"  ${pname}-${version}.post0
     '';
 
     installPhase = ''
       echo "Moving sdist..."
-      mv dist/*.tar.gz $out
+      mv dist/${name} $out
     '';
   };
 in buildPythonPackage rec {
@@ -66,7 +75,7 @@ in buildPythonPackage rec {
 
   meta = with stdenv.lib; {
     description = "Utilities to facilitate the installation of Python packages";
-    homepage = https://pypi.python.org/pypi/setuptools;
+    homepage = "https://pypi.python.org/pypi/setuptools";
     license = with licenses; [ psfl zpl20 ];
     platforms = python.meta.platforms;
     priority = 10;

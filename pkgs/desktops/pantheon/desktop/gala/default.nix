@@ -1,5 +1,7 @@
 { stdenv
 , fetchFromGitHub
+, nix-update-script
+, fetchpatch
 , pantheon
 , pkgconfig
 , meson
@@ -18,7 +20,7 @@
 , gnome-desktop
 , mutter
 , clutter
-, plank
+, elementary-dock
 , elementary-icon-theme
 , elementary-settings-daemon
 , wrapGAppsHook
@@ -26,19 +28,18 @@
 
 stdenv.mkDerivation rec {
   pname = "gala";
-  version = "unstable-2019-10-31"; # Is tracking https://github.com/elementary/gala/commits/stable/juno
+  version = "3.3.2";
 
   src = fetchFromGitHub {
     owner = "elementary";
     repo = pname;
-    rev = "0f0724c97ad49f470f41c4a25c63103f51122997";
-    sha256 = "09cl3k2am878iiy76bijb0ykrcafh944kz027jgi1y5yk4bwfjc4";
+    rev = version;
+    sha256 = "sha256-BOarHUEgWqQM6jmVMauJi0JnsM+jE45MnPNnAqz1qOE=";
   };
 
   passthru = {
-    updateScript = pantheon.updateScript {
-      repoName = pname;
-      versionPolicy = "master";
+    updateScript = nix-update-script {
+      attrPath = "pantheon.${pname}";
     };
   };
 
@@ -57,20 +58,28 @@ stdenv.mkDerivation rec {
   buildInputs = [
     bamf
     clutter
+    elementary-dock
     elementary-icon-theme
-    gnome-desktop
     elementary-settings-daemon
+    gnome-desktop
     granite
     gtk3
     libcanberra
     libcanberra-gtk3
     libgee
     mutter
-    plank
   ];
 
   patches = [
+    # https://github.com/elementary/gala/pull/869
+    # build failure in vala 0.48.7
+    # https://github.com/elementary/gala/pull/869#issuecomment-657147695
+    (fetchpatch {
+      url = "https://github.com/elementary/gala/commit/85d290c75eaa147b704ad34e6c67498071707ee8.patch";
+      sha256 = "19jkvmxidf453qfrxkvi35igxzfz2cm8srwkabvyn9wyd1yhiw0l";
+    })
     ./plugins-dir.patch
+    ./use-new-notifications-default.patch
   ];
 
   postPatch = ''
@@ -80,7 +89,7 @@ stdenv.mkDerivation rec {
 
   meta =  with stdenv.lib; {
     description = "A window & compositing manager based on mutter and designed by elementary for use with Pantheon";
-    homepage = https://github.com/elementary/gala;
+    homepage = "https://github.com/elementary/gala";
     license = licenses.gpl3Plus;
     platforms = platforms.linux;
     maintainers = pantheon.maintainers;

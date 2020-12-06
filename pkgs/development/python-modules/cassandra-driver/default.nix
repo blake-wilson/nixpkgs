@@ -15,11 +15,11 @@
 
 buildPythonPackage rec {
   pname = "cassandra-driver";
-  version = "3.19.0";
+  version = "3.24.0";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "1vy9yzsd9c29irq99m8lpkgnc634waai2phvr6b89pmmdirp2wm9";
+    sha256 = "83ec8d9a5827ee44bb1c0601a63696a8a9086beaf0151c8255556299246081bd";
   };
 
   nativeBuildInputs = [ cython ];
@@ -42,5 +42,6 @@ buildPythonPackage rec {
     description = "A Python client driver for Apache Cassandra";
     homepage = "http://datastax.github.io/python-driver";
     license = licenses.asl20;
+    broken = true; # geomet doesn't exist
   };
 }

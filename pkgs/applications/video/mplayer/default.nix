@@ -1,4 +1,4 @@
-{ config, stdenv, fetchurl, pkgconfig, freetype, yasm, ffmpeg
+{ config, stdenv, fetchurl, pkgconfig, freetype, yasm, ffmpeg_3
 , aalibSupport ? true, aalib ? null
 , fontconfigSupport ? true, fontconfig ? null, freefont_ttf ? null
 , fribidiSupport ? true, fribidi ? null
@@ -21,6 +21,7 @@
 , jackaudioSupport ? false, libjack2 ? null
 , pulseSupport ? config.pulseaudio or false, libpulseaudio ? null
 , bs2bSupport ? false, libbs2b ? null
+, v4lSupport ? false, libv4l ? null
 # For screenshots
 , libpngSupport ? true, libpng ? null
 , libjpegSupport ? true, libjpeg ? null
@@ -53,12 +54,13 @@ assert pulseSupport -> libpulseaudio != null;
 assert bs2bSupport -> libbs2b != null;
 assert libpngSupport -> libpng != null;
 assert libjpegSupport -> libjpeg != null;
+assert v4lSupport -> libv4l != null;
 
 let
 
   codecs_src =
     let
-      dir = http://www.mplayerhq.hu/MPlayer/releases/codecs/;
+      dir = "http://www.mplayerhq.hu/MPlayer/releases/codecs/";
       version = "20071007";
     in
     if stdenv.hostPlatform.system == "i686-linux" then fetchurl {
@@ -107,7 +109,7 @@ stdenv.mkDerivation rec {
   depsBuildBuild = [ buildPackages.stdenv.cc ];
   nativeBuildInputs = [ pkgconfig yasm ];
   buildInputs = with stdenv.lib;
-    [ freetype ffmpeg ]
+    [ freetype ffmpeg_3 ]
     ++ optional aalibSupport aalib
     ++ optional fontconfigSupport fontconfig
     ++ optional fribidiSupport fribidi
@@ -132,6 +134,7 @@ stdenv.mkDerivation rec {
     ++ optional libpngSupport libpng
     ++ optional libjpegSupport libjpeg
     ++ optional bs2bSupport libbs2b
+    ++ optional v4lSupport libv4l
     ++ (with darwin.apple_sdk.frameworks; optionals stdenv.isDarwin [ Cocoa OpenGL ])
     ;
 
@@ -156,6 +159,7 @@ stdenv.mkDerivation rec {
     (if x264Support then "--enable-x264 --disable-x264-lavc" else "--disable-x264 --enable-x264-lavc")
     (if jackaudioSupport then "" else "--disable-jack")
     (if pulseSupport then "--enable-pulse" else "--disable-pulse")
+    (if v4lSupport then "--enable-v4l2 --enable-tv-v4l2" else "--disable-v4l2 --disable-tv-v4l2")
     "--disable-xanim"
     "--disable-ivtv"
     "--disable-xvid --disable-xvid-lavc"
@@ -182,7 +186,7 @@ stdenv.mkDerivation rec {
   preConfigure = ''
     configureFlagsArray+=(
       "--cc=$CC"
-      "--host-cc=$BUILD_CC"
+      "--host-cc=$CC_FOR_BUILD"
       "--as=$AS"
       "--nm=$NM"
       "--ar=$AR"
@@ -195,11 +199,12 @@ stdenv.mkDerivation rec {
     echo CONFIG_MPEGAUDIODSP=yes >> config.mak
   '';
 
-  NIX_LDFLAGS = with stdenv.lib;
+  NIX_LDFLAGS = with stdenv.lib; toString (
        optional  fontconfigSupport "-lfontconfig"
     ++ optional  fribidiSupport "-lfribidi"
     ++ optionals x11Support [ "-lX11" "-lXext" ]
-    ;
+    ++ [ "-lfreetype" ]
+  );
 
   installTargets = [ "install" ] ++ stdenv.lib.optional x11Support "install-gui";
 
@@ -217,7 +222,7 @@ stdenv.mkDerivation rec {
 
   meta = {
     description = "A movie player that supports many video formats";
-    homepage = http://mplayerhq.hu;
+    homepage = "http://mplayerhq.hu";
     license = "GPL";
     maintainers = [ stdenv.lib.maintainers.eelco ];
     platforms = [ "i686-linux" "x86_64-linux" "x86_64-darwin" ];

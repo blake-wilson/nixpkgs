@@ -1,4 +1,4 @@
-{ stdenv, fetchgit, cmake, pkgconfig, libusb1 }:
+{ stdenv, fetchgit, fetchpatch, cmake, pkgconfig, libusb1 }:
 
 stdenv.mkDerivation rec {
   pname = "rtl-sdr";
@@ -10,8 +10,14 @@ stdenv.mkDerivation rec {
     sha256 = "0lmvsnb4xw4hmz6zs0z5ilsah5hjz29g1s0050n59fllskqr3b8k";
   };
 
-  nativeBuildInputs = [ pkgconfig ];
-  buildInputs = [ cmake libusb1 ];
+  patches = [ (fetchpatch {
+    name = "hardened-udev-rules.patch";
+    url = "https://osmocom.org/projects/rtl-sdr/repository/revisions/b2814731563be4d5a0a68554ece6454a2c63af12/diff?format=diff";
+    sha256 = "0ns740s2rys4glq4la4bh0sxfv1mn61yfjns2yllhx70rsb2fqrn";
+  }) ];
+
+  nativeBuildInputs = [ pkgconfig cmake ];
+  buildInputs = [ libusb1 ];
 
   # TODO: get these fixes upstream:
   # * Building with -DINSTALL_UDEV_RULES=ON tries to install udev rules to
@@ -29,7 +35,7 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "Turns your Realtek RTL2832 based DVB dongle into a SDR receiver";
-    homepage = http://sdr.osmocom.org/trac/wiki/rtl-sdr;
+    homepage = "http://sdr.osmocom.org/trac/wiki/rtl-sdr";
     license = licenses.gpl2Plus;
     platforms = platforms.linux ++ platforms.darwin;
     maintainers = [ maintainers.bjornfor ];

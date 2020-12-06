@@ -1,18 +1,13 @@
-{ stable, branch, version, sha256Hash }:
+{ stable, branch, version, sha256Hash, mkOverride, commonOverrides }:
 
-{ stdenv, python3, fetchFromGitHub }:
+{ lib, python3, fetchFromGitHub, wrapQtAppsHook }:
 
 let
+  defaultOverrides = commonOverrides ++ [
+  ];
+
   python = python3.override {
-    packageOverrides = self: super: {
-      jsonschema = super.jsonschema.overridePythonAttrs (oldAttrs: rec {
-        version = "2.6.0";
-        src = oldAttrs.src.override {
-          inherit version;
-          sha256 = "00kf3zmpp9ya4sydffpifn0j0mzm342a2vzh82p6r0vh10cg7xbg";
-        };
-      });
-    };
+    packageOverrides = lib.foldr lib.composeExtensions (self: super: { }) defaultOverrides;
   };
 in python.pkgs.buildPythonPackage rec {
   name = "${pname}-${version}";
@@ -25,22 +20,28 @@ in python.pkgs.buildPythonPackage rec {
     sha256 = sha256Hash;
   };
 
+  nativeBuildInputs = [ wrapQtAppsHook ];
   propagatedBuildInputs = with python.pkgs; [
-    raven psutil jsonschema # tox for check
+    sentry-sdk psutil jsonschema # tox for check
     # Runtime dependencies
     sip (pyqt5.override { withWebSockets = true; }) distro setuptools
   ];
 
   doCheck = false; # Failing
+  dontWrapQtApps = true;
+  postFixup = ''
+      wrapQtApp "$out/bin/gns3"
+  '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Graphical Network Simulator 3 GUI (${branch} release)";
     longDescription = ''
       Graphical user interface for controlling the GNS3 network simulator. This
       requires access to a local or remote GNS3 server (it's recommended to
       download the official GNS3 VM).
     '';
-    homepage = https://www.gns3.com/;
+    homepage = "https://www.gns3.com/";
+    changelog = "https://github.com/GNS3/gns3-gui/releases/tag/v${version}";
     license = licenses.gpl3Plus;
     platforms = platforms.linux;
     maintainers = with maintainers; [ primeos ];

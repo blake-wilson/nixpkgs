@@ -2,11 +2,11 @@
 
 stdenv.mkDerivation rec {
   pname = "kdev-php";
-  version = "5.4.4";
+  version = "5.6.0";
 
   src = fetchurl {
     url = "https://github.com/KDE/${pname}/archive/v${version}.tar.gz";
-    sha256 = "1q80vh2b4bmpa3sh94b6jsa5ymqr6hcn76mr2lyw30h2ppy5hm5l";
+    sha256 = "1j5m9mhjzp2r4wdwnnnckms8ic536s6y0iyry2zdndbsy215hqlz";
   };
 
   nativeBuildInputs = [ cmake extra-cmake-modules ];

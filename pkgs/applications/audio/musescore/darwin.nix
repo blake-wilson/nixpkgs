@@ -11,6 +11,9 @@ stdenv.mkDerivation rec {
   pname = "musescore-darwin";
   version = concatStringsSep "." versionComponents;
 
+  # The disk image contains the .app and a symlink to /Applications.
+  sourceRoot = "${appName}.app";
+
   src = fetchurl {
     url =  "ftp://ftp.osuosl.org/pub/musescore/releases/MuseScore-${concatStringsSep "." (take 3 versionComponents)}/MuseScore-${version}.dmg";
     sha256 = "19xkaxlkbrhvfip6n3iw6q7463ngr6y5gfisrpjqg2xl2igyl795";
@@ -25,10 +28,10 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "Music notation and composition software";
-    homepage = https://musescore.org/;
+    homepage = "https://musescore.org/";
     license = licenses.gpl2;
     platforms = platforms.darwin;
     maintainers = with maintainers; [ yurrriq ];
-    repositories.git = https://github.com/musescore/MuseScore;
+    repositories.git = "https://github.com/musescore/MuseScore";
   };
 }

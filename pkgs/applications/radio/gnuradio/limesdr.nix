@@ -1,5 +1,5 @@
 { stdenv, fetchFromGitHub, cmake, pkgconfig, boost, gnuradio
-, pythonSupport ? true, python, swig, limesuite
+, pythonSupport ? true, python, swig, limesuite, log4cpp
 } :
 
 assert pythonSupport -> python != null && swig != null;
@@ -24,7 +24,7 @@ in stdenv.mkDerivation {
   ] ++ stdenv.lib.optionals pythonSupport [ swig ];
 
   buildInputs = [
-    boost gnuradio limesuite
+    boost gnuradio limesuite log4cpp
   ] ++ stdenv.lib.optionals pythonSupport [ python ];
 
 
@@ -32,7 +32,7 @@ in stdenv.mkDerivation {
 
   meta = with stdenv.lib; {
     description = "Gnuradio source and sink blocks for LimeSDR";
-    homepage = https://wiki.myriadrf.org/Gr-limesdr_Plugin_for_GNURadio;
+    homepage = "https://wiki.myriadrf.org/Gr-limesdr_Plugin_for_GNURadio";
     license = licenses.mit;
     platforms = platforms.linux;
     maintainers = [ maintainers.markuskowa ];

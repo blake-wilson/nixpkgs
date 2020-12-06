@@ -1,34 +1,39 @@
-{ stdenv
-, buildPythonPackage
-, fetchPypi
-, google_api_core
-, google_cloud_core
-, grpcio
-, pytest
-, mock
-}:
+{ stdenv, buildPythonPackage, fetchPypi, pytestCheckHook, pythonOlder
+, google_api_core, google_cloud_core, google_cloud_testutils, grpcio, libcst
+, mock, proto-plus, pytest-asyncio }:
 
 buildPythonPackage rec {
   pname = "google-cloud-translate";
-  version = "2.0.0";
+  version = "3.0.1";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "0nfc628nr2k6kd3q9qpgwz7c12l0191rv5x4pvca8q82jl96gip5";
+    sha256 = "ecdea3e176e80f606d08c4c7fd5acea6b3dd960f4b2e9a65951aaf800350a759";
   };
 
-  # google_cloud_core[grpc] -> grpcio
-  propagatedBuildInputs = [ google_api_core google_cloud_core grpcio ];
+  disabled = pythonOlder "3.6";
 
-  checkInputs = [ pytest mock ];
-  checkPhase = ''
-    cd tests # prevent local google/__init__.py from getting loaded
-    pytest unit
+  # google_cloud_core[grpc] -> grpcio
+  propagatedBuildInputs =
+    [ google_api_core google_cloud_core grpcio libcst proto-plus ];
+
+  checkInputs = [ google_cloud_testutils mock pytest-asyncio pytestCheckHook ];
+
+  # test_http.py broken, fix not yet released
+  # https://github.com/googleapis/python-translate/pull/69
+  disabledTests = [
+    "test_build_api_url_w_extra_query_params"
+    "test_build_api_url_no_extra_query_params"
+    "test_build_api_url_w_custom_endpoint"
+  ];
+
+  preCheck = ''
+    rm -r google
   '';
 
   meta = with stdenv.lib; {
     description = "Google Cloud Translation API client library";
-    homepage = https://github.com/GoogleCloudPlatform/google-cloud-python;
+    homepage = "https://github.com/googleapis/python-translate";
     license = licenses.asl20;
     maintainers = [ maintainers.costrouc ];
   };

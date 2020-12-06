@@ -1,12 +1,10 @@
 { stdenv, lib, makeWrapper, p7zip
-, gawk, utillinux, xorg, glib, dbus-glib, zlib
+, gawk, util-linux, xorg, glib, dbus-glib, zlib
 , kernel ? null, libsOnly ? false
 , undmg, fetchurl
 }:
 
 assert (!libsOnly) -> kernel != null;
-# Disable for kernels 4.15 and above due to compatibility issues
-assert kernel != null -> stdenv.lib.versionOlder kernel.version "4.15";
 
 let xorgFullVer = lib.getVersion xorg.xorgserver;
     xorgVer = lib.versions.majorMinor xorgFullVer;
@@ -46,7 +44,7 @@ stdenv.mkDerivation rec {
 
   kernelVersion = if libsOnly then "" else lib.getName kernel.name;
   kernelDir = if libsOnly then "" else "${kernel.dev}/lib/modules/${kernelVersion}";
-  scriptPath = lib.concatStringsSep ":" (lib.optionals (!libsOnly) [ "${utillinux}/bin" "${gawk}/bin" ]);
+  scriptPath = lib.concatStringsSep ":" (lib.optionals (!libsOnly) [ "${util-linux}/bin" "${gawk}/bin" ]);
 
   buildPhase = ''
     if test -z "$libsOnly"; then
@@ -160,7 +158,7 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "Parallels Tools for Linux guests";
-    homepage = https://parallels.com;
+    homepage = "https://parallels.com";
     platforms = [ "i686-linux" "x86_64-linux" ];
     license = licenses.unfree;
     # I was making this package blindly and requesting testing from the real user,

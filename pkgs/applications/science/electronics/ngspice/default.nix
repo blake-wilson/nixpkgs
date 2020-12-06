@@ -1,13 +1,24 @@
-{stdenv, fetchurl, bison, flex
-, readline, libX11, libICE, libXaw, libXmu, libXext, libXt, fftw }:
+{ stdenv
+, fetchurl
+, bison
+, flex
+, readline
+, libX11
+, libICE
+, libXaw
+, libXmu
+, libXext
+, libXt
+, fftw
+}:
 
 stdenv.mkDerivation rec {
   pname = "ngspice";
-  version = "30";
+  version = "33";
 
   src = fetchurl {
     url = "mirror://sourceforge/ngspice/ngspice-${version}.tar.gz";
-    sha256 = "15v0jdfy2a2zxp8dmy04fdp7w7a4vwvffcwa688r81b86wphxzh8";
+    sha256 = "1wa1hmpn13spmxqgbb1m7vgy32mwvjqwrxhymzll8z65q5nbd7dr";
   };
 
   nativeBuildInputs = [ flex bison ];
@@ -17,7 +28,7 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "The Next Generation Spice (Electronic Circuit Simulator)";
-    homepage = http://ngspice.sourceforge.net;
+    homepage = "http://ngspice.sourceforge.net";
     license = with licenses; [ "BSD" gpl2 ];
     maintainers = with maintainers; [ bgamari rongcuid ];
     platforms = platforms.linux;

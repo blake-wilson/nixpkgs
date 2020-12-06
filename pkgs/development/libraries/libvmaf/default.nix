@@ -1,33 +1,28 @@
-{ stdenv, fetchFromGitHub, autoconf, automake, intltool, libtool, pkgconfig }:
+{ stdenv, fetchFromGitHub, meson, ninja, nasm }:
 
 stdenv.mkDerivation rec {
   pname = "libvmaf";
-  version = "1.3.15";
+  version = "1.5.3";
 
   src = fetchFromGitHub {
     owner = "netflix";
     repo = "vmaf";
     rev = "v${version}";
-    sha256="10kgcdf06hzhbl5r7zsllq88bxbyn282hfqx5i3hkp66fpq896d2";
+    sha256 = "0x3l3g0hgrrjh3ygmxr1pd3rd5589s07c7id35nvj76ch5b7gy63";
   };
 
-  nativeBuildInputs = [ autoconf automake intltool libtool pkgconfig ];
+  sourceRoot = "source/libvmaf";
+
+  nativeBuildInputs = [ meson ninja nasm ];
   outputs = [ "out" "dev" ];
   doCheck = true;
-
-  postFixup = ''
-    substituteInPlace "$dev/lib/pkgconfig/libvmaf.pc" \
-      --replace "includedir=/usr/local/include" "includedir=$dev"
-  '';
-
-  makeFlags = [ "INSTALL_PREFIX=${placeholder "out"}" ];
 
   meta = with stdenv.lib; {
     homepage = "https://github.com/Netflix/vmaf";
     description = "Perceptual video quality assessment based on multi-method fusion (VMAF)";
-    platforms = platforms.linux;
-    license = licenses.asl20;
-    maintainers = [ maintainers.cfsmp3 ];
+    platforms = platforms.unix;
+    license = licenses.bsd2Patent;
+    maintainers = [ maintainers.cfsmp3 maintainers.marsam ];
   };
 
 }

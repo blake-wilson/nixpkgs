@@ -3,13 +3,13 @@
 stdenv.mkDerivation rec
 {
   pname = "alembic";
-  version = "1.7.12";
+  version = "1.7.16";
 
   src = fetchFromGitHub {
     owner = "alembic";
     repo = "alembic";
     rev = version;
-    sha256 = "0a9icrv6pwh2b73lywq1aj7i19pmzpg59iy3ngal8vq4zdciylqc";
+    sha256 = "1vmhwjhppjv8m0ysk2qz0wl47cbl8i40bjjq5l4jmmp1ysvlbknf";
   };
 
   outputs = [ "bin" "dev" "out" "lib" ];

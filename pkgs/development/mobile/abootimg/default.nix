@@ -1,4 +1,4 @@
-{ stdenv, fetchFromGitHub, coreutils, cpio, findutils, gzip, makeWrapper, utillinux }:
+{ stdenv, fetchFromGitHub, coreutils, cpio, findutils, gzip, makeWrapper, util-linux }:
 
 let
   version = "0.6";
@@ -14,7 +14,7 @@ stdenv.mkDerivation {
     sha256 = "1qgx9fxwhylgnixzkz2mzv2707f65qq7rar2rsqak536vhig1z9a";
   };
 
-  nativeBuildInputs = [ makeWrapper utillinux ];
+  nativeBuildInputs = [ makeWrapper util-linux ];
 
   postPatch = ''
     cat <<EOF > version.h
@@ -35,7 +35,7 @@ stdenv.mkDerivation {
   '';
 
   meta = with stdenv.lib; {
-    homepage = https://github.com/ggrandou/abootimg;
+    homepage = "https://github.com/ggrandou/abootimg";
     description = "Manipulate Android Boot Images";
     license = licenses.gpl2;
     platforms = platforms.linux;

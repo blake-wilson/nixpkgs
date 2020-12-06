@@ -1,8 +1,8 @@
 {stdenv, fetchurl, fuse, bison, flex_2_5_35, openssl, python3, ncurses, readline,
  autoconf, automake, libtool, pkgconfig, zlib, libaio, libxml2, acl, sqlite,
  liburcu, attr, makeWrapper, coreutils, gnused, gnugrep, which,
- openssh, gawk, findutils, utillinux, lvm2, btrfs-progs, e2fsprogs, xfsprogs, systemd,
- rsync, glibc
+ openssh, gawk, findutils, util-linux, lvm2, btrfs-progs, e2fsprogs, xfsprogs, systemd,
+ rsync, glibc, rpcsvc-proto, libtirpc
 }:
 let
   s =
@@ -15,16 +15,16 @@ let
     #       The command
     #         find /nix/store/...-glusterfs-.../ -name '*.py' -executable
     #       can help with finding new Python scripts.
-    version = "7.0";
+    version = "7.6";
     name="${baseName}-${version}";
     url="https://github.com/gluster/glusterfs/archive/v${version}.tar.gz";
-    sha256 = "0ynh7wrgpnmwah9r2ll32dmicdivz13ijjxg2vj1qcaxgy0b5ivm";
+    sha256 = "0zdcv2jk8dp67id8ic30mkn97ccp07jf20g7v09a5k31pw9aqyih";
   };
 
   buildInputs = [
     fuse bison flex_2_5_35 openssl ncurses readline
     autoconf automake libtool pkgconfig zlib libaio libxml2
-    acl sqlite liburcu attr makeWrapper utillinux
+    acl sqlite liburcu attr makeWrapper util-linux libtirpc
     (python3.withPackages (pkgs: [
       pkgs.flask
       pkgs.prettytable
@@ -56,7 +56,7 @@ let
     openssh # ssh
     rsync # rsync, e.g. for geo-replication
     systemd # systemctl
-    utillinux # mount umount
+    util-linux # mount umount
     which # which
     xfsprogs # xfs_info
   ];
@@ -73,19 +73,25 @@ stdenv.mkDerivation
 
   postPatch = ''
     sed -e '/chmod u+s/d' -i contrib/fuse-util/Makefile.am
+    substituteInPlace libglusterfs/src/glusterfs/lvm-defaults.h \
+      --replace '/sbin/' '${lvm2}/bin/'
+    substituteInPlace libglusterfs/src/glusterfs/compat.h \
+      --replace '/bin/umount' '${util-linux}/bin/umount'
+    substituteInPlace contrib/fuse-lib/mount-gluster-compat.h \
+      --replace '/bin/mount' '${util-linux}/bin/mount'
   '';
 
-   # Note that the VERSION file is something that is present in release tarballs
-   # but not in git tags (at least not as of writing in v3.10.1).
-   # That's why we have to create it.
-   # Without this, gluster (at least 3.10.1) will fail very late and cryptically,
-   # for example when setting up geo-replication, with a message like
-   #   Staging of operation 'Volume Geo-replication Create' failed on localhost : Unable to fetch master volume details. Please check the master cluster and master volume.
-   # What happens here is that the gverify.sh script tries to compare the versions,
-   # but fails when the version is empty.
-   # See upstream GlusterFS bug https://bugzilla.redhat.com/show_bug.cgi?id=1452705
-   preConfigure = ''
-     echo "v${s.version}" > VERSION
+  # Note that the VERSION file is something that is present in release tarballs
+  # but not in git tags (at least not as of writing in v3.10.1).
+  # That's why we have to create it.
+  # Without this, gluster (at least 3.10.1) will fail very late and cryptically,
+  # for example when setting up geo-replication, with a message like
+  #   Staging of operation 'Volume Geo-replication Create' failed on localhost : Unable to fetch master volume details. Please check the master cluster and master volume.
+  # What happens here is that the gverify.sh script tries to compare the versions,
+  # but fails when the version is empty.
+  # See upstream GlusterFS bug https://bugzilla.redhat.com/show_bug.cgi?id=1452705
+  preConfigure = ''
+    echo "v${s.version}" > VERSION
     ./autogen.sh
     export PYTHON=${python3}/bin/python
     '';
@@ -94,7 +100,9 @@ stdenv.mkDerivation
     ''--localstatedir=/var''
     ];
 
-  makeFlags = "DESTDIR=$(out)";
+  nativeBuildInputs = [ rpcsvc-proto ];
+
+  makeFlags = [ "DESTDIR=$(out)" ];
 
   enableParallelBuilding = true;
 
@@ -186,7 +194,7 @@ stdenv.mkDerivation
   meta = with stdenv.lib; {
     inherit (s) version;
     description = "Distributed storage system";
-    homepage = https://www.gluster.org;
+    homepage = "https://www.gluster.org";
     license = licenses.lgpl3Plus; # dual licese: choice of lgpl3Plus or gpl2
     maintainers = [ maintainers.raskin ];
     platforms = with platforms; linux ++ freebsd;

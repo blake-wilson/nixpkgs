@@ -3,17 +3,19 @@
 , makeWrapper, perlPackages, mkDerivation }:
 
 let
-  version = "1.6";
-in mkDerivation rec {
   pname = "qdirstat";
-  inherit version;
+  version = "1.7";
 
   src = fetchFromGitHub {
     owner = "shundhammer";
-    repo = "qdirstat";
+    repo = pname;
     rev = version;
-    sha256 = "0q4ccjmlbqifg251kyxwys8wspdskr8scqhacyfrs9cmnjxcjqan";
+    sha256 = "163x3fxra0l3vvrzm25mh7jvcwjbmwsqlpppkxx76mkz9a1769fy";
   };
+in
+
+mkDerivation {
+  inherit pname version src;
 
   nativeBuildInputs = [ qmake makeWrapper ];
 

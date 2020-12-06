@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, pkgconfig, addOpenGLRunpath, perl, texinfo, yasm
+{ stdenv, buildPackages, fetchurl, pkgconfig, addOpenGLRunpath, perl, texinfo, yasm
 , alsaLib, bzip2, fontconfig, freetype, gnutls, libiconv, lame, libass, libogg
 , libssh, libtheora, libva, libdrm, libvorbis, libvpx, lzma, libpulseaudio, soxr
 , x264, x265, xvidcore, zlib, libopus, speex, nv-codec-headers, dav1d
@@ -44,7 +44,7 @@
 
 let
   inherit (stdenv) isDarwin isFreeBSD isLinux isAarch32;
-  inherit (stdenv.lib) optional optionals optionalString enableFeature;
+  inherit (stdenv.lib) optional optionals optionalString enableFeature filter;
 
   cmpVer = builtins.compareVersions;
   reqMin = requiredVersion: (cmpVer requiredVersion branch != 1);
@@ -85,7 +85,7 @@ stdenv.mkDerivation rec {
   setOutputFlags = false; # doesn't accept all and stores configureFlags in libs!
 
   configurePlatforms = [];
-  configureFlags = [
+  configureFlags = filter (v: v != null) ([
       "--arch=${stdenv.hostPlatform.parsed.cpu.name}"
       "--target_os=${stdenv.hostPlatform.parsed.kernel.name}"
     # License
@@ -96,13 +96,15 @@ stdenv.mkDerivation rec {
       (ifMinVer "0.6" "--enable-pic")
       (enableFeature runtimeCpuDetectBuild "runtime-cpudetect")
       "--enable-hardcoded-tables"
+    ] ++
       (if multithreadBuild then (
          if stdenv.isCygwin then
-           "--disable-pthreads --enable-w32threads"
+           ["--disable-pthreads" "--enable-w32threads"]
          else # Use POSIX threads by default
-           "--enable-pthreads --disable-w32threads")
+           ["--enable-pthreads" "--disable-w32threads"])
        else
-         "--disable-pthreads --disable-w32threads")
+         ["--disable-pthreads" "--disable-w32threads"])
+    ++ [
       (ifMinVer "0.9" "--disable-os2threads") # We don't support OS/2
       "--enable-network"
       (ifMinVer "2.4" "--enable-pixelutils")
@@ -124,6 +126,7 @@ stdenv.mkDerivation rec {
     # Docs
       (ifMinVer "0.6" "--disable-doc")
     # External Libraries
+      "--enable-libass"
       "--enable-bzlib"
       "--enable-gnutls"
       (ifMinVer "1.0" "--enable-fontconfig")
@@ -134,7 +137,7 @@ stdenv.mkDerivation rec {
       (ifMinVer "2.1" "--enable-libssh")
       (ifMinVer "0.6" (enableFeature vaapiSupport "vaapi"))
       (ifMinVer "3.4" (enableFeature vaapiSupport "libdrm"))
-      "--enable-vdpau"
+      (enableFeature vdpauSupport "vdpau")
       "--enable-libvorbis"
       (ifMinVer "0.6" (enableFeature vpxSupport "libvpx"))
       (ifMinVer "2.4" "--enable-lzma")
@@ -161,16 +164,17 @@ stdenv.mkDerivation rec {
   ] ++ optionals (stdenv.hostPlatform != stdenv.buildPlatform) [
       "--cross-prefix=${stdenv.cc.targetPrefix}"
       "--enable-cross-compile"
-  ] ++ optional stdenv.cc.isClang "--cc=clang";
+  ] ++ optional stdenv.cc.isClang "--cc=clang");
 
+  depsBuildBuild = [ buildPackages.stdenv.cc ];
   nativeBuildInputs = [ addOpenGLRunpath perl pkgconfig texinfo yasm ];
 
   buildInputs = [
     bzip2 fontconfig freetype gnutls libiconv lame libass libogg libssh libtheora
-    libvdpau libvorbis lzma soxr x264 x265 xvidcore zlib libopus speex nv-codec-headers
+    libvorbis lzma soxr x264 x265 xvidcore zlib libopus speex nv-codec-headers
   ] ++ optionals openglSupport [ libGL libGLU ]
     ++ optional libmfxSupport intel-media-sdk
-    ++ optional vpxSupport libaom
+    ++ optional libaomSupport libaom
     ++ optional vpxSupport libvpx
     ++ optionals (!isDarwin && !isAarch32) [ libpulseaudio ] # Need to be fixed on Darwin and ARM
     ++ optional ((isLinux || isFreeBSD) && !isAarch32) libva
@@ -195,9 +199,10 @@ stdenv.mkDerivation rec {
         --replace "includedir=$out" "includedir=''${!outputInclude}"
     done
   '' + optionalString stdenv.isLinux ''
-    # Set RUNPATH so that libnvcuvid in /run/opengl-driver(-32)/lib can be found.
+    # Set RUNPATH so that libnvcuvid and libcuda in /run/opengl-driver(-32)/lib can be found.
     # See the explanation in addOpenGLRunpath.
-    addOpenGLRunpath $out/lib/libavcodec.so*
+    addOpenGLRunpath $out/lib/libavcodec.so
+    addOpenGLRunpath $out/lib/libavutil.so
   '';
 
   installFlags = [ "install-man" ];
@@ -208,7 +213,7 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "A complete, cross-platform solution to record, convert and stream audio and video";
-    homepage = http://www.ffmpeg.org/;
+    homepage = "http://www.ffmpeg.org/";
     longDescription = ''
       FFmpeg is the leading multimedia framework, able to decode, encode, transcode,
       mux, demux, stream, filter and play pretty much anything that humans and machines
@@ -218,7 +223,7 @@ stdenv.mkDerivation rec {
     '';
     license = licenses.gpl3;
     platforms = platforms.all;
-    maintainers = with maintainers; [ codyopel fuuzetsu ];
+    maintainers = with maintainers; [ codyopel ];
     inherit branch;
   };
 }

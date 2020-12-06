@@ -57,8 +57,8 @@ let
         substituteInPlace $i \
           --replace \"/sbin/modprobe \"${pkgs.kmod}/bin/modprobe \
           --replace \"/sbin/mdadm \"${pkgs.mdadm}/sbin/mdadm \
-          --replace \"/sbin/blkid \"${pkgs.utillinux}/sbin/blkid \
-          --replace \"/bin/mount \"${pkgs.utillinux}/bin/mount \
+          --replace \"/sbin/blkid \"${pkgs.util-linux}/sbin/blkid \
+          --replace \"/bin/mount \"${pkgs.util-linux}/bin/mount \
           --replace /usr/bin/readlink ${pkgs.coreutils}/bin/readlink \
           --replace /usr/bin/basename ${pkgs.coreutils}/bin/basename
       done
@@ -83,6 +83,10 @@ let
       run_progs=$(grep -v '^[[:space:]]*#' $out/* | grep 'RUN+="/' |
         sed -e 's/.*RUN+="\([^ "]*\)[ "].*/\1/' | uniq)
       for i in $import_progs $run_progs; do
+        # if the path refers to /run/current-system/systemd, replace with config.systemd.package
+        if [[ $i == /run/current-system/systemd* ]]; then
+          i="${config.systemd.package}/''${i#/run/current-system/systemd/}"
+        fi
         if [[ ! -x $i ]]; then
           echo "FAIL"
           echo "$i is called in udev rules but is not executable or does not exist"
@@ -221,8 +225,8 @@ in
         type = types.lines;
         description = ''
           Additional <command>hwdb</command> files. They'll be written
-          into file <filename>10-local.hwdb</filename>. Thus they are
-          read before all other files.
+          into file <filename>99-local.hwdb</filename>. Thus they are
+          read after all other files.
         '';
       };
 
@@ -276,18 +280,15 @@ in
 
     services.udev.packages = [ extraUdevRules extraHwdbFile ];
 
-    services.udev.path = [ pkgs.coreutils pkgs.gnused pkgs.gnugrep pkgs.utillinux udev ];
+    services.udev.path = [ pkgs.coreutils pkgs.gnused pkgs.gnugrep pkgs.util-linux udev ];
 
     boot.kernelParams = mkIf (!config.networking.usePredictableInterfaceNames) [ "net.ifnames=0" ];
 
     environment.etc =
-      [ { source = udevRules;
-          target = "udev/rules.d";
-        }
-        { source = hwdbBin;
-          target = "udev/hwdb.bin";
-        }
-      ];
+      {
+        "udev/rules.d".source = udevRules;
+        "udev/hwdb.bin".source = hwdbBin;
+      };
 
     system.requiredKernelConfig = with config.lib.kernelConfig; [
       (isEnabled "UNIX")

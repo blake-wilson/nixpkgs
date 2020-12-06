@@ -1,16 +1,18 @@
-{ stdenv, fetchurl, cmake, openblasCompat, gfortran, gmm, fltk, libjpeg
+{ stdenv, fetchurl, cmake, blas, lapack, gfortran, gmm, fltk, libjpeg
 , zlib, libGL, libGLU, xorg, opencascade-occt }:
+
+assert (!blas.isILP64) && (!lapack.isILP64);
 
 stdenv.mkDerivation rec {
   pname = "gmsh";
-  version = "4.4.1";
+  version = "4.7.1";
 
   src = fetchurl {
     url = "http://gmsh.info/src/gmsh-${version}-source.tgz";
-    sha256 = "1p7hibmsgv961lfkzdxlgcvmcb0q155m2sp60r97cjsfzhw68g45";
+    sha256 = "0shwi41van3k0z6rnpl3sz5nh46xbyyljwfpcp8pwxbc26aw5169";
   };
 
-  buildInputs = [ openblasCompat gmm fltk libjpeg zlib libGLU libGL
+  buildInputs = [ blas lapack gmm fltk libjpeg zlib libGLU libGL
     libGLU xorg.libXrender xorg.libXcursor xorg.libXfixes xorg.libXext
     xorg.libXft xorg.libXinerama xorg.libX11 xorg.libSM xorg.libICE
     opencascade-occt

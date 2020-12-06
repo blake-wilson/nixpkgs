@@ -56,9 +56,11 @@ in
           networking.firewall.enable = false;
 
           services.httpd.enable = true;
-          services.httpd.listen = [{ ip = "*"; port = 9000; }];
-          services.httpd.adminAddr = "foo@example.org";
-          services.httpd.documentRoot = "/tmp";
+          services.httpd.virtualHosts.localhost = {
+            listen = [{ ip = "*"; port = 9000; }];
+            adminAddr = "foo@example.org";
+            documentRoot = "/tmp";
+          };
         };
 
       client2 =
@@ -88,7 +90,7 @@ in
       client1.succeed("upnpc -a ${internalClient1Address} 9000 9000 TCP")
 
       client1.wait_for_unit("httpd")
-      client2.wait_until_succeeds("curl http://${externalRouterAddress}:9000/")
+      client2.wait_until_succeeds("curl -f http://${externalRouterAddress}:9000/")
     '';
 
 })

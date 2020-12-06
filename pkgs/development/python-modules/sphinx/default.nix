@@ -16,7 +16,6 @@
 , Babel
 , snowballstemmer
 , six
-, sqlalchemy
 , whoosh
 , imagesize
 , requests
@@ -33,11 +32,11 @@
 
 buildPythonPackage rec {
   pname = "sphinx";
-  version = "2.2.0";
+  version = "3.3.1";
   src = fetchPypi {
     pname = "Sphinx";
     inherit version;
-    sha256 = "0d586b0f8c2fc3cc6559c5e8fd6124628110514fda0e5d7c82e682d749d2e845";
+    sha256 = "1e8d592225447104d1172be415bc2972bd1357e3e12fdc76edf2261105db4300";
   };
   LC_ALL = "en_US.UTF-8";
 
@@ -56,7 +55,6 @@ buildPythonPackage rec {
     setuptools
     snowballstemmer
     six
-    sqlalchemy
     whoosh
     imagesize
     requests
@@ -72,15 +70,9 @@ buildPythonPackage rec {
   # Lots of tests. Needs network as well at some point.
   doCheck = false;
 
-  # https://github.com/NixOS/nixpkgs/issues/22501
-  # Do not run `python sphinx-build arguments` but `sphinx-build arguments`.
-  postPatch = ''
-    substituteInPlace sphinx/make_mode.py --replace "sys.executable, " ""
-  '';
-
   meta = {
     description = "A tool that makes it easy to create intelligent and beautiful documentation for Python projects";
-    homepage = http://sphinx.pocoo.org/;
+    homepage = "http://sphinx.pocoo.org/";
     license = lib.licenses.bsd3;
     maintainers = with lib.maintainers; [ nand0p ];
   };

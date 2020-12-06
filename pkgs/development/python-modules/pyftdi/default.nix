@@ -1,26 +1,24 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, pythonOlder
-, pyusb
-, pyserial
-}:
+{ lib, buildPythonPackage, fetchFromGitHub, pythonOlder, pyusb, pyserial }:
 
 buildPythonPackage rec {
   pname = "pyftdi";
-  version = "0.30.3";
+  version = "0.51.2";
   disabled = pythonOlder "3.5";
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "ed55f0cb2d2f84b6e97be9583d582480ba9777cb0179aac0bb0ac480cd6760f5";
+  src = fetchFromGitHub {
+    owner = "eblot";
+    repo = pname;
+    rev = "v${version}";
+    sha256 = "14mkwk44bgm6s4kqagz7nm6p6gsygmksl2628jaqh7ppblxca9as";
   };
 
   propagatedBuildInputs = [ pyusb pyserial ];
 
+  pythonImportsCheck = [ "pyftdi" ];
+
   meta = {
     description = "User-space driver for modern FTDI devices";
-    homepage = "http://github.com/eblot/pyftdi";
-    license = lib.licenses.lgpl2;
+    homepage = "https://github.com/eblot/pyftdi";
+    license = lib.licenses.bsd3;
   };
 }

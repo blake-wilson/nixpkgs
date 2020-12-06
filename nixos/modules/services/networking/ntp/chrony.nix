@@ -6,6 +6,7 @@ let
   cfg = config.services.chrony;
 
   stateDir = "/var/lib/chrony";
+  driftFile = "${stateDir}/chrony.drift";
   keyFile = "${stateDir}/chrony.keys";
 
   configFile = pkgs.writeText "chrony.conf" ''
@@ -16,7 +17,7 @@ let
       "initstepslew ${toString cfg.initstepslew.threshold} ${concatStringsSep " " cfg.servers}"
     }
 
-    driftfile ${stateDir}/chrony.drift
+    driftfile ${driftFile}
     keyfile ${keyFile}
 
     ${optionalString (!config.time.hardwareClockInLocalTime) "rtconutc"}
@@ -30,6 +31,7 @@ in
   options = {
     services.chrony = {
       enable = mkOption {
+        type = types.bool;
         default = false;
         description = ''
           Whether to synchronise your machine's time using chrony.
@@ -79,14 +81,10 @@ in
 
     environment.systemPackages = [ pkgs.chrony ];
 
-    users.groups = singleton
-      { name = "chrony";
-        gid = config.ids.gids.chrony;
-      };
+    users.groups.chrony.gid = config.ids.gids.chrony;
 
-    users.users = singleton
-      { name = "chrony";
-        uid = config.ids.uids.chrony;
+    users.users.chrony =
+      { uid = config.ids.uids.chrony;
         group = "chrony";
         description = "chrony daemon user";
         home = stateDir;
@@ -95,6 +93,12 @@ in
     services.timesyncd.enable = mkForce false;
 
     systemd.services.systemd-timedated.environment = { SYSTEMD_TIMEDATED_NTP_SERVICES = "chronyd.service"; };
+
+    systemd.tmpfiles.rules = [
+      "d ${stateDir} 0755 chrony chrony - -"
+      "f ${driftFile} 0640 chrony chrony -"
+      "f ${keyFile} 0640 chrony chrony -"
+    ];
 
     systemd.services.chronyd =
       { description = "chrony NTP daemon";
@@ -107,13 +111,6 @@ in
 
         path = [ pkgs.chrony ];
 
-        preStart = ''
-          mkdir -m 0755 -p ${stateDir}
-          touch ${keyFile}
-          chmod 0640 ${keyFile}
-          chown chrony:chrony ${stateDir} ${keyFile}
-        '';
-
         unitConfig.ConditionCapability = "CAP_SYS_TIME";
         serviceConfig =
           { Type = "simple";
@@ -122,7 +119,6 @@ in
             ProtectHome = "yes";
             ProtectSystem = "full";
             PrivateTmp = "yes";
-
           };
 
       };

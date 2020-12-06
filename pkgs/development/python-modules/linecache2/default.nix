@@ -2,6 +2,7 @@
 , buildPythonPackage
 , fetchPypi
 , pbr
+, isPy3k
 }:
 
 buildPythonPackage rec {
@@ -22,5 +23,4 @@ buildPythonPackage rec {
     homepage = "https://github.com/testing-cabal/linecache2";
     license = licenses.psfl;
   };
-
 }

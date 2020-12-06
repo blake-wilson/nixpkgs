@@ -10,12 +10,15 @@
 
 buildPythonApplication rec {
   pname = "cmake-format";
-  version = "0.6.0";
+  version = "0.6.13";
+  # The source distribution does not build because of missing files.
+  format = "wheel";
 
   src = fetchPypi {
-    inherit version;
-    pname = "cmake_format";
-    sha256 = "0sip832bxsvnm7fhqhx49d53g2s7swdk3fhyhlglm2shgj89b5zw";
+    inherit version format;
+    python = "py3";
+    pname = "cmakelang";
+    sha256 = "0kmggnfbv6bba75l3zfzqwk0swi90brjka307m2kcz2w35kr8jvn";
   };
 
   propagatedBuildInputs = [ autopep8 flake8 jinja2 pylint pyyaml ];

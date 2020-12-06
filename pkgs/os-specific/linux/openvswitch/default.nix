@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, makeWrapper, pkgconfig, utillinux, which
+{ stdenv, fetchurl, makeWrapper, pkgconfig, util-linux, which
 , procps, libcap_ng, openssl, python3 , perl
 , kernel ? null }:
 
@@ -8,18 +8,18 @@ let
   _kernel = kernel;
   pythonEnv = python3.withPackages (ps: with ps; [ six ]);
 in stdenv.mkDerivation rec {
-  version = "2.12.0";
+  version = "2.14.0";
   pname = "openvswitch";
 
   src = fetchurl {
     url = "https://www.openvswitch.org/releases/${pname}-${version}.tar.gz";
-    sha256 = "1y78ix5inhhcvicbvyy2ij38am1215nr55vydhab3d4065q45z8k";
+    sha256 = "0q52k6mq1jfsv0ix55mjd5ljlalhklhqfrma3l61dzhgihmfawa1";
   };
 
   kernel = optional (_kernel != null) _kernel.dev;
 
   nativeBuildInputs = [ pkgconfig ];
-  buildInputs = [ makeWrapper utillinux openssl libcap_ng pythonEnv
+  buildInputs = [ makeWrapper util-linux openssl libcap_ng pythonEnv
                   perl procps which ];
 
   configureFlags = [
@@ -58,7 +58,7 @@ in stdenv.mkDerivation rec {
       support distribution across multiple physical servers similar
       to VMware's vNetwork distributed vswitch or Cisco's Nexus 1000V.
       '';
-    homepage = https://www.openvswitch.org/;
+    homepage = "https://www.openvswitch.org/";
     license = licenses.asl20;
     maintainers = with maintainers; [ netixx kmcopper ];
   };

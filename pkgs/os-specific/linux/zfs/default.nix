@@ -1,4 +1,5 @@
-{ stdenv, fetchFromGitHub, autoreconfHook, utillinux, nukeReferences, coreutils
+{ stdenv, fetchFromGitHub, fetchpatch
+, autoreconfHook, util-linux, nukeReferences, coreutils
 , perl, buildPackages
 , configFile ? "all"
 
@@ -8,9 +9,11 @@
 , nfs-utils
 , gawk, gnugrep, gnused, systemd
 , smartmontools, sysstat, sudo
+, pkgconfig
 
 # Kernel dependencies
 , kernel ? null
+, enablePython ? true
 }:
 
 with stdenv.lib;
@@ -46,32 +49,52 @@ let
         patchShebangs scripts
         # The arrays must remain the same length, so we repeat a flag that is
         # already part of the command and therefore has no effect.
-        substituteInPlace ./module/zfs/zfs_ctldir.c --replace '"/usr/bin/env", "umount"' '"${utillinux}/bin/umount", "-n"' \
-                                                    --replace '"/usr/bin/env", "mount"'  '"${utillinux}/bin/mount", "-n"'
+        substituteInPlace ./module/os/linux/zfs/zfs_ctldir.c \
+          --replace '"/usr/bin/env", "umount"' '"${util-linux}/bin/umount", "-n"' \
+          --replace '"/usr/bin/env", "mount"'  '"${util-linux}/bin/mount", "-n"'
       '' + optionalString buildUser ''
-        substituteInPlace ./lib/libzfs/libzfs_mount.c --replace "/bin/umount"             "${utillinux}/bin/umount" \
-                                                      --replace "/bin/mount"              "${utillinux}/bin/mount"
-        substituteInPlace ./lib/libshare/nfs.c        --replace "/usr/sbin/exportfs"      "${nfs-utils}/bin/exportfs"
+        substituteInPlace ./lib/libshare/os/linux/nfs.c --replace "/usr/sbin/exportfs" "${
+          # We don't *need* python support, but we set it like this to minimize closure size:
+          # If it's disabled by default, no need to enable it, even if we have python enabled
+          # And if it's enabled by default, only change that if we explicitly disable python to remove python from the closure
+          nfs-utils.override (old: { enablePython = old.enablePython or true && enablePython; })
+        }/bin/exportfs"
         substituteInPlace ./config/user-systemd.m4    --replace "/usr/lib/modules-load.d" "$out/etc/modules-load.d"
-        substituteInPlace ./config/zfs-build.m4       --replace "\$sysconfdir/init.d"     "$out/etc/init.d"
+        substituteInPlace ./config/zfs-build.m4       --replace "\$sysconfdir/init.d"     "$out/etc/init.d" \
+                                                      --replace "/etc/default"            "$out/etc/default"
         substituteInPlace ./etc/zfs/Makefile.am       --replace "\$(sysconfdir)"          "$out/etc"
-        substituteInPlace ./cmd/zed/Makefile.am       --replace "\$(sysconfdir)"          "$out/etc"
-        substituteInPlace ./etc/systemd/system/zfs-share.service.in \
-          --replace "/bin/rm " "${coreutils}/bin/rm "
+
+        substituteInPlace ./contrib/initramfs/hooks/Makefile.am \
+          --replace "/usr/share/initramfs-tools/hooks" "$out/usr/share/initramfs-tools/hooks"
+        substituteInPlace ./contrib/initramfs/Makefile.am \
+          --replace "/usr/share/initramfs-tools" "$out/usr/share/initramfs-tools"
+        substituteInPlace ./contrib/initramfs/scripts/Makefile.am \
+          --replace "/usr/share/initramfs-tools/scripts" "$out/usr/share/initramfs-tools/scripts"
+        substituteInPlace ./contrib/initramfs/scripts/local-top/Makefile.am \
+          --replace "/usr/share/initramfs-tools/scripts/local-top" "$out/usr/share/initramfs-tools/scripts/local-top"
+        substituteInPlace ./contrib/initramfs/scripts/Makefile.am \
+          --replace "/usr/share/initramfs-tools/scripts" "$out/usr/share/initramfs-tools/scripts"
+        substituteInPlace ./contrib/initramfs/scripts/local-top/Makefile.am \
+          --replace "/usr/share/initramfs-tools/scripts/local-top" "$out/usr/share/initramfs-tools/scripts/local-top"
+        substituteInPlace ./etc/systemd/system/Makefile.am \
+          --replace '$(DESTDIR)$(systemdunitdir)' "$out"'$(DESTDIR)$(systemdunitdir)'
+
+        substituteInPlace ./contrib/initramfs/conf.d/Makefile.am \
+          --replace "/usr/share/initramfs-tools/conf.d" "$out/usr/share/initramfs-tools/conf.d"
+        substituteInPlace ./contrib/initramfs/conf-hooks.d/Makefile.am \
+          --replace "/usr/share/initramfs-tools/conf-hooks.d" "$out/usr/share/initramfs-tools/conf-hooks.d"
 
         substituteInPlace ./cmd/vdev_id/vdev_id \
           --replace "PATH=/bin:/sbin:/usr/bin:/usr/sbin" \
           "PATH=${makeBinPath [ coreutils gawk gnused gnugrep systemd ]}"
-      '' + optionalString stdenv.hostPlatform.isMusl ''
-        substituteInPlace config/user-libtirpc.m4 \
-          --replace /usr/include/tirpc ${libtirpc}/include/tirpc
       '';
 
       nativeBuildInputs = [ autoreconfHook nukeReferences ]
-        ++ optionals buildKernel (kernel.moduleBuildDependencies ++ [ perl ]);
-      buildInputs = optionals buildUser [ zlib libuuid attr ]
-        ++ optionals (buildUser) [ openssl python3 ]
-        ++ optional stdenv.hostPlatform.isMusl libtirpc;
+        ++ optionals buildKernel (kernel.moduleBuildDependencies ++ [ perl ])
+        ++ optional buildUser pkgconfig;
+      buildInputs = optionals buildUser [ zlib libuuid attr libtirpc ]
+        ++ optional buildUser openssl
+        ++ optional (buildUser && enablePython) python3;
 
       # for zdb to get the rpath to libgcc_s, needed for pthread_cancel to work
       NIX_CFLAGS_LINK = "-lgcc_s";
@@ -80,7 +103,8 @@ let
 
       configureFlags = [
         "--with-config=${configFile}"
-        (withFeatureAs buildUser "python" python3.interpreter)
+        "--with-tirpc=1"
+        (withFeatureAs (buildUser && enablePython) "python" python3.interpreter)
       ] ++ optionals buildUser [
         "--with-dracutdir=$(out)/lib/dracut"
         "--with-udevdir=$(out)/lib/udev"
@@ -110,7 +134,7 @@ let
       postInstall = optionalString buildKernel ''
         # Add reference that cannot be detected due to compressed kernel module
         mkdir -p "$out/nix-support"
-        echo "${utillinux}" >> "$out/nix-support/extra-refs"
+        echo "${util-linux}" >> "$out/nix-support/extra-refs"
       '' + optionalString buildUser ''
         # Remove provided services as they are buggy
         rm $out/etc/systemd/system/zfs-import-*.service
@@ -121,9 +145,6 @@ let
         substituteInPlace $i --replace "zfs-import-cache.service" "zfs-import.target"
         done
 
-        # Fix pkgconfig.
-        ln -s ../share/pkgconfig $out/lib/pkgconfig
-
         # Remove tests because they add a runtime dependency on gcc
         rm -rf $out/share/zfs/zfs-tests
 
@@ -132,10 +153,11 @@ let
         (cd $out/share/bash-completion/completions; ln -s zfs zpool)
       '';
 
-      postFixup = ''
-        path="PATH=${makeBinPath [ coreutils gawk gnused gnugrep utillinux smartmontools sysstat sudo ]}"
+      postFixup = let
+        path = "PATH=${makeBinPath [ coreutils gawk gnused gnugrep util-linux smartmontools sysstat ]}:$PATH";
+      in ''
         for i in $out/libexec/zfs/zpool.d/*; do
-          sed -i "2i$path" $i
+          sed -i '2i${path}' $i
         done
       '';
 
@@ -148,10 +170,10 @@ let
           Copy-On-Write filesystem with data integrity detection and repair,
           snapshotting, cloning, block devices, deduplication, and more.
         '';
-        homepage = https://zfsonlinux.org/;
+        homepage = "https://github.com/openzfs/zfs";
         license = licenses.cddl;
         platforms = platforms.linux;
-        maintainers = with maintainers; [ jcumming wizeman fpletz globin ];
+        maintainers = with maintainers; [ hmenke jcumming jonringer wizeman fpletz globin mic92 ];
       };
     };
 in {
@@ -163,9 +185,9 @@ in {
     # incompatibleKernelVersion = "4.20";
 
     # this package should point to the latest release.
-    version = "0.8.2";
+    version = "2.0.0";
 
-    sha256 = "0miax0h2wg4b2kn8n93804faajy2n1sh25knyy2hg3k77nlr4pni";
+    sha256 = "1kriz6pg8wj98izvjc60wp23lgcp4k3mzhpkgj74np73rzgy6v8r";
   };
 
   zfsUnstable = common {
@@ -173,9 +195,8 @@ in {
     # incompatibleKernelVersion = "4.19";
 
     # this package should point to a version / git revision compatible with the latest kernel release
-    version = "0.8.2";
+    version = "2.0.0";
 
-    sha256 = "0miax0h2wg4b2kn8n93804faajy2n1sh25knyy2hg3k77nlr4pni";
-    isUnstable = true;
+    sha256 = "1kriz6pg8wj98izvjc60wp23lgcp4k3mzhpkgj74np73rzgy6v8r";
   };
 }

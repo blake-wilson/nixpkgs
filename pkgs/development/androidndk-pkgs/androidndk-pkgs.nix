@@ -53,10 +53,12 @@ in
 
 rec {
   # Misc tools
-  binaries = runCommand "ndk-gcc-binutils" {
+  binaries = runCommand "ndk-toolchain-binutils" {
+    pname = "ndk-toolchain-binutils";
+    inherit (androidndk) version;
     isClang = true; # clang based cc, but bintools ld
     nativeBuildInputs = [ makeWrapper ];
-    propgatedBuildInputs = [ androidndk ];
+    propagatedBuildInputs = [ androidndk ];
   } ''
     mkdir -p $out/bin
 
@@ -82,7 +84,10 @@ rec {
   };
 
   clang = wrapCCWith {
-    cc = binaries;
+    cc = binaries // {
+      # for packages expecting libcompiler-rt, etc. to come from here (stdenv.cc.cc.lib)
+      lib = targetAndroidndkPkgs.libraries;
+    };
     bintools = binutils;
     libc = targetAndroidndkPkgs.libraries;
     extraBuildCommands = ''

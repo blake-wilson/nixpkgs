@@ -1,16 +1,17 @@
-{ stdenv, buildPythonPackage, fetchPypi, substituteAll
+{ stdenv, buildPythonPackage, fetchPypi, substituteAll, pythonOlder
 , geos, pytest, cython
 , numpy
 }:
 
 buildPythonPackage rec {
   pname = "Shapely";
-  version = "1.6.4.post2";
+  version = "1.7.1";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "c4b87bb61fc3de59fc1f85e71a79b0c709dc68364d9584473697aad4aa13240f";
+    sha256 = "0adiz4jwmwxk7k1awqifb1a9bj5x4nx4gglb5dz9liam21674h8n";
   };
+  disabled = pythonOlder "3.5";
 
   nativeBuildInputs = [
     geos # for geos-config

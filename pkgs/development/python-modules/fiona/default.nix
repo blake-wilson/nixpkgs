@@ -1,16 +1,16 @@
 { stdenv, lib, buildPythonPackage, fetchPypi, isPy3k, pythonOlder
 , attrs, click, cligj, click-plugins, six, munch, enum34
-, pytest, boto3, mock, giflib
+, pytest, boto3, mock, giflib, pytz
 , gdal_2 # can't bump to 3 yet, https://github.com/Toblerity/Fiona/issues/745
 }:
 
 buildPythonPackage rec {
   pname = "Fiona";
-  version = "1.8.11";
+  version = "1.8.17";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "1e7ca9e051f5bffa1c43c70d573da9ca223fc076b84fa73380614fc02b9eb7f6";
+    sha256 = "716201c21246587f374785bec6d6a20a984fe1f6c2b0e83bf15127eb8f724d0c";
   };
 
   CXXFLAGS = lib.optionalString stdenv.cc.isClang "-std=c++11";
@@ -30,6 +30,7 @@ buildPythonPackage rec {
     click-plugins
     six
     munch
+    pytz
   ] ++ lib.optional (!isPy3k) enum34;
 
   checkInputs = [
@@ -47,7 +48,7 @@ buildPythonPackage rec {
 
   meta = with lib; {
     description = "OGR's neat, nimble, no-nonsense API for Python";
-    homepage = http://toblerity.org/fiona/;
+    homepage = "https://fiona.readthedocs.io/";
     license = licenses.bsd3;
     maintainers = with maintainers; [ knedlsepp ];
   };

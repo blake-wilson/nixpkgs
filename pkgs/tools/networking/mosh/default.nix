@@ -3,10 +3,11 @@
 , libutempter ? null, withUtempter ? stdenv.isLinux }:
 
 stdenv.mkDerivation rec {
-  name = "mosh-1.3.2";
+  pname = "mosh";
+  version = "1.3.2";
 
   src = fetchurl {
-    url = "https://mosh.org/${name}.tar.gz";
+    url = "https://mosh.org/mosh-${version}.tar.gz";
     sha256 = "05hjhlp6lk8yjcy59zywpf0r6s0h0b9zxq0lw66dh9x8vxrhaq6s";
   };
 
@@ -14,6 +15,8 @@ stdenv.mkDerivation rec {
   buildInputs = [ protobuf ncurses zlib makeWrapper openssl bash-completion ]
     ++ (with perlPackages; [ perl IOTty ])
     ++ lib.optional withUtempter libutempter;
+
+  enableParallelBuilding = true;
 
   patches = [
     ./ssh_path.patch
@@ -23,6 +26,8 @@ stdenv.mkDerivation rec {
       url = "https://github.com/mobile-shell/mosh/commit/e5f8a826ef9ff5da4cfce3bb8151f9526ec19db0.patch";
       sha256 = "15518rb0r5w1zn4s6981bf1sz6ins6gpn2saizfzhmr13hw4gmhm";
     })
+    # Fix build with bash-completion 2.10
+    ./bash_completion_datadir.patch
   ];
   postPatch = ''
     substituteInPlace scripts/mosh.pl \
@@ -38,7 +43,7 @@ stdenv.mkDerivation rec {
   CXXFLAGS = stdenv.lib.optionalString stdenv.cc.isClang "-std=c++11";
 
   meta = {
-    homepage = https://mosh.org/;
+    homepage = "https://mosh.org/";
     description = "Mobile shell (ssh replacement)";
     longDescription = ''
       Remote terminal application that allows roaming, supports intermittent

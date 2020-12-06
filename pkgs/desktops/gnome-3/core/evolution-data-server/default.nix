@@ -6,13 +6,13 @@
 
 stdenv.mkDerivation rec {
   pname = "evolution-data-server";
-  version = "3.34.2";
+  version = "3.38.2";
 
   outputs = [ "out" "dev" ];
 
   src = fetchurl {
     url = "mirror://gnome/sources/evolution-data-server/${stdenv.lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
-    sha256 = "16z85y6hhazcrp5ngw47w4x9r0j8zrj7awv5im58hhp0xs19zf1y";
+    sha256 = "0mflr8a3f2q55rirvqhizji0zinic75jk8mksflszqzgcdcph85z";
   };
 
   patches = [
@@ -56,9 +56,9 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "Unified backend for programs that work with contacts, tasks, and calendar information";
-    homepage = https://wiki.gnome.org/Apps/Evolution;
+    homepage = "https://wiki.gnome.org/Apps/Evolution";
     license = licenses.lgpl2;
-    maintainers = gnome3.maintainers;
+    maintainers = teams.gnome.members;
     platforms = platforms.linux;
   };
 }

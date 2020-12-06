@@ -4,7 +4,7 @@
 
 buildPythonPackage rec {
   pname = "mesa";
-  version = "0.8.6";
+  version = "0.8.7";
 
   # According to their docs, this library is for Python 3+.
   disabled = isPy27;
@@ -13,7 +13,7 @@ buildPythonPackage rec {
     owner = "projectmesa";
     repo = "mesa";
     rev = "v${version}";
-    sha256 = "0d8c636zhswxd91ldlmdxxlyym2fj3bk1iqmpc1jp3hg7vvc7w03";
+    sha256 = "0i1bpdqjrx4avgrzyqxpwxx86j11yhrq1j4kca854xahvhmwis19";
   };
 
   checkInputs = [ pytest ];

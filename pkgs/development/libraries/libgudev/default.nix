@@ -9,13 +9,13 @@
 
 stdenv.mkDerivation rec {
   pname = "libgudev";
-  version = "233";
+  version = "234";
 
   outputs = [ "out" "dev" ];
 
   src = fetchurl {
     url = "mirror://gnome/sources/${pname}/${stdenv.lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
-    sha256 = "00xvva04lgqamhnf277lg32phjn971wgpc9cxvgf5x13xdq4jz2q";
+    sha256 = "0drf39qhsdz35kwb18hnfj2ig4yfxhfks66m783zlhnvy2narbhv";
   };
 
   nativeBuildInputs = [ pkgconfig gobject-introspection ];
@@ -33,8 +33,8 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "A library that provides GObject bindings for libudev";
-    homepage = https://wiki.gnome.org/Projects/libgudev;
-    maintainers = [ maintainers.eelco ] ++ gnome3.maintainers;
+    homepage = "https://wiki.gnome.org/Projects/libgudev";
+    maintainers = [ maintainers.eelco ] ++ teams.gnome.members;
     platforms = platforms.linux;
     license = licenses.lgpl2Plus;
   };

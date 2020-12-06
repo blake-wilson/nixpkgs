@@ -1,8 +1,8 @@
 { version, sha256Hash }:
 
 { stdenv, fetchFromGitHub, fetchpatch
-, fusePackages, utillinux, gettext
-, meson, ninja, pkgconfig
+, fusePackages, util-linux, gettext
+, meson, ninja, pkg-config
 , autoreconfHook
 , python3Packages, which
 }:
@@ -34,7 +34,7 @@ in stdenv.mkDerivation rec {
       else [ ./fuse2-Do-not-set-FUSERMOUNT_DIR.patch ]);
 
   nativeBuildInputs = if isFuse3
-    then [ meson ninja pkgconfig ]
+    then [ meson ninja pkg-config ]
     else [ autoreconfHook gettext ];
 
   outputs = [ "out" ] ++ stdenv.lib.optional isFuse3 "common";
@@ -54,7 +54,7 @@ in stdenv.mkDerivation rec {
     # $PATH, so it should also work on non-NixOS systems.
     export NIX_CFLAGS_COMPILE="-DFUSERMOUNT_DIR=\"/run/wrappers/bin\""
 
-    sed -e 's@/bin/@${utillinux}/bin/@g' -i lib/mount_util.c
+    sed -e 's@/bin/@${util-linux}/bin/@g' -i lib/mount_util.c
     '' + (if isFuse3 then ''
       # The configure phase will delete these files (temporary workaround for
       # ./fuse3-install_man.patch)
@@ -84,8 +84,17 @@ in stdenv.mkDerivation rec {
   enableParallelBuilding = true;
 
   meta = with stdenv.lib; {
+    description = "Library that allows filesystems to be implemented in user space";
+    longDescription = ''
+      FUSE (Filesystem in Userspace) is an interface for userspace programs to
+      export a filesystem to the Linux kernel. The FUSE project consists of two
+      components: The fuse kernel module (maintained in the regular kernel
+      repositories) and the libfuse userspace library (this package). libfuse
+      provides the reference implementation for communicating with the FUSE
+      kernel module.
+    '';
     inherit (src.meta) homepage;
-    description = "Kernel module and library that allows filesystems to be implemented in user space";
+    changelog = "https://github.com/libfuse/libfuse/releases/tag/fuse-${version}";
     platforms = platforms.linux;
     license = with licenses; [ gpl2 lgpl21 ];
     maintainers = [ maintainers.primeos ];

@@ -1,6 +1,6 @@
-{ stdenv, fetchFromGitHub, substituteAll, libtool, pkgconfig, gettext, gnused
+{ stdenv, fetchFromGitHub, fetchpatch, substituteAll, libtool, pkgconfig, gettext, gnused
 , gtk-doc, acl, systemd, glib, libatasmart, polkit, coreutils, bash, which
-, expat, libxslt, docbook_xsl, utillinux, mdadm, libgudev, libblockdev, parted
+, expat, libxslt, docbook_xsl, util-linux, mdadm, libgudev, libblockdev, parted
 , gobject-introspection, docbook_xml_dtd_412, docbook_xml_dtd_43, autoconf, automake
 , xfsprogs, f2fs-tools, dosfstools, e2fsprogs, btrfs-progs, exfat, nilfs-utils, ntfs3g
 }:
@@ -22,7 +22,7 @@ stdenv.mkDerivation rec {
     (substituteAll {
       src = ./fix-paths.patch;
       bash = "${bash}/bin/bash";
-      blkid = "${utillinux}/bin/blkid";
+      blkid = "${util-linux}/bin/blkid";
       false = "${coreutils}/bin/false";
       mdadm = "${mdadm}/bin/mdadm";
       sed = "${gnused}/bin/sed";
@@ -34,8 +34,14 @@ stdenv.mkDerivation rec {
       src = ./force-path.patch;
       path = stdenv.lib.makeBinPath [
         btrfs-progs coreutils dosfstools e2fsprogs exfat f2fs-tools nilfs-utils
-        xfsprogs ntfs3g parted utillinux
+        xfsprogs ntfs3g parted util-linux
       ];
+    })
+
+    # Fix tests: https://github.com/storaged-project/udisks/issues/724
+    (fetchpatch {
+      url = "https://github.com/storaged-project/udisks/commit/60a0c1c967821d317046d9494e45b9a8e4e7a1c1.patch";
+      sha256 = "0rlgqsxn7rb074x6ivm0ya5lywc4llifj5br0zr31mwwckv7hsdm";
     })
   ];
 

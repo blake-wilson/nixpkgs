@@ -1,26 +1,28 @@
-{ stdenv, fetchFromGitHub, boost, cmake, cpp-hocon, curl, leatherman, libwhereami, libyamlcpp, openssl, ruby, utillinux }:
+{ stdenv, fetchFromGitHub, boost, cmake, cpp-hocon, curl, leatherman, libwhereami, libyamlcpp, openssl, ruby, util-linux }:
 
 stdenv.mkDerivation rec {
   pname = "facter";
-  version = "3.14.6";
+  version = "3.14.14";
 
   src = fetchFromGitHub {
-    sha256 = "1zfff1mpdwnlnm8dmmlvysw2zdsnglgk5nvhhzx8zyk0zyz0nj54";
+    sha256 = "07pfa11i3nn2dk5g3c1qj3g7d2s8gd2fr0lmfijndaqxm7gjrn1a";
     rev = version;
     repo = pname;
     owner = "puppetlabs";
   };
 
-  CXXFLAGS = "-fpermissive -Wno-error=catch-value";
-  NIX_LDFLAGS = "-lblkid";
+  CXXFLAGS = stdenv.lib.optionalString stdenv.cc.isGNU "-fpermissive -Wno-error=catch-value";
+  NIX_LDFLAGS = stdenv.lib.optionalString stdenv.isLinux "-lblkid";
 
-  cmakeFlags = [ 
-    "-DFACTER_RUBY=${ruby}/lib/libruby.so"
+  cmakeFlags = [
+    "-DFACTER_RUBY=${ruby}/lib/libruby${stdenv.hostPlatform.extensions.sharedLibrary}"
     "-DRUBY_LIB_INSTALL=${placeholder "out"}/lib/ruby"
   ];
 
+  NIX_CFLAGS_COMPILE = "-Wno-error";
+
   nativeBuildInputs = [ cmake ];
-  buildInputs = [ boost cpp-hocon curl leatherman libwhereami libyamlcpp openssl ruby utillinux ];
+  buildInputs = [ boost cpp-hocon curl leatherman libwhereami libyamlcpp openssl ruby util-linux ];
 
   enableParallelBuilding = true;
 
@@ -29,6 +31,6 @@ stdenv.mkDerivation rec {
     description = "A system inventory tool";
     license = licenses.asl20;
     maintainers = [ maintainers.womfoo ];
-    platforms = platforms.linux;
+    platforms = platforms.unix;
   };
 }

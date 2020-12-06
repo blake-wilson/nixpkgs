@@ -1,14 +1,16 @@
 { fetchurl, stdenv, substituteAll, meson, ninja, pkgconfig, gnome3, glib, gtk3, gsettings-desktop-schemas
 , gnome-desktop, dbus, json-glib, libICE, xmlto, docbook_xsl, docbook_xml_dtd_412, python3
-, libxslt, gettext, makeWrapper, systemd, xorg, epoxy, gnugrep, bash }:
+, libxslt, gettext, makeWrapper, systemd, xorg, epoxy, gnugrep, bash, gnome-session-ctl }:
 
 stdenv.mkDerivation rec {
   pname = "gnome-session";
-  version = "3.34.1";
+  version = "3.38.0";
+
+  outputs = ["out" "sessions"];
 
   src = fetchurl {
     url = "mirror://gnome/sources/gnome-session/${stdenv.lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
-    sha256 = "0q366pns99f6wka5ikahqpasnsm72q9pg0c0nnfb2ld7spi1z06p";
+    sha256 = "0rrxjk3vbqy3cdgnl7rw71dvcyrvhwq3m6s53dnkyjxsrnr0xk3v";
   };
 
   patches = [
@@ -21,7 +23,7 @@ stdenv.mkDerivation rec {
     })
   ];
 
-  mesonFlags = [ "-Dsystemd=true" ];
+  mesonFlags = [ "-Dsystemd=true" "-Dsystemd_session=default" ];
 
   nativeBuildInputs = [
     meson ninja pkgconfig gettext makeWrapper
@@ -37,6 +39,14 @@ stdenv.mkDerivation rec {
   postPatch = ''
     chmod +x meson_post_install.py # patchShebangs requires executable file
     patchShebangs meson_post_install.py
+
+    # Use our provided `gnome-session-ctl`
+    original="@libexecdir@/gnome-session-ctl"
+    replacement="${gnome-session-ctl}/libexec/gnome-session-ctl"
+
+    find data/ -type f -name "*.service.in" -exec sed -i \
+      -e s,$original,$replacement,g \
+      {} +
   '';
 
   # `bin/gnome-session` will reset the environment when run in wayland, we
@@ -50,18 +60,31 @@ stdenv.mkDerivation rec {
       --suffix XDG_CONFIG_DIRS : "${gnome3.gnome-settings-daemon}/etc/xdg"
   '';
 
+  # We move the GNOME sessions to another output since gnome-session is a dependency of
+  # GDM itself. If we do not hide them, it will show broken GNOME sessions when GDM is
+  # enabled without proper GNOME installation.
+  postInstall = ''
+    mkdir $sessions
+    moveToOutput share/wayland-sessions "$sessions"
+    moveToOutput share/xsessions "$sessions"
+
+    # Our provided one is being used
+    rm -rf $out/libexec/gnome-session-ctl
+  '';
+
   passthru = {
     updateScript = gnome3.updateScript {
       packageName = "gnome-session";
       attrPath = "gnome3.gnome-session";
     };
+    providedSessions = [ "gnome" "gnome-xorg" ];
   };
 
   meta = with stdenv.lib; {
     description = "GNOME session manager";
-    homepage = https://wiki.gnome.org/Projects/SessionManagement;
+    homepage = "https://wiki.gnome.org/Projects/SessionManagement";
     license = licenses.gpl2Plus;
-    maintainers = gnome3.maintainers;
+    maintainers = teams.gnome.members;
     platforms = platforms.linux;
   };
 }

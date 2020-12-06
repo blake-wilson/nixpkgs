@@ -6,19 +6,24 @@
 , speechdSupport ? false, speechd ? null
 , pulseSupport ? false, libpulseaudio ? null
 , iceSupport ? false, zeroc-ice ? null
+, grpcSupport ? false, grpc ? null, c-ares ? null, abseil-cpp ? null, which ? null
+, nixosTests
 }:
 
 assert jackSupport -> libjack2 != null;
 assert speechdSupport -> speechd != null;
 assert pulseSupport -> libpulseaudio != null;
 assert iceSupport -> zeroc-ice != null;
+assert grpcSupport -> (grpc != null && c-ares != null && abseil-cpp != null && which != null);
 
 with stdenv.lib;
 let
   generic = overrides: source: qt5.mkDerivation (source // overrides // {
-    name = "${overrides.type}-${source.version}";
+    pname = overrides.type;
+    version = source.version;
 
-    patches = (source.patches or []) ++ optional jackSupport ./mumble-jack-support.patch;
+    patches = (source.patches or [])
+      ++ [ ./fix-rnnoise-argument.patch ];
 
     nativeBuildInputs = [ pkgconfig python qt5.qmake ]
       ++ (overrides.nativeBuildInputs or [ ]);
@@ -36,12 +41,12 @@ let
       "CONFIG+=bundled-celt"
       "CONFIG+=no-bundled-opus"
       "CONFIG+=no-bundled-speex"
+      "DEFINES+=PLUGIN_PATH=${placeholder "out"}/lib/mumble"
     ] ++ optional (!speechdSupport) "CONFIG+=no-speechd"
       ++ optional jackSupport "CONFIG+=no-oss CONFIG+=no-alsa CONFIG+=jackaudio"
       ++ (overrides.configureFlags or [ ]);
 
     preConfigure = ''
-       qmakeFlags="$qmakeFlags DEFINES+=PLUGIN_PATH=$out/lib/mumble"
        patchShebangs scripts
     '';
 
@@ -61,11 +66,13 @@ let
 
     enableParallelBuilding = true;
 
+    passthru.tests.connectivity = nixosTests.mumble;
+
     meta = {
       description = "Low-latency, high quality voice chat software";
-      homepage = https://mumble.info;
+      homepage = "https://mumble.info";
       license = licenses.bsd3;
-      maintainers = with maintainers; [ ];
+      maintainers = with maintainers; [ petabyteboy infinisil ];
       platforms = platforms.linux;
     };
   });
@@ -112,9 +119,12 @@ let
 
     configureFlags = [
       "CONFIG+=no-client"
-    ] ++ optional (!iceSupport) "CONFIG+=no-ice";
+    ] ++ optional (!iceSupport) "CONFIG+=no-ice"
+      ++ optional grpcSupport "CONFIG+=grpc";
 
-    buildInputs = [ libcap ] ++ optional iceSupport zeroc-ice;
+    buildInputs = [ libcap ]
+      ++ optional iceSupport zeroc-ice
+      ++ optionals grpcSupport [ grpc c-ares abseil-cpp which ];
 
     installPhase = ''
       # bin stuff
@@ -123,14 +133,14 @@ let
   } source;
 
   source = rec {
-    version = "1.3.0";
+    version = "1.3.3";
 
     # Needs submodules
     src = fetchFromGitHub {
       owner = "mumble-voip";
       repo = "mumble";
       rev = version;
-      sha256 = "0g5ri84gg0x3crhpxlzawf9s9l4hdna6aqw6qbdpx1hjlf5k6g8k";
+      sha256 = "1jaq5bl5gdpzd4pskpcd2j93g2w320znn4s8ck8f4jz5f46da1bj";
       fetchSubmodules = true;
     };
   };

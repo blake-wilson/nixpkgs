@@ -32,9 +32,9 @@ buildPythonApplication {
 
   meta = with stdenv.lib; {
     description = "Golden Scrabble crossword puzzle game";
-    homepage = https://github.com/RaaH/gscrabble/;
+    homepage = "https://github.com/RaaH/gscrabble/";
     license = licenses.gpl2Plus;
     platforms = platforms.linux;
-    maintainers = [ maintainers.genesis ];
+    maintainers = [ ];
   };
 }

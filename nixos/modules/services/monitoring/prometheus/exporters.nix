@@ -21,6 +21,7 @@ let
   #  `serviceOpts.script` or `serviceOpts.serviceConfig.ExecStart`
 
   exporterOpts = genAttrs [
+    "apcupsd"
     "bind"
     "blackbox"
     "collectd"
@@ -28,18 +29,27 @@ let
     "dovecot"
     "fritzbox"
     "json"
+    "keylight"
+    "lnd"
     "mail"
+    "mikrotik"
     "minio"
+    "modemmanager"
     "nextcloud"
     "nginx"
     "node"
+    "openvpn"
     "postfix"
     "postgres"
+    "redis"
     "rspamd"
+    "rtl_433"
     "snmp"
+    "sql"
     "surfboard"
     "tor"
     "unifi"
+    "unifi-poller"
     "varnish"
     "wireguard"
   ] (name:
@@ -78,7 +88,8 @@ let
     };
     firewallFilter = mkOption {
       type = types.str;
-      default = "-p tcp -m tcp --dport ${toString port}";
+      default = "-p tcp -m tcp --dport ${toString cfg.${name}.port}";
+      defaultText = "-p tcp -m tcp --dport ${toString port}";
       example = literalExample ''
         "-i eth0 -p tcp -m tcp --dport ${toString port}"
       '';
@@ -93,7 +104,6 @@ let
       default = "${name}-exporter";
       description = ''
         User name under which the ${name} exporter shall be run.
-        Has no effect when <option>systemd.services.prometheus-${name}-exporter.serviceConfig.DynamicUser</option> is true.
       '';
     };
     group = mkOption {
@@ -101,7 +111,6 @@ let
       default = "${name}-exporter";
       description = ''
         Group under which the ${name} exporter shall be run.
-        Has no effect when <option>systemd.services.prometheus-${name}-exporter.serviceConfig.DynamicUser</option> is true.
       '';
     };
   });
@@ -153,13 +162,21 @@ let
         serviceConfig.PrivateTmp = mkDefault true;
         serviceConfig.WorkingDirectory = mkDefault /tmp;
         serviceConfig.DynamicUser = mkDefault enableDynamicUser;
-      } serviceOpts ] ++ optional (!enableDynamicUser) {
         serviceConfig.User = conf.user;
         serviceConfig.Group = conf.group;
-      });
+      } serviceOpts ]);
   };
 in
 {
+
+  imports = (lib.forEach [ "blackboxExporter" "collectdExporter" "fritzboxExporter"
+                   "jsonExporter" "minioExporter" "nginxExporter" "nodeExporter"
+                   "snmpExporter" "unifiExporter" "varnishExporter" ]
+       (opt: lib.mkRemovedOptionModule [ "services" "prometheus" "${opt}" ] ''
+         The prometheus exporters are now configured using `services.prometheus.exporters'.
+         See the 18.03 release notes for more information.
+       '' ));
+
   options.services.prometheus.exporters = mkOption {
     type = types.submodule {
       options = (mkSubModules);
@@ -179,16 +196,36 @@ in
 
   config = mkMerge ([{
     assertions = [ {
-      assertion = (cfg.snmp.configurationPath == null) != (cfg.snmp.configuration == null);
+      assertion = cfg.snmp.enable -> (
+        (cfg.snmp.configurationPath == null) != (cfg.snmp.configuration == null)
+      );
       message = ''
         Please ensure you have either `services.prometheus.exporters.snmp.configuration'
           or `services.prometheus.exporters.snmp.configurationPath' set!
       '';
     } {
-      assertion = (cfg.mail.configFile == null) != (cfg.mail.configuration == {});
+      assertion = cfg.mikrotik.enable -> (
+        (cfg.mikrotik.configFile == null) != (cfg.mikrotik.configuration == null)
+      );
+      message = ''
+        Please specify either `services.prometheus.exporters.mikrotik.configuration'
+          or `services.prometheus.exporters.mikrotik.configFile'.
+      '';
+    } {
+      assertion = cfg.mail.enable -> (
+        (cfg.mail.configFile == null) != (cfg.mail.configuration == null)
+      );
       message = ''
         Please specify either 'services.prometheus.exporters.mail.configuration'
           or 'services.prometheus.exporters.mail.configFile'.
+      '';
+    } {
+      assertion = cfg.sql.enable -> (
+        (cfg.sql.configFile == null) != (cfg.sql.configuration == null)
+      );
+      message = ''
+        Please specify either 'services.prometheus.exporters.sql.configuration' or
+          'services.prometheus.exporters.sql.configFile'
       '';
     } ];
   }] ++ [(mkIf config.services.minio.enable {
@@ -197,9 +234,13 @@ in
     services.prometheus.exporters.minio.minioAccessSecret = mkDefault config.services.minio.secretKey;
   })] ++ [(mkIf config.services.rspamd.enable {
     services.prometheus.exporters.rspamd.url = mkDefault "http://localhost:11334/stat";
+  })] ++ [(mkIf config.services.prometheus.exporters.rtl_433.enable {
+    hardware.rtl-sdr.enable = mkDefault true;
   })] ++ [(mkIf config.services.nginx.enable {
     systemd.services.prometheus-nginx-exporter.after = [ "nginx.service" ];
     systemd.services.prometheus-nginx-exporter.requires = [ "nginx.service" ];
+  })] ++ [(mkIf config.services.postfix.enable {
+    services.prometheus.exporters.postfix.group = mkDefault config.services.postfix.setgidGroup;
   })] ++ (mapAttrsToList (name: conf:
     mkExporterConf {
       inherit name;

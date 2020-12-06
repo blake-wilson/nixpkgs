@@ -25,7 +25,7 @@
 buildContainer {
   args = [ (with pkgs; writeScript "run.sh" ''
     #!${bash}/bin/bash
-    ${coreutils}/bin/exec ${bash}/bin/bash
+    exec ${bash}/bin/bash
   '').outPath ]; <co xml:id='ex-ociTools-buildContainer-1' />
 
   mounts = {
@@ -38,8 +38,7 @@ buildContainer {
 
   readonly = false; <co xml:id='ex-ociTools-buildContainer-3' />
 }
-
-    </programlisting>
+</programlisting>
    <calloutlist>
     <callout arearefs='ex-ociTools-buildContainer-1'>
      <para>

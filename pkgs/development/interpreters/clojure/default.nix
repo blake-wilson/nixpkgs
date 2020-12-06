@@ -1,35 +1,55 @@
-{ stdenv, fetchurl, jdk11, rlwrap, makeWrapper }:
+{ stdenv, fetchurl, installShellFiles, jdk, rlwrap, makeWrapper }:
 
 stdenv.mkDerivation rec {
   pname = "clojure";
-  version = "1.10.1.489";
+  version = "1.10.1.727";
 
   src = fetchurl {
     url = "https://download.clojure.org/install/clojure-tools-${version}.tar.gz";
-    sha256 = "12ks7adh5cx99l5vydppkqknk5nvv9vsj2k0afcwwxd897m794kz";
+    sha256 = "1mnxvy4n7g72vcwhvrgr0xqri3p9d9w76c8a78kphhmd8lq0m92q";
   };
 
-  buildInputs = [ makeWrapper ];
+  nativeBuildInputs = [
+    installShellFiles
+    makeWrapper
+  ];
 
-  outputs = [ "out" "prefix" ];
+  # See https://github.com/clojure/brew-install/blob/1.10.1/src/main/resources/clojure/install/linux-install.sh
+  installPhase =
+    let
+      binPath = stdenv.lib.makeBinPath [ rlwrap jdk ];
+    in
+    ''
+      clojure_lib_dir=$out
+      bin_dir=$out/bin
 
-  installPhase = let
-    binPath = stdenv.lib.makeBinPath [ rlwrap jdk11 ];
-  in ''
-    mkdir -p $prefix/libexec
-    cp clojure-tools-${version}.jar $prefix/libexec
-    cp example-deps.edn $prefix
+      echo "Installing libs into $clojure_lib_dir"
+      install -Dm644 deps.edn "$clojure_lib_dir/deps.edn"
+      install -Dm644 example-deps.edn "$clojure_lib_dir/example-deps.edn"
+      install -Dm644 exec.jar "$clojure_lib_dir/libexec/exec.jar"
+      install -Dm644 clojure-tools-${version}.jar "$clojure_lib_dir/libexec/clojure-tools-${version}.jar"
 
-    substituteInPlace clojure --replace PREFIX $prefix
+      echo "Installing clojure and clj into $bin_dir"
+      substituteInPlace clojure --replace PREFIX $out
+      install -Dm755 clojure "$bin_dir/clojure"
+      install -Dm755 clj "$bin_dir/clj"
 
-    install -Dt $out/bin clj clojure
-    wrapProgram $out/bin/clj --prefix PATH : $out/bin:${binPath}
-    wrapProgram $out/bin/clojure --prefix PATH : $out/bin:${binPath}
+      wrapProgram $bin_dir/clojure --prefix PATH : $out/bin:${binPath}
+      wrapProgram $bin_dir/clj --prefix PATH : $out/bin:${binPath}
+
+      installManPage clj.1 clojure.1
+    '';
+
+  doInstallCheck = true;
+  installCheckPhase = ''
+    CLJ_CONFIG=$out CLJ_CACHE=$out/libexec $out/bin/clojure \
+      -Spath \
+      -Sverbose \
+      -Scp $out/libexec/clojure-tools-${version}.jar
   '';
-
   meta = with stdenv.lib; {
     description = "A Lisp dialect for the JVM";
-    homepage = https://clojure.org/;
+    homepage = "https://clojure.org/";
     license = licenses.epl10;
     longDescription = ''
       Clojure is a dynamic programming language that targets the Java

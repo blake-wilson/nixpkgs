@@ -1,12 +1,12 @@
-{ stdenv, lib, fetchurl, fetchpatch, readline }:
+{ stdenv, lib, fetchurl, readline }:
 
 stdenv.mkDerivation rec {
   pname = "oil";
-  version = "0.7.pre6";
+  version = "0.8.5";
 
   src = fetchurl {
     url = "https://www.oilshell.org/download/oil-${version}.tar.xz";
-    sha256 = "1yhfrxrqd4jbjsf0g2fkxv8zypcndnikv9g15yp9szgp4sh1r9vv";
+    sha256 = "1z0p08q4808h78bp6nwdszpfavhr4y7n313bp0gg5qdbssnciq1v";
   };
 
   postPatch = ''

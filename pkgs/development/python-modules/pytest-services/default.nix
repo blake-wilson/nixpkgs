@@ -6,21 +6,23 @@
 , psutil
 , pytest
 , subprocess32
+, zc_lockfile
 }:
 
 buildPythonPackage rec {
   pname = "pytest-services";
-  version = "1.3.1";
+  version = "2.1.0";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "035bc9ce8addb33f7c2ec95a9c0c88926d213a6c2e12b2c57da31a4ec0765f2c";
+    sha256 = "0037101eaa17e050542808ecb2e799e9b2b148f1867f62b2296329fdd2034cf5";
   };
 
   propagatedBuildInputs = [
     requests
     psutil
     pytest
+    zc_lockfile
   ] ++ lib.optional (!isPy3k) subprocess32;
 
   # no tests in PyPI tarball
@@ -28,7 +30,7 @@ buildPythonPackage rec {
 
   meta = with lib; {
     description = "Services plugin for pytest testing framework";
-    homepage = https://github.com/pytest-dev/pytest-services;
+    homepage = "https://github.com/pytest-dev/pytest-services";
     license = licenses.mit;
     maintainers = with maintainers; [ dotlambda ];
   };

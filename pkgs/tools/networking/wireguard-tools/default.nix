@@ -1,30 +1,30 @@
-{
-  stdenv, fetchzip,
-
-  iptables ? null,
-  iproute ? null,
-  libmnl ? null,
-  makeWrapper ? null,
-  openresolv ? null,
-  procps ? null,
-  wireguard-go ? null,
+{ stdenv
+, fetchzip
+, nixosTests
+, iptables ? null
+, iproute ? null
+, makeWrapper ? null
+, openresolv ? null
+, procps ? null
+, wireguard-go ? null
 }:
 
 with stdenv.lib;
 
 stdenv.mkDerivation rec {
   pname = "wireguard-tools";
-  version = "0.0.20191127";
+  version = "1.0.20200827";
 
   src = fetchzip {
-    url = "https://git.zx2c4.com/WireGuard/snapshot/WireGuard-${version}.tar.xz";
-    sha256 = "1n1x5858c32p0a13rrhn9a491174k5z4wd0gsy8qn546k1a8qj99";
+    url = "https://git.zx2c4.com/wireguard-tools/snapshot/wireguard-tools-${version}.tar.xz";
+    sha256 = "1d8rs1g6zy3kz327cc3hzkk5a44278x9p32gxasz6i94bq0b2bs3";
   };
 
-  sourceRoot = "source/src/tools";
+  outputs = [ "out" "man" ];
+
+  sourceRoot = "source/src";
 
   nativeBuildInputs = [ makeWrapper ];
-  buildInputs = optional stdenv.isLinux libmnl;
 
   makeFlags = [
     "DESTDIR=$(out)"
@@ -47,14 +47,17 @@ stdenv.mkDerivation rec {
     done
   '';
 
-  passthru.updateScript = ./update.sh;
+  passthru = {
+    updateScript = ./update.sh;
+    tests = nixosTests.wireguard;
+  };
 
   meta = {
     description = "Tools for the WireGuard secure network tunnel";
-    downloadPage = "https://git.zx2c4.com/WireGuard/refs/";
+    downloadPage = "https://git.zx2c4.com/wireguard-tools/refs/";
     homepage = "https://www.wireguard.com/";
     license = licenses.gpl2;
-    maintainers = with maintainers; [ elseym ericsagnes mic92 zx2c4 globin ma27 ];
+    maintainers = with maintainers; [ elseym ericsagnes mic92 zx2c4 globin ma27 xwvvvvwx ];
     platforms = platforms.unix;
   };
 }

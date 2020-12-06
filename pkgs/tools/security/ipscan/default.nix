@@ -2,11 +2,11 @@
 
 stdenv.mkDerivation rec {
   pname = "ipscan";
-  version = "3.6.2";
+  version = "3.7.3";
 
   src = fetchurl {
-    url = "https://github.com/angryip/ipscan/releases/download/${version}/ipscan_${version}_amd64.deb";
-    sha256 = "0wnnnabpj0dsxdijvss5sl9kd4i6rmcq55zbas33xs3c5g305ssk";
+    url = "https://github.com/angryip/ipscan/releases/download/${version}/ipscan_${version}_all.deb";
+    sha256 = "18vvjqsxkz9g503k983cxdzzz6sdkv6qg3nwf8af9k34ynhhh0m7";
   };
 
   sourceRoot = ".";
@@ -16,7 +16,7 @@ stdenv.mkDerivation rec {
 
   installPhase = ''
     mkdir -p $out/share
-    cp usr/lib/ipscan/ipscan-linux64-${version}.jar $out/share/${pname}-${version}.jar
+    cp usr/lib/ipscan/ipscan-any-${version}.jar $out/share/${pname}-${version}.jar
 
     makeWrapper ${jre}/bin/java $out/bin/ipscan \
       --prefix LD_LIBRARY_PATH : "$out/lib/:${stdenv.lib.makeLibraryPath [ swt xorg.libXtst ]}" \
@@ -32,7 +32,7 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "Fast and friendly network scanner";
-    homepage = https://angryip.org;
+    homepage = "https://angryip.org";
     license = licenses.gpl2;
     platforms = [ "x86_64-linux" ];
     maintainers = with maintainers; [ kylesferrazza ];

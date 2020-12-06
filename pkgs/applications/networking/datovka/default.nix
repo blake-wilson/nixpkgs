@@ -11,11 +11,11 @@
 
 mkDerivation rec {
   pname = "datovka";
-  version = "4.14.1";
+  version = "4.15.6";
 
   src = fetchurl {
     url = "https://secure.nic.cz/files/datove_schranky/${version}/${pname}-${version}.tar.xz";
-    sha256 = "0jinxsm2zw77294vz9pjiqpgpzdwx5nijsi4nqzxna5rkmwdyxk6";
+    sha256 = "1qs1yd9qqsf56jm9w6sffkqb2l8s3i9qgi2q8vd59ss19ym6yky2";
   };
 
   buildInputs = [ libisds qmake qtbase qtsvg libxml2 ];

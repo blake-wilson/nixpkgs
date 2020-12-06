@@ -3,11 +3,11 @@
 
 buildPythonPackage rec {
   pname = "transitions";
-  version = "0.7.1";
+  version = "0.8.4";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "b73015080833b753cbb4a10f51f8234924ddfbdbaf33539fee4e4f3abfff454d";
+    sha256 = "9a2841b24789dfd345267cb92e26b79da75fd03f6021d1a5222c71b5c9ae3c16";
   };
 
   postPatch = ''
@@ -23,7 +23,7 @@ buildPythonPackage rec {
   '';
 
   meta = with stdenv.lib; {
-    homepage = https://github.com/pytransitions/transitions;
+    homepage = "https://github.com/pytransitions/transitions";
     description = "A lightweight, object-oriented finite state machine implementation in Python";
     license = licenses.mit;
     maintainers = with maintainers; [ dotlambda ];

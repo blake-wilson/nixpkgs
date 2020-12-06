@@ -80,7 +80,7 @@ stdenv.mkDerivation rec {
 
   gnFlags = [
     "use_custom_libcxx=false"
-    "is_clang=${if stdenv.cc.isClang then "true" else "false"}"
+    "is_clang=${lib.boolToString stdenv.cc.isClang}"
     "use_sysroot=false"
     # "use_system_icu=true"
     "is_component_build=false"
@@ -99,7 +99,7 @@ stdenv.mkDerivation rec {
 
   # with gcc8, -Wclass-memaccess became part of -Wall and causes logging limit
   # to be exceeded
-  NIX_CFLAGS_COMPILE = stdenv.lib.optional stdenv.cc.isGNU "-Wno-class-memaccess";
+  NIX_CFLAGS_COMPILE = stdenv.lib.optionalString stdenv.cc.isGNU "-Wno-class-memaccess";
 
   nativeBuildInputs = [ gn ninja pkgconfig python ]
     ++ stdenv.lib.optionals stdenv.isDarwin [ xcbuild darwin.DarwinTools ];
@@ -120,8 +120,6 @@ stdenv.mkDerivation rec {
     Description: V8 JavaScript Engine
     Version: ${version}
     Libs: -L$out/lib -lv8 -pthread
-    Cflags: -I$out/include
-    Libs: -L$out/lib -lpulse
     Cflags: -I$out/include
     EOF
   '';

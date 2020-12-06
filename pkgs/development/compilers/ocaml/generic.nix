@@ -1,29 +1,34 @@
 { minor_version, major_version, patch_version
-, url ? null
-, sha256, ...}@args:
+, ...}@args:
 let
   versionNoPatch = "${toString major_version}.${toString minor_version}";
   version = "${versionNoPatch}.${toString patch_version}";
-  real_url = if url == null then
-    "http://caml.inria.fr/pub/distrib/ocaml-${versionNoPatch}/ocaml-${version}.tar.xz"
-  else url;
   safeX11 = stdenv: !(stdenv.isAarch32 || stdenv.isMips);
 in
 
-{ stdenv, fetchurl, ncurses, buildEnv
-, libX11, xorgproto, useX11 ? safeX11 stdenv
+{ stdenv, fetchurl, ncurses, buildEnv, libunwind
+, libX11, xorgproto, useX11 ? safeX11 stdenv && !stdenv.lib.versionAtLeast version "4.09"
 , aflSupport ? false
 , flambdaSupport ? false
+, spaceTimeSupport ? false
 }:
 
 assert useX11 -> !stdenv.isAarch32 && !stdenv.isMips;
 assert aflSupport -> stdenv.lib.versionAtLeast version "4.05";
 assert flambdaSupport -> stdenv.lib.versionAtLeast version "4.03";
+assert spaceTimeSupport -> stdenv.lib.versionAtLeast version "4.04";
+
+let
+  src = args.src or (fetchurl {
+    url = args.url or "http://caml.inria.fr/pub/distrib/ocaml-${versionNoPatch}/ocaml-${version}.tar.xz";
+    inherit (args) sha256;
+  });
+in
 
 let
    useNativeCompilers = !stdenv.isMips;
    inherit (stdenv.lib) optional optionals optionalString;
-   name = "ocaml${optionalString aflSupport "+afl"}${optionalString flambdaSupport "+flambda"}-${version}";
+   name = "ocaml${optionalString aflSupport "+afl"}${optionalString spaceTimeSupport "+spacetime"}${optionalString flambdaSupport "+flambda"}-${version}";
 in
 
 let
@@ -37,10 +42,7 @@ stdenv.mkDerivation (args // {
   inherit name;
   inherit version;
 
-  src = fetchurl {
-    url = real_url;
-    inherit sha256;
-  };
+  inherit src;
 
   prefixKey = "-prefix ";
   configureFlags =
@@ -53,12 +55,14 @@ stdenv.mkDerivation (args // {
       [ "-x11lib" x11lib "-x11include" x11inc ])
   ++ optional aflSupport (flags "--with-afl" "-afl-instrument")
   ++ optional flambdaSupport (flags "--enable-flambda" "-flambda")
+  ++ optional spaceTimeSupport (flags "--enable-spacetime" "-spacetime")
   ;
 
-  buildFlags = "world" + optionalString useNativeCompilers " bootstrap world.opt";
+  buildFlags = [ "world" ] ++ optionals useNativeCompilers [ "bootstrap" "world.opt" ];
   buildInputs = optional (!stdenv.lib.versionAtLeast version "4.07") ncurses
     ++ optionals useX11 [ libX11 xorgproto ];
-  installTargets = "install" + optionalString useNativeCompilers " installopt";
+  propagatedBuildInputs = optional spaceTimeSupport libunwind;
+  installTargets = [ "install" ] ++ optional useNativeCompilers "installopt";
   preConfigure = optionalString (!stdenv.lib.versionAtLeast version "4.04") ''
     CAT=$(type -tp cat)
     sed -e "s@/bin/cat@$CAT@" -i config/auto-aux/sharpbang
@@ -73,7 +77,7 @@ stdenv.mkDerivation (args // {
   };
 
   meta = with stdenv.lib; {
-    homepage = http://caml.inria.fr/ocaml;
+    homepage = "http://caml.inria.fr/ocaml";
     branch = versionNoPatch;
     license = with licenses; [
       qpl /* compiler */

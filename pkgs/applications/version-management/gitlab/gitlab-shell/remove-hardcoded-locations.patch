@@ -1,7 +1,7 @@
-diff --git a/go/internal/config/config.go b/go/internal/config/config.go
-index 2231851..c869930 100644
---- a/go/internal/config/config.go
-+++ b/go/internal/config/config.go
+diff --git a/internal/config/config.go b/internal/config/config.go
+index 79c2a36..12ba31e 100644
+--- a/internal/config/config.go
++++ b/internal/config/config.go
 @@ -3,7 +3,6 @@ package config
  import (
  	"io/ioutil"
@@ -10,7 +10,7 @@ index 2231851..c869930 100644
  	"path"
  	"path/filepath"
  
-@@ -38,16 +37,13 @@ type Config struct {
+@@ -59,16 +58,13 @@ func (c *Config) GetHttpClient() *client.HttpClient {
  }
  
  func New() (*Config, error) {
@@ -29,24 +29,24 @@ index 2231851..c869930 100644
  }
  
  func newFromFile(filename string) (*Config, error) {
-diff --git a/go/internal/keyline/key_line.go b/go/internal/keyline/key_line.go
-index f92f50b..160e287 100644
---- a/go/internal/keyline/key_line.go
-+++ b/go/internal/keyline/key_line.go
-@@ -36,7 +36,7 @@ func NewPrincipalKeyLine(keyId string, principal string, rootDir string) (*KeyLi
+diff --git a/internal/keyline/key_line.go b/internal/keyline/key_line.go
+index c6f2422..fb0426b 100644
+--- a/internal/keyline/key_line.go
++++ b/internal/keyline/key_line.go
+@@ -37,7 +37,7 @@ func NewPrincipalKeyLine(keyId, principal string, config *config.Config) (*KeyLi
  }
  
  func (k *KeyLine) ToString() string {
--	command := fmt.Sprintf("%s %s-%s", path.Join(k.RootDir, executable.BinDir, executable.GitlabShell), k.Prefix, k.Id)
+-	command := fmt.Sprintf("%s %s-%s", path.Join(k.Config.RootDir, executable.BinDir, executable.GitlabShell), k.Prefix, k.Id)
 +	command := fmt.Sprintf("%s %s-%s", path.Join("/run/current-system/sw/bin", executable.GitlabShell), k.Prefix, k.Id)
  
  	return fmt.Sprintf(`command="%s",%s %s`, command, SshOptions, k.Value)
  }
 diff --git a/support/gitlab_config.rb b/support/gitlab_config.rb
-index 1416488..90a5f79 100644
+index 52ac5ee..d96baa3 100644
 --- a/support/gitlab_config.rb
 +++ b/support/gitlab_config.rb
-@@ -4,7 +4,7 @@ class GitlabConfig
+@@ -7,7 +7,7 @@ class GitlabConfig
    attr_reader :config
  
    def initialize
@@ -55,3 +55,6 @@ index 1416488..90a5f79 100644
    end
  
    def auth_file
+-- 
+2.28.0
+

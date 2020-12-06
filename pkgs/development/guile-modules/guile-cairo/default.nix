@@ -2,11 +2,11 @@
 
 stdenv.mkDerivation rec {
   pname = "guile-cairo";
-  version = "1.10.0";
+  version = "1.11.2";
 
   src = fetchurl {
     url = "mirror://savannah/guile-cairo/${pname}-${version}.tar.gz";
-    sha256 = "0p6xrhf2k6n5dybn88050za7h90gnd7534n62l53vsca187pwgdf";
+    sha256 = "0yx0844p61ljd4d3d63qrawiygiw6ks02fwv2cqx7nav5kfd8ck2";
   };
 
   nativeBuildInputs = [ pkgconfig ];
@@ -28,7 +28,7 @@ stdenv.mkDerivation rec {
       maintained graphics library with all of the benefits of Scheme: memory
       management, exceptions, macros, and a dynamic programming environment.
     '';
-    homepage = https://www.nongnu.org/guile-cairo/;
+    homepage = "https://www.nongnu.org/guile-cairo/";
     license = licenses.lgpl3Plus;
     maintainers = with maintainers; [ vyp ];
     platforms = platforms.linux;

@@ -10,11 +10,11 @@
 
 buildPythonPackage rec {
   pname = "lightgbm";
-  version = "2.3.0";
+  version = "3.1.0";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "37225b9f816ea3365ff5988fc8a3717e46ac99a5f223986c86c86cec4f111b54";
+    sha256 = "0d0abcb1035a7f50226412a78993d61830621e16fd6fa685bbf178c97b0d6e82";
   };
 
   nativeBuildInputs = [
@@ -55,7 +55,7 @@ buildPythonPackage rec {
 
   meta = with stdenv.lib; {
     description = "A fast, distributed, high performance gradient boosting (GBDT, GBRT, GBM or MART) framework";
-    homepage = https://github.com/Microsoft/LightGBM;
+    homepage = "https://github.com/Microsoft/LightGBM";
     license = licenses.mit;
     maintainers = with maintainers; [ teh costrouc ];
   };

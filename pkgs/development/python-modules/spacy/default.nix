@@ -1,59 +1,48 @@
 { lib
 , buildPythonPackage
+, callPackage
 , fetchPypi
 , pythonOlder
 , pytest
-, preshed
-, ftfy
-, numpy
-, murmurhash
-, plac
-, ujson
-, dill
-, requests
-, thinc
-, regex
-, cymem
-, pathlib
-, msgpack
-, msgpack-numpy
-, jsonschema
 , blis
-, wasabi
-, srsly
 , catalogue
+, cymem
+, jsonschema
+, murmurhash
+, numpy
+, pathlib
+, plac
+, preshed
+, requests
 , setuptools
+, srsly
+, thinc
+, wasabi
 }:
 
 buildPythonPackage rec {
   pname = "spacy";
-  version = "2.2.3";
+  version = "2.3.4";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "0shfjk6nhm6gzp5p88pz5k7bkg5dr3x9yvandkayqb2vsvkwj50x";
+    sha256 = "a5c8805759114aac3a1db1b20f42af1124da5315be903ccb4c472cc8452393fb";
   };
 
   propagatedBuildInputs = [
-   numpy
-   murmurhash
-   cymem
-   preshed
-   thinc
-   plac
-   ujson
-   dill
-   requests
-   regex
-   ftfy
-   msgpack
-   msgpack-numpy
-   jsonschema
    blis
-   wasabi
-   srsly
    catalogue
+   cymem
+   jsonschema
+   murmurhash
+   numpy
+   plac
+   preshed
+   requests
    setuptools
+   srsly
+   thinc
+   wasabi
   ] ++ lib.optional (pythonOlder "3.4") pathlib;
 
   checkInputs = [
@@ -65,10 +54,23 @@ buildPythonPackage rec {
   #   ${python.interpreter} -m pytest spacy/tests --vectors --models --slow
   # '';
 
+  postPatch = ''
+    substituteInPlace setup.cfg \
+      --replace "blis>=0.4.0,<0.5.0" "blis>=0.4.0,<1.0" \
+      --replace "catalogue>=0.0.7,<1.1.0" "catalogue>=0.0.7,<3.0" \
+      --replace "plac>=0.9.6,<1.2.0" "plac>=0.9.6,<2.0" \
+      --replace "srsly>=1.0.2,<1.1.0" "srsly>=1.0.2,<3.0" \
+      --replace "thinc==7.4.1" "thinc>=7.4.1,<8"
+  '';
+
+  pythonImportsCheck = [ "spacy" ];
+
+  passthru.tests = callPackage ./annotation-test {};
+
   meta = with lib; {
     description = "Industrial-strength Natural Language Processing (NLP) with Python and Cython";
-    homepage = https://github.com/explosion/spaCy;
+    homepage = "https://github.com/explosion/spaCy";
     license = licenses.mit;
     maintainers = with maintainers; [ danieldk sdll ];
-    };
+  };
 }

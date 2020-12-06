@@ -1,21 +1,23 @@
-{ lib, python, fetchFromGitHub, installShellFiles }:
+{ stdenv, lib, python3, fetchFromGitHub, installShellFiles }:
 
 let
-  version = "2.0.76";
+  version = "2.15.1";
   src = fetchFromGitHub {
     owner = "Azure";
     repo = "azure-cli";
     rev = "azure-cli-${version}";
-    sha256 = "0zfy8nhw4nx0idh94qidr06vsfxgdk2ky0ih76s27121pdwr05aa";
+    sha256 = "05vwaafb6yzvrhig0gjkb4803yj6qr00gqh41rws9520899f2m9d";
   };
 
   # put packages that needs to be overriden in the py package scope
-  py = import ./python-packages.nix { inherit python lib src version; };
+  py = import ./python-packages.nix {
+    inherit stdenv lib src version;
+    python = python3;
+  };
 in
 py.pkgs.toPythonApplication (py.pkgs.buildAzureCliPackage {
   pname = "azure-cli";
   inherit version src;
-  disabled = python.isPy27; # namespacing assumes PEP420, which isn't compat with py2
 
   sourceRoot = "source/src/azure-cli";
 
@@ -23,8 +25,8 @@ py.pkgs.toPythonApplication (py.pkgs.buildAzureCliPackage {
     substituteInPlace setup.py \
       --replace "javaproperties==0.5.1" "javaproperties" \
       --replace "pytz==2019.1" "pytz" \
-      --replace "mock~=2.0" "mock" \
-      --replace "azure-mgmt-reservations==0.3.1" "azure-mgmt-reservations~=0.3.1"
+      --replace "antlr4-python3-runtime~=4.7.2" "antlr4-python3-runtime~=4.7" \
+      --replace "mock~=4.0" "mock"
 
     # remove namespace hacks
     # remove urllib3 because it was added as 'urllib3[secure]', which doesn't get handled well
@@ -37,6 +39,7 @@ py.pkgs.toPythonApplication (py.pkgs.buildAzureCliPackage {
   nativeBuildInputs = [ installShellFiles ];
 
   propagatedBuildInputs = with py.pkgs; [
+    azure-appconfiguration
     azure-batch
     azure-cli-core
     azure-cli-telemetry
@@ -45,6 +48,8 @@ py.pkgs.toPythonApplication (py.pkgs.buildAzureCliPackage {
     azure-functions-devops-build
     azure-graphrbac
     azure-keyvault
+    azure-keyvault-administration
+    azure-loganalytics
     azure-mgmt-advisor
     azure-mgmt-apimanagement
     azure-mgmt-applicationinsights
@@ -92,6 +97,7 @@ py.pkgs.toPythonApplication (py.pkgs.buildAzureCliPackage {
     azure-mgmt-rdbms
     azure-mgmt-recoveryservices
     azure-mgmt-recoveryservicesbackup
+    azure-mgmt-redhatopenshift
     azure-mgmt-redis
     azure-mgmt-relay
     azure-mgmt-reservations
@@ -104,10 +110,14 @@ py.pkgs.toPythonApplication (py.pkgs.buildAzureCliPackage {
     azure-mgmt-sql
     azure-mgmt-sqlvirtualmachine
     azure-mgmt-storage
+    azure-mgmt-synapse
     azure-mgmt-trafficmanager
     azure-mgmt-web
     azure-multiapi-storage
     azure-storage-blob
+    azure-synapse-accesscontrol
+    azure-synapse-artifacts
+    azure-synapse-spark
     colorama
     cryptography
     Fabric
@@ -158,9 +168,7 @@ py.pkgs.toPythonApplication (py.pkgs.buildAzureCliPackage {
   # almost the entire test suite requires an azure account setup and networking
   # ensure that the azure namespaces are setup correctly and that azure.cli can be accessed
   checkPhase = ''
-    cd azure # avoid finding local copy
-    ${py.interpreter} -c 'import azure.cli.core; assert "${version}" == azure.cli.core.__version__'
-    HOME=$TMPDIR ${py.interpreter} -m azure.cli --help
+    HOME=$TMPDIR $out/bin/az --help > /dev/null
   '';
 
   # ensure these namespaces are able to be accessed
@@ -173,6 +181,7 @@ py.pkgs.toPythonApplication (py.pkgs.buildAzureCliPackage {
     "azure_functions_devops_build"
     "azure.graphrbac"
     "azure.keyvault"
+    "azure.loganalytics"
     "azure.mgmt.advisor"
     "azure.mgmt.apimanagement"
     "azure.mgmt.applicationinsights"

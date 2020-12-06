@@ -8,13 +8,13 @@
 
 stdenv.mkDerivation rec {
   pname = "dislocker";
-  version = "0.7.1";
+  version = "0.7.3";
 
   src = fetchFromGitHub {
     owner = "aorimn";
     repo = "dislocker";
     rev = "v${version}";
-    sha256 = "1crh2sg5x1kgqmdrl1nmrqwxjykxa4zwnbggcpdn97mj2gvdw7sb";
+    sha256 = "1ak68s1v5dwh8y2dy5zjybmrh0pnqralmyqzis67y21m87g47h2k";
   };
 
   nativeBuildInputs = [ cmake ];
@@ -22,7 +22,7 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "Read BitLocker encrypted partitions in Linux";
-    homepage    = https://github.com/aorimn/dislocker;
+    homepage    = "https://github.com/aorimn/dislocker";
     license     = licenses.gpl2;
     maintainers = with maintainers; [ elitak ];
     platforms   = platforms.linux;

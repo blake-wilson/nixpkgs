@@ -6,11 +6,11 @@
 
 buildPythonPackage rec {
   pname = "Wand";
-  version = "0.5.7";
+  version = "0.6.5";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "0wvqzppflph3fkgkyv3k11ga28fv1g1bz8sbf227d7pql8c6ia8k";
+    sha256 = "ec981b4f07f7582fc564aba8b57763a549392e9ef8b6a338e9da54cdd229cf95";
   };
 
   postPatch = ''
@@ -26,7 +26,7 @@ buildPythonPackage rec {
 
   meta = with stdenv.lib; {
     description = "Ctypes-based simple MagickWand API binding for Python";
-    homepage = http://wand-py.org/;
+    homepage = "http://wand-py.org/";
     license = [ licenses.mit ];
     maintainers = with maintainers; [ infinisil ];
   };

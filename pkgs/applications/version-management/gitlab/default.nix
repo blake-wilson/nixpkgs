@@ -1,5 +1,5 @@
 { stdenv, lib, fetchurl, fetchFromGitLab, bundlerEnv
-, ruby, tzdata, git, nettools, nixosTests, nodejs
+, ruby, tzdata, git, nettools, nixosTests, nodejs, openssl
 , gitlabEnterprise ? false, callPackage, yarn
 , fixup_yarn_lock, replace
 }:
@@ -28,6 +28,10 @@ let
           patches = [ ./fix-grpc-ar.patch ];
           dontBuild = false;
         };
+        # the openssl needs the openssl include files
+        openssl = x.openssl // {
+          buildInputs = [ openssl ];
+        };
       };
     groups = [
       "default" "unicorn" "ed25519" "metrics" "development" "puma" "test" "kerberos"
@@ -43,7 +47,15 @@ let
     pname = "gitlab-assets";
     inherit version src;
 
-    nativeBuildInputs = [ rubyEnv.wrappedRuby rubyEnv.bundler nodejs yarn ];
+    nativeBuildInputs = [ rubyEnv.wrappedRuby rubyEnv.bundler nodejs yarn git ];
+
+    # Since version 12.6.0, the rake tasks need the location of git,
+    # so we have to apply the location patches here too.
+    patches = [ ./remove-hardcoded-locations.patch ];
+    # One of the patches uses this variable - if it's unset, execution
+    # of rake tasks fails.
+    GITLAB_LOG_PATH = "log";
+    FOSS_ONLY = !gitlabEnterprise;
 
     configurePhase = ''
       runHook preConfigure
@@ -81,8 +93,9 @@ let
 
       bundle exec rake gettext:po_to_json RAILS_ENV=production NODE_ENV=production
       bundle exec rake rake:assets:precompile RAILS_ENV=production NODE_ENV=production
-      bundle exec rake webpack:compile RAILS_ENV=production NODE_ENV=production NODE_OPTIONS="--max_old_space_size=2048"
+      bundle exec rake gitlab:assets:compile_webpack_if_needed RAILS_ENV=production NODE_ENV=production
       bundle exec rake gitlab:assets:fix_urls RAILS_ENV=production NODE_ENV=production
+      bundle exec rake gitlab:assets:check_page_bundle_mixins_css_for_sideeffects RAILS_ENV=production NODE_ENV=production
 
       runHook postBuild
     '';
@@ -166,7 +179,7 @@ stdenv.mkDerivation {
   };
 
   meta = with lib; {
-    homepage = http://www.gitlab.com/;
+    homepage = "http://www.gitlab.com/";
     platforms = platforms.linux;
     maintainers = with maintainers; [ fpletz globin krav talyz ];
   } // (if gitlabEnterprise then

@@ -1,18 +1,18 @@
-{ stdenv, fetchFromGitHub, rustPlatform,
-  xorg, python3, pkgconfig, cairo, libxkbcommon }:
+{ stdenv, fetchFromGitHub, rustPlatform
+, xorg, python3, pkgconfig, cairo, libxkbcommon }:
 
 rustPlatform.buildRustPackage rec {
   pname = "wmfocus";
-  version = "1.1.2";
+  version = "1.1.5";
 
   src = fetchFromGitHub {
     owner = "svenstaro";
     repo = pname;
-    rev = version;
-    sha256 = "0jx0h2zyghs3bp4sg8f3vk5rkyprz2dqfqs0v72vmkp3cvgzxbvs";
+    rev = "v${version}";
+    sha256 = "09xffklpz62h6yiksxdlv3a9s1z0wr3ax9syl399avwdmq3c0y49";
   };
 
-  cargoSha256 = "1xmc28ns59jcmnv17102s2084baxqdvi0ibbyqwb108385qnixzf";
+  cargoSha256 = "0rczas6sgcppacz48xx7sarkvc4s2sgcdz6c661d7vcry1y46xms";
 
   nativeBuildInputs = [ python3 pkgconfig ];
   buildInputs = [ cairo libxkbcommon xorg.xcbutilkeysyms ];
@@ -24,9 +24,9 @@ rustPlatform.buildRustPackage rec {
 
   meta = with stdenv.lib; {
     description = "Visually focus windows by label";
+    homepage = "https://github.com/svenstaro/wmfocus";
+    license = licenses.mit;
     maintainers = with maintainers; [ synthetica ];
     platforms = platforms.linux;
-    license = licenses.mit;
-    homepage = https://github.com/svenstaro/wmfocus;
   };
 }

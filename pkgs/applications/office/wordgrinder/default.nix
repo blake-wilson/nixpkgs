@@ -3,19 +3,20 @@
 
 stdenv.mkDerivation rec {
   pname = "wordgrinder";
-  version = "0.7.2";
+  version = "0.8";
 
   src = fetchFromGitHub {
     repo = "wordgrinder";
     owner = "davidgiven";
     rev = version;
-    sha256 = "08lnq5wmspfqdjmqm15gizcq0xr7mg4h62qhvwj63v0sd6ks1cal";
+    sha256 = "124d1bnn2aqs6ik8pdazzni6a0583prz9lfdjrbwyb97ipqga9pm";
   };
 
   makeFlags = [
     "PREFIX=$(out)"
     "LUA_INCLUDE=${lua52Packages.lua}/include"
     "LUA_LIB=${lua52Packages.lua}/lib/liblua.so"
+    "OBJDIR=$TMP/wg-build"
   ];
 
   preBuild = stdenv.lib.optionalString stdenv.isLinux ''
@@ -24,6 +25,7 @@ stdenv.mkDerivation rec {
 
   dontUseNinjaBuild = true;
   dontUseNinjaInstall = true;
+  dontConfigure = true;
 
   nativeBuildInputs = [
     pkgconfig
@@ -32,11 +34,12 @@ stdenv.mkDerivation rec {
   ];
 
   buildInputs = [
-    libXft
     lua52Packages.lua
     ncurses
     readline
     zlib
+  ] ++ stdenv.lib.optionals stdenv.isLinux [
+    libXft
   ];
 
   # To be able to find <Xft.h>
@@ -51,7 +54,7 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "Text-based word processor";
-    homepage = https://cowlark.com/wordgrinder;
+    homepage = "https://cowlark.com/wordgrinder";
     license = licenses.mit;
     maintainers = with maintainers; [ matthiasbeyer ];
     platforms = with stdenv.lib.platforms; linux ++ darwin;

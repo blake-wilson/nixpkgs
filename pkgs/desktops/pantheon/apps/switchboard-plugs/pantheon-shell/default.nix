@@ -1,21 +1,21 @@
-{ stdenv, fetchFromGitHub, pantheon, meson, ninja, pkgconfig, vala, glib
+{ stdenv, fetchFromGitHub, nix-update-script, pantheon, meson, ninja, pkgconfig, vala, glib
 , libgee, granite, gexiv2, elementary-settings-daemon, gtk3, gnome-desktop
-, gala, wingpanel, plank, switchboard, gettext, bamf, fetchpatch }:
+, gala, wingpanel, elementary-dock, switchboard, gettext, bamf, fetchpatch }:
 
 stdenv.mkDerivation rec {
   pname = "switchboard-plug-pantheon-shell";
-  version = "2.8.2";
+  version = "2.8.4";
 
   src = fetchFromGitHub {
     owner = "elementary";
     repo = pname;
     rev = version;
-    sha256 = "0l4js2gqvn8lmky5b3jjqw6mzxcv9i2gjqr1vka0z40px6vfzf0z";
+    sha256 = "sha256-CHl+4mVjrDg2gusrWOCfI++DZMWKLdvHxG3ZWMjZ2to=";
   };
 
   passthru = {
-    updateScript = pantheon.updateScript {
-      repoName = pname;
+    updateScript = nix-update-script {
+      attrPath = "pantheon.${pname}";
     };
   };
 
@@ -29,34 +29,22 @@ stdenv.mkDerivation rec {
 
   buildInputs = [
     bamf
+    elementary-dock
     elementary-settings-daemon
+    gala
     gexiv2
     glib
     gnome-desktop
     granite
     gtk3
     libgee
-    plank
     switchboard
+    wingpanel
   ];
-
-  patches = [
-    ./backgrounds.patch # Having https://github.com/elementary/switchboard-plug-pantheon-shell/issues/166 would make this patch uneeded
-    ./hardcode-gsettings.patch
-  ];
-
-  postPatch = ''
-    substituteInPlace src/Views/Appearance.vala \
-      --subst-var-by GALA_GSETTINGS_PATH ${glib.getSchemaPath gala}
-    substituteInPlace src/Views/HotCorners.vala \
-      --subst-var-by GALA_GSETTINGS_PATH ${glib.getSchemaPath gala}
-    substituteInPlace src/Views/Appearance.vala \
-      --subst-var-by WINGPANEL_GSETTINGS_PATH ${glib.getSchemaPath wingpanel}
-  '';
 
   meta = with stdenv.lib; {
     description = "Switchboard Desktop Plug";
-    homepage = https://github.com/elementary/switchboard-plug-pantheon-shell;
+    homepage = "https://github.com/elementary/switchboard-plug-pantheon-shell";
     license = licenses.gpl3Plus;
     platforms = platforms.linux;
     maintainers = pantheon.maintainers;

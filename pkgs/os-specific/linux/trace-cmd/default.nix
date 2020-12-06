@@ -23,12 +23,12 @@ stdenv.mkDerivation {
     "man_dir=${placeholder "man"}/share/man"
     "libdir=${placeholder "lib"}/lib"
     "includedir=${placeholder "dev"}/include"
-    "BASH_COMPLETE_DIR=${placeholder "out"}/etc/bash_completion.d"
+    "BASH_COMPLETE_DIR=${placeholder "out"}/share/bash-completion/completions"
   ];
 
   meta = with stdenv.lib; {
     description = "User-space tools for the Linux kernel ftrace subsystem";
-    homepage    = http://kernelshark.org/;
+    homepage    = "https://kernelshark.org/";
     license     = licenses.gpl2;
     platforms   = platforms.linux;
     maintainers = with maintainers; [ thoughtpolice basvandijk ];

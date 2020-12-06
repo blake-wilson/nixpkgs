@@ -1,6 +1,6 @@
 { stdenv, fetchFromGitHub, autoreconfHook, pkgconfig
 , zlib, bzip2, lzma, lzo, lz4, zstd, xz
-, libgcrypt, e2fsprogs, utillinux, libgpgerror }:
+, libgcrypt, e2fsprogs, util-linux, libgpgerror }:
 
 let
   version = "0.8.5";
@@ -22,7 +22,7 @@ in stdenv.mkDerivation {
 
   buildInputs = [
     zlib bzip2 lzma lzo lz4 zstd xz
-    libgcrypt e2fsprogs utillinux libgpgerror
+    libgcrypt e2fsprogs util-linux libgpgerror
   ];
 
   meta = with stdenv.lib; {
@@ -36,7 +36,7 @@ in stdenv.mkDerivation {
       checksummed in the archive in order to protect the data. If the archive is
       corrupt, you just loose the current file, not the whole archive.
     '';
-    homepage = http://www.fsarchiver.org/;
+    homepage = "https://www.fsarchiver.org/";
     license = licenses.lgpl2;
     maintainers = [ maintainers.etu ];
     platforms = platforms.linux;

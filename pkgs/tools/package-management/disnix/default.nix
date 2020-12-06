@@ -1,16 +1,12 @@
-{ stdenv, fetchurl, pkgconfig, glib, libxml2, libxslt, getopt, nixUnstable, dysnomia, libintl, libiconv }:
+{ stdenv, fetchurl, pkgconfig, glib, libxml2, libxslt, getopt, gettext, nixUnstable, dysnomia, libintl, libiconv, help2man, doclifter, docbook5, dblatex, doxygen, libnixxml, autoreconfHook }:
 
 stdenv.mkDerivation {
-  name = "disnix-0.9";
+  name = "disnix-0.10";
 
   src = fetchurl {
-    url = https://github.com/svanderburg/disnix/releases/download/disnix-0.9/disnix-0.9.tar.gz;
-    sha256 = "1kc4520zjc1z72mknylfvrsyda9rbmm5c9mw8w13zhdwg3zbna06";
+    url = "https://github.com/svanderburg/disnix/releases/download/disnix-0.10/disnix-0.10.tar.gz";
+    sha256 = "0mciqbc2h60nc0i6pd36w0m2yr96v97ybrzrqzh5f67ac1f0gqwg";
   };
-
-  configureFlags = [
-    " --with-dbus-sys=${placeholder "out"}/share/dbus-1/system.d"
-  ];
 
   nativeBuildInputs = [ pkgconfig ];
   buildInputs = [ glib libxml2 libxslt getopt nixUnstable libintl libiconv dysnomia ];
@@ -18,7 +14,7 @@ stdenv.mkDerivation {
   meta = {
     description = "A Nix-based distributed service deployment tool";
     license = stdenv.lib.licenses.lgpl21Plus;
-    maintainers = [ stdenv.lib.maintainers.sander ];
+    maintainers = with stdenv.lib.maintainers; [ sander tomberek ];
     platforms = stdenv.lib.platforms.unix;
   };
 }

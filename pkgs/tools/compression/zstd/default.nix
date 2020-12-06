@@ -1,68 +1,80 @@
-{ stdenv, fetchFromGitHub, fetchpatch, gnugrep
+{ stdenv, fetchFromGitHub, fetchpatch, cmake, bash, gnugrep
 , fixDarwinDylibNames
 , file
-, legacySupport ? false }:
+, legacySupport ? false
+, static ? false
+}:
 
 stdenv.mkDerivation rec {
   pname = "zstd";
-  version = "1.4.4";
+  version = "1.4.5";
 
   src = fetchFromGitHub {
-    sha256 = "0zn7r8d4m8w2lblnjalqpz18na0spzkdiw3fwq2fzb7drhb32v54";
-    rev = "v${version}";
-    repo = "zstd";
     owner = "facebook";
+    repo = "zstd";
+    rev = "v${version}";
+    sha256 = "0ay3qlk4sffnmcl3b34q4zd7mkcmjds023icmib1mdli97qcp38l";
   };
 
+  nativeBuildInputs = [ cmake ]
+   ++ stdenv.lib.optional stdenv.isDarwin fixDarwinDylibNames;
+  buildInputs = stdenv.lib.optional stdenv.hostPlatform.isUnix bash;
+
   patches = [
-    # All 3 from https://github.com/facebook/zstd/pull/1883
+    ./playtests-darwin.patch
     (fetchpatch {
-      url = "https://github.com/facebook/zstd/commit/106278e7e5fafaea3b7deb4147bdc8071562d2f0.diff";
-      sha256 = "13z7id1qbc05cv1rmak7c8xrchp7jh1i623bq5pwcihg57wzcyr8";
-    })
-    (fetchpatch {
-      url = "https://github.com/facebook/zstd/commit/0ede342acc2c26f87ae962fa88e158904d4198c4.diff";
-      sha256 = "12l5xbvnzkvr76mvl1ls767paqfwbd9q1pzq44ckacfpz4f6iaap";
-      excludes = [
-        # I think line endings are causing problems, or something like that
-        "programs/windres/generate_res.bat"
-      ];
-    })
-    (fetchpatch {
-      url = "https://github.com/facebook/zstd/commit/10552eaffef84c011f67af0e04f0780b50a5ab26.diff";
-      sha256 = "1s27ravar3rn7q8abybp9733jhpsfcaci51k04da94ahahvxwiqw";
+      url = "https://github.com/facebook/zstd/pull/2163.patch";
+      sha256 = "07mfjc5f9wy0w2xlj36hyf7g5ax9r2rf6ixhkffhnwc6rwy0q54p";
     })
   ] # This I didn't upstream because if you use posix threads with MinGW it will
-    # work find, and I'm not sure how to write the condition.
+    # work fine, and I'm not sure how to write the condition.
     ++ stdenv.lib.optional stdenv.hostPlatform.isWindows ./mcfgthreads-no-pthread.patch;
 
-  nativeBuildInputs = stdenv.lib.optional stdenv.isDarwin fixDarwinDylibNames;
+  postPatch = stdenv.lib.optionalString (!static) ''
+    substituteInPlace build/cmake/CMakeLists.txt \
+      --replace 'message(SEND_ERROR "You need to build static library to build tests")' ""
+    substituteInPlace build/cmake/tests/CMakeLists.txt \
+      --replace 'libzstd_static' 'libzstd_shared'
+    sed -i \
+      "1aexport ${stdenv.lib.optionalString stdenv.isDarwin "DY"}LD_LIBRARY_PATH=$PWD/build_/lib" \
+      tests/playTests.sh
+  '';
 
-  makeFlags = [
-    "ZSTD_LEGACY_SUPPORT=${if legacySupport then "1" else "0"}"
-  ] ++ stdenv.lib.optional stdenv.hostPlatform.isWindows "OS=Windows";
+  cmakeFlags = [
+    "-DZSTD_BUILD_SHARED:BOOL=${if (!static) then "ON" else "OFF"}"
+    "-DZSTD_BUILD_STATIC:BOOL=${if static then "ON" else "OFF"}"
+    "-DZSTD_PROGRAMS_LINK_SHARED:BOOL=${if (!static) then "ON" else "OFF"}"
+    "-DZSTD_LEGACY_SUPPORT:BOOL=${if legacySupport then "ON" else "OFF"}"
+    "-DZSTD_BUILD_TESTS:BOOL=ON"
+  ];
+  cmakeDir = "../build/cmake";
+  dontUseCmakeBuildDir = true;
+  preConfigure = ''
+    mkdir -p build_ && cd $_
+  '';
 
   checkInputs = [ file ];
   doCheck = true;
-  preCheck = ''
-    substituteInPlace tests/playTests.sh \
-      --replace 'MD5SUM="md5 -r"' 'MD5SUM="md5sum"'
+  checkPhase = ''
+    runHook preCheck
+    # Patch shebangs for playTests
+    patchShebangs ../programs/zstdgrep
+    ctest -R playTests # The only relatively fast test.
+    runHook postCheck
   '';
-
-  installFlags = [
-    "PREFIX=$(out)"
-  ];
 
   preInstall = ''
-    substituteInPlace programs/zstdgrep \
+    substituteInPlace ../programs/zstdgrep \
       --replace ":-grep" ":-${gnugrep}/bin/grep" \
-      --replace ":-zstdcat" ":-$out/bin/zstdcat"
+      --replace ":-zstdcat" ":-$bin/bin/zstdcat"
 
-    substituteInPlace programs/zstdless \
-      --replace "zstdcat" "$out/bin/zstdcat"
+    substituteInPlace ../programs/zstdless \
+      --replace "zstdcat" "$bin/bin/zstdcat"
   '';
 
-  enableParallelBuilding = true;
+  outputs = [ "bin" "dev" ]
+    ++ stdenv.lib.optional stdenv.hostPlatform.isUnix "man"
+    ++ [ "out" ];
 
   meta = with stdenv.lib; {
     description = "Zstandard real-time compression algorithm";
@@ -75,7 +87,7 @@ stdenv.mkDerivation rec {
       speed is preserved and remain roughly the same at all settings, a
       property shared by most LZ compression algorithms, such as zlib.
     '';
-    homepage = https://facebook.github.io/zstd/;
+    homepage = "https://facebook.github.io/zstd/";
     license = with licenses; [ bsd3 ]; # Or, at your opinion, GPL-2.0-only.
 
     platforms = platforms.all;

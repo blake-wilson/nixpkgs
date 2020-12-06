@@ -1,6 +1,7 @@
 { lib
 , buildPythonPackage
 , fetchPypi
+, isPy27
 , six
 , pytest
 , numpy
@@ -8,11 +9,12 @@
 
 buildPythonPackage rec {
   pname = "pytest-doctestplus";
-  version = "0.4.0";
+  version = "0.8.0";
+  disabled = isPy27; # abandoned upstream
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "8872b9c236924af20c39c2813d7f1bde50a1edca7c4aba5a8bfbae3a32360e87";
+    sha256 = "fb083925a17ce636f33997c275f61123e63372c1db11fefac1e991ed25a4ca37";
   };
 
   propagatedBuildInputs = [
@@ -25,13 +27,14 @@ buildPythonPackage rec {
     pytest
   ];
 
+  # check_distribution incorrectly pulls pytest version
   checkPhase = ''
-    pytest
+    pytest -k 'not check_distribution'
   '';
 
   meta = with lib; {
     description = "Pytest plugin with advanced doctest features";
-    homepage = https://astropy.org;
+    homepage = "https://astropy.org";
     license = licenses.bsd3;
     maintainers = [ maintainers.costrouc ];
   };

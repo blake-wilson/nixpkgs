@@ -1,4 +1,4 @@
-{ stdenv, fetchFromGitHub, python, bash }:
+{ stdenv, fetchFromGitHub, python3, bash }:
 
 stdenv.mkDerivation rec {
   pname = "autojump";
@@ -11,7 +11,7 @@ stdenv.mkDerivation rec {
     sha256 = "1rgpsh70manr2dydna9da4x7p8ahii7dgdgwir5fka340n1wrcws";
   };
 
-  buildInputs = [ python bash ];
+  buildInputs = [ python3 bash ];
   dontBuild = true;
 
   installPhase = ''
@@ -45,7 +45,7 @@ stdenv.mkDerivation rec {
 
       Autojump supports tab-completion.
     '';
-    homepage = https://github.com/wting/autojump;
+    homepage = "https://github.com/wting/autojump";
     license = licenses.gpl3;
     platforms = platforms.all;
     maintainers = with maintainers; [ domenkozar yurrriq ];

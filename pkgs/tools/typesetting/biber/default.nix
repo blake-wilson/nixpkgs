@@ -10,13 +10,20 @@ perlPackages.buildPerlModule {
 
   src = "${biberSource}/source/bibtex/biber/biblatex-biber.tar.gz";
 
-  # TODO: remove TextBibTeX for biber 2.14: https://github.com/plk/biber/blob/dev/Changes
+  patches = [
+    # Fix for https://github.com/plk/biber/issues/329
+    (fetchpatch {
+      url = "https://github.com/plk/biber/commit/fa312ce402fe581ba7cc0890c83a1d47c2610e26.diff";
+      sha256 = "1j87mdwvx368z9b5x6b72s753hwvrldf2pb42p6hflq5hzkicy50";
+    })
+  ];
+
   buildInputs = with perlPackages; [
     autovivification BusinessISBN BusinessISMN BusinessISSN ConfigAutoConf
     DataCompare DataDump DateSimple EncodeEUCJPASCII EncodeHanExtra EncodeJIS2K
     DateTime DateTimeFormatBuilder DateTimeCalendarJulian
     ExtUtilsLibBuilder FileSlurper FileWhich IPCRun3 LogLog4perl LWPProtocolHttps ListAllUtils
-    ListMoreUtils MozillaCA IOString ReadonlyXS RegexpCommon TextBibTeX
+    ListMoreUtils MozillaCA ParseRecDescent IOString ReadonlyXS RegexpCommon TextBibTeX
     UnicodeLineBreak URI XMLLibXMLSimple XMLLibXSLT XMLWriter
     ClassAccessor TextCSV TextCSV_XS TextRoman DataUniqid LinguaTranslit SortKey
     TestDifferences

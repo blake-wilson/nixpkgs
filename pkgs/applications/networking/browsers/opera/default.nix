@@ -47,11 +47,11 @@ let
 in stdenv.mkDerivation rec {
 
   pname = "opera";
-  version = "65.0.3467.48";
+  version = "68.0.3618.63";
 
   src = fetchurl {
     url = "${mirror}/${version}/linux/${pname}-stable_${version}_amd64.deb";
-    sha256 = "0vcpq2p8si6rlyvd8nzs0a7pjxks2qn8i8czna968wyfxlczckyr";
+    sha256 = "1643043ywz94x2yr7xyw7krfq53iwkr8qxlbydzq6zb2zina7jxd";
   };
 
   unpackCmd = "${dpkg}/bin/dpkg-deb -x $curSrc .";
@@ -104,7 +104,7 @@ in stdenv.mkDerivation rec {
     # This is a little tricky. Without it the app starts then crashes. Then it
     # brings up the crash report, which also crashes. `strace -f` hints at a
     # missing libudev.so.0.
-    systemd.lib
+    (lib.getLib systemd)
   ];
 
   installPhase = ''

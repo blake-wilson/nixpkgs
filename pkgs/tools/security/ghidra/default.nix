@@ -1,22 +1,34 @@
-{ stdenv, fetchurl, unzip, lib, makeWrapper, autoPatchelfHook
-, openjdk11, pam
+{ stdenv, fetchzip, lib, makeWrapper, autoPatchelfHook
+, openjdk11, pam, makeDesktopItem, icoutils
 }: let
 
   pkg_path = "$out/lib/ghidra";
 
-in stdenv.mkDerivation {
+  desktopItem = makeDesktopItem {
+    name = "ghidra";
+    exec = "ghidra";
+    icon = "ghidra";
+    desktopName = "Ghidra";
+    genericName = "Ghidra Software Reverse Engineering Suite";
+    categories = "Development;";
+  };
 
-  name = "ghidra-9.0.4";
 
-  src = fetchurl {
-    url = https://ghidra-sre.org/ghidra_9.0.4_PUBLIC_20190516.zip;
-    sha256 = "1gqqxk57hswwgr97qisqivcfgjdxjipfdshyh4r76dyrfpa0q3d5";
+in stdenv.mkDerivation rec {
+
+  pname = "ghidra";
+  version = "9.2";
+  versiondate = "20201113";
+
+  src = fetchzip {
+    url = "https://www.ghidra-sre.org/ghidra_${version}_PUBLIC_${versiondate}.zip";
+    sha256 = "0lcvmbq04qkdsf0bz509frgw79bhyxyixkqg1k712p3576ng3nby";
   };
 
   nativeBuildInputs = [
     makeWrapper
     autoPatchelfHook
-    unzip
+    icoutils
   ];
 
   buildInputs = [
@@ -28,7 +40,17 @@ in stdenv.mkDerivation {
 
   installPhase = ''
     mkdir -p "${pkg_path}"
+    mkdir -p "${pkg_path}" "$out/share/applications"
     cp -a * "${pkg_path}"
+    ln -s ${desktopItem}/share/applications/* $out/share/applications
+
+    icotool -x "${pkg_path}/support/ghidra.ico"
+    rm ghidra_4_40x40x32.png
+    for f in ghidra_*.png; do
+      res=$(basename "$f" ".png" | cut -d"_" -f3 | cut -d"x" -f1-2)
+      mkdir -pv "$out/share/icons/hicolor/$res/apps"
+      mv "$f" "$out/share/icons/hicolor/$res/apps/ghidra.png"
+    done;
   '';
 
   postFixup = ''
@@ -42,7 +64,7 @@ in stdenv.mkDerivation {
     homepage = "https://ghidra-sre.org/";
     platforms = [ "x86_64-linux" ];
     license = licenses.asl20;
-    maintainers = [ maintainers.ck3d ];
+    maintainers = with maintainers; [ ck3d govanify ];
   };
 
 }

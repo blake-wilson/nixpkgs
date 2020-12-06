@@ -11,7 +11,7 @@ rustPlatform.buildRustPackage rec {
     sha256 = "19ypflbayi5l0mb8yw7w0a4bq9a3w8nl9jsxapp9m3xggzmsvrxx";
   };
 
-  cargoSha256 = "1qf52xsd15rj8y9w65zyab7akvzry76k1d4gxvxlz7ph3sl7jl3y";
+  cargoSha256 = "1zgds5rjjikvaj0rxc7slyvkjn067s0v8vdnxn3vsv819q5yd707";
 
   meta = with stdenv.lib; {
     description = "A tool to parallelize shell commands";
@@ -24,6 +24,5 @@ rustPlatform.buildRustPackage rec {
     homepage = "https://github.com/ctbur/async";
     license = licenses.gpl3Plus;
     maintainers = with maintainers; [ minijackson ];
-    platforms = platforms.all;
   };
 }

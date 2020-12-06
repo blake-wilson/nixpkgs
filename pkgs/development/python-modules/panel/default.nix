@@ -7,15 +7,16 @@
 , markdown
 , pyct
 , testpath
+, tqdm
 }:
 
 buildPythonPackage rec {
   pname = "panel";
-  version = "0.6.4";
+  version = "0.9.7";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "9b86a827f24dcfd1b6d821836e691fca7aab21b79a293031297f83cf2f8d6cef";
+    sha256 = "2e86d82bdd5e7664bf49558eedad62b664d5403ec9e422e5ddfcf69e3bd77318";
   };
 
   propagatedBuildInputs = [
@@ -25,6 +26,7 @@ buildPythonPackage rec {
     markdown
     pyct
     testpath
+    tqdm
   ];
 
   # infinite recursion in test dependencies (hvplot)
@@ -32,7 +34,7 @@ buildPythonPackage rec {
 
   meta = with lib; {
     description = "A high level dashboarding library for python visualization libraries";
-    homepage = http://pyviz.org;
+    homepage = "https://pyviz.org";
     license = licenses.bsd3;
     maintainers = [ maintainers.costrouc ];
   };

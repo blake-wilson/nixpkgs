@@ -1,22 +1,26 @@
 { stdenv, buildGoModule, fetchurl
 , go, ncurses, notmuch, scdoc
 , python3, perl, w3m, dante
+, fetchFromGitHub
 }:
 
 buildGoModule rec {
   pname = "aerc";
-  version = "0.3.0";
+  version = "0.4.0";
 
   src = fetchurl {
     url = "https://git.sr.ht/~sircmpwn/aerc/archive/${version}.tar.gz";
-    sha256 = "188jln8hmgiqn5il5m54bns0wk4grj09di8y6mmid58ibw6spma4";
+    sha256 = "05qy14k9wmyhsg1hiv4njfx1zn1m9lz4d1p50kc36v7pq0n4csfk";
   };
 
+  runVend = true;
+  vendorSha256 = "13zs5113ip85yl6sw9hzclxwlnrhy18d39vh9cwbq97dgnh9rz89";
+
+  doCheck = false;
+
   nativeBuildInputs = [
-    go
     scdoc
     python3.pkgs.wrapPython
-    notmuch
   ];
 
   patches = [
@@ -27,9 +31,7 @@ buildGoModule rec {
     python3.pkgs.colorama
   ];
 
-  buildInputs = [ python3 perl ];
-
-  GOFLAGS="-tags=notmuch";
+  buildInputs = [ python3 notmuch ];
 
   buildPhase = "
     runHook preBuild
@@ -39,7 +41,7 @@ buildGoModule rec {
 
   installPhase = ''
     runHook preInstall
-    make PREFIX=$out install
+    make PREFIX=$out GOFLAGS="$GOFLAGS -tags=notmuch" install
     wrapPythonProgramsIn $out/share/aerc/filters "$out $pythonPath"
     runHook postInstall
   '';
@@ -51,11 +53,9 @@ buildGoModule rec {
       ${stdenv.lib.makeBinPath [ w3m dante ]}
   '';
 
-  modSha256 = "0pxbv4zfhii0g41cy0ycfpkkxw6nnd4ibavic6zqw30j476jnm2x";
-
   meta = with stdenv.lib; {
-    description = "aerc is an email client for your terminal";
-    homepage = https://aerc-mail.org/;
+    description = "An email client for your terminal";
+    homepage = "https://aerc-mail.org/";
     maintainers = with maintainers; [ tadeokondrak ];
     license = licenses.mit;
     platforms = platforms.unix;

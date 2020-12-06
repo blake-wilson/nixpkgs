@@ -4,12 +4,12 @@
 , git, glibcLocales }:
 
 buildPythonPackage rec {
-  version = "0.19.13";
+  version = "0.20.14";
   pname = "dulwich";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "aa628449c5f594a9a282f4d9e5993fef65481ef5e3b9b6c52ff31200f8f5dc95";
+    sha256 = "21d6ee82708f7c67ce3fdcaf1f1407e524f7f4f7411a410a972faa2176baec0d";
   };
 
   LC_ALL = "en_US.UTF-8";
@@ -23,7 +23,7 @@ buildPythonPackage rec {
 
   meta = with stdenv.lib; {
     description = "Simple Python implementation of the Git file formats and protocols";
-    homepage = https://samba.org/~jelmer/dulwich/;
+    homepage = "https://samba.org/~jelmer/dulwich/";
     license = licenses.gpl2Plus;
     maintainers = with maintainers; [ koral ];
   };

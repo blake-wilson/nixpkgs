@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, zlib, utillinux }:
+{ stdenv, fetchurl, zlib, util-linux }:
 
 let name = "pigz";
     version = "2.4";
@@ -13,7 +13,7 @@ stdenv.mkDerivation {
 
   enableParallelBuilding = true;
 
-  buildInputs = [zlib] ++ stdenv.lib.optional stdenv.isLinux utillinux;
+  buildInputs = [zlib] ++ stdenv.lib.optional stdenv.isLinux util-linux;
 
   makeFlags = [ "CC=${stdenv.cc}/bin/${stdenv.cc.targetPrefix}cc" ];
 
@@ -29,7 +29,7 @@ stdenv.mkDerivation {
   '';
 
   meta = with stdenv.lib; {
-    homepage = http://www.zlib.net/pigz/;
+    homepage = "http://www.zlib.net/pigz/";
     description = "A parallel implementation of gzip for multi-core machines";
     license = licenses.zlib;
     platforms = platforms.unix;

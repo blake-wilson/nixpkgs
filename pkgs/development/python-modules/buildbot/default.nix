@@ -3,7 +3,7 @@
   sqlalchemy_migrate, dateutil, txaio, autobahn, pyjwt, pyyaml, treq,
   txrequests, pyjade, boto3, moto, mock, python-lz4, setuptoolsTrial,
   isort, pylint, flake8, buildbot-worker, buildbot-pkg, buildbot-plugins,
-  parameterized, git, openssh, glibcLocales }:
+  parameterized, git, openssh, glibcLocales, nixosTests }:
 
 let
   withPlugins = plugins: buildPythonPackage {
@@ -25,11 +25,11 @@ let
 
   package = buildPythonPackage rec {
     pname = "buildbot";
-    version = "2.5.0";
+    version = "2.8.4";
 
     src = fetchPypi {
       inherit pname version;
-      sha256 = "06dza7kggybz8nf3i1skkadwrq9s0nkpqjfahifysaag3j3b5rp4";
+      sha256 = "0i2sbxhsqyk2yr234il0zsyp1rf2v1l5hmzvw0yrgds6jpr19cqv";
     };
 
     propagatedBuildInputs = [
@@ -44,10 +44,9 @@ let
       autobahn
       pyjwt
       pyyaml
-
+    ]
       # tls
-      twisted.extras.tls
-    ];
+      ++ twisted.extras.tls;
 
     checkInputs = [
       treq
@@ -74,12 +73,12 @@ let
       # This patch disables the test that tries to read /etc/os-release which
       # is not accessible in sandboxed builds.
       ./skip_test_linux_distro.patch
-      # Work around https://github.com/glyph/automat/issues/117
+
+      # fix compatibility with the latest SQLAlchemy
       (fetchpatch {
-        url = "https://git.archlinux.org/svntogit/community.git/plain/trunk/buildbot-automat-117.diff?h=packages/buildbot&id=7904292340f98578adfe783a09e9eb4c5b1d4632";
-        name = "buildbot-automat-117.diff";
+        url = "https://github.com/buildbot/buildbot/commit/96f3cd1c5f5c82b733baecb133576366ecf544fc.patch";
+        sha256 = "0n1jm13h08j7ksbs8ixayn3wziq5hzyp3kscz9fpgxd8gl885y5n";
         stripLen = 1;
-        sha256 = "0rng6f8nvghkihajz9m925rdp9q3c395bj4wc7r2s1minv613hba";
       })
     ];
 
@@ -99,11 +98,12 @@ let
 
     passthru = {
       inherit withPlugins;
+      tests.buildbot = nixosTests.buildbot;
     };
 
     meta = with lib; {
       homepage = "https://buildbot.net/";
-      description = "Buildbot is an open-source continuous integration framework for automating software build, test, and release processes";
+      description = "An open-source continuous integration framework for automating software build, test, and release processes";
       maintainers = with maintainers; [ nand0p ryansydnor lopsided98 ];
       license = licenses.gpl2;
     };

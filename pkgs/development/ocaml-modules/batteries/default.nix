@@ -1,25 +1,26 @@
 { stdenv, fetchurl, ocaml, findlib, ocamlbuild, qtest, num }:
 
-let version = "2.10.0"; in
+let version = "3.2.0"; in
 
 stdenv.mkDerivation {
   name = "ocaml${ocaml.version}-batteries-${version}";
 
   src = fetchurl {
     url = "https://github.com/ocaml-batteries-team/batteries-included/releases/download/v${version}/batteries-${version}.tar.gz";
-    sha256 = "08ghw87d56h1a6y1nnh3x2wy9xj25jqfk5sp6ma9nsyd37babb0h";
+    sha256 = "0a77njgc6c6kz4rpwqgmnii7f1na6hzsa55nqqm3dndhq9xh628w";
   };
 
-  buildInputs = [ ocaml findlib ocamlbuild qtest ];
+  buildInputs = [ ocaml findlib ocamlbuild ];
+  checkInputs = [ qtest ];
   propagatedBuildInputs = [ num ];
 
-  doCheck = stdenv.lib.versions.majorMinor ocaml.version != "4.07" && !stdenv.isAarch64;
-  checkTarget = "test test";
+  doCheck = stdenv.lib.versionAtLeast ocaml.version "4.04" && !stdenv.isAarch64;
+  checkTarget = "test";
 
   createFindlibDestdir = true;
 
   meta = {
-    homepage = http://batteries.forge.ocamlcore.org/;
+    homepage = "http://batteries.forge.ocamlcore.org/";
     description = "OCaml Batteries Included";
     longDescription = ''
       A community-driven effort to standardize on an consistent, documented,

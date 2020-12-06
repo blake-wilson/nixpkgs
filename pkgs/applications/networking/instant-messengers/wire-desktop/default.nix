@@ -5,10 +5,12 @@
 , makeDesktopItem
 , makeWrapper
 , stdenv
+, lib
 , udev
 , wrapGAppsHook
 , cpio
 , xar
+, libdbusmenu
 }:
 
 let
@@ -20,13 +22,13 @@ let
   pname = "wire-desktop";
 
   version = {
-    x86_64-darwin = "3.10.3215";
-    x86_64-linux = "3.11.2912";
+    x86_64-darwin = "3.21.3959";
+    x86_64-linux = "3.21.2936";
   }.${system} or throwSystem;
 
   sha256 = {
-    x86_64-darwin = "0ygm3fgy9k1dp2kjfwsrrwq1i88wgxc6k8y80yz61ivdawgph9wa";
-    x86_64-linux = "1d2wa13d750dd2vslnvzf0ibwjmf5s299pxq0rs2x98y2sabw3sl";
+    x86_64-darwin = "0fgzzqf1wnkjbcr0j0vjn6sggkz0z1kx6w4gi7gk4c4markdicm1";
+    x86_64-linux = "033804nkz1fdmq3p8iplrlx708x1fjlr09bmrpy36lqg5h7m3yd6";
   }.${system} or throwSystem;
 
   meta = with stdenv.lib; {
@@ -69,11 +71,14 @@ let
     desktopItem = makeDesktopItem {
       categories = "Network;InstantMessaging;Chat;VideoConference";
       comment = "Secure messenger for everyone";
-      desktopName = "Wire Desktop";
+      desktopName = "Wire";
       exec = "wire-desktop %U";
       genericName = "Secure messenger";
       icon = "wire-desktop";
       name = "wire-desktop";
+      extraEntries = ''
+        StartupWMClass=Wire
+      '';
     };
 
     dontBuild = true;
@@ -104,7 +109,8 @@ let
     '';
 
     runtimeDependencies = [
-      udev.lib
+      (lib.getLib udev)
+      libdbusmenu
     ];
 
     postFixup = ''
@@ -118,7 +124,7 @@ let
 
     src = fetchurl {
       url = "https://github.com/wireapp/wire-desktop/releases/download/"
-      + "macos%2F${version}/Wire.pkg";
+          + "macos%2F${version}/Wire.pkg";
       inherit sha256;
     };
 

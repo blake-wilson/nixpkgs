@@ -36,6 +36,8 @@ let
         ${addModuleIf cfg.zeroconf.discovery.enable "module-zeroconf-discover"}
         ${addModuleIf cfg.tcp.enable (concatStringsSep " "
            ([ "module-native-protocol-tcp" ] ++ allAnon ++ ipAnon))}
+        ${addModuleIf config.services.jack.jackd.enable "module-jack-sink"}
+        ${addModuleIf config.services.jack.jackd.enable "module-jack-source"}
         ${cfg.extraConfig}
       '';
     };
@@ -144,7 +146,9 @@ in {
 
       package = mkOption {
         type = types.package;
-        default = pkgs.pulseaudio;
+        default = if config.services.jack.jackd.enable
+                  then pkgs.pulseaudioFull
+                  else pkgs.pulseaudio;
         defaultText = "pkgs.pulseaudio";
         example = literalExample "pkgs.pulseaudioFull";
         description = ''
@@ -215,9 +219,8 @@ in {
 
   config = mkMerge [
     {
-      environment.etc = singleton {
-        target = "pulse/client.conf";
-        source = clientConf;
+      environment.etc = {
+        "pulse/client.conf".source = clientConf;
       };
 
       hardware.pulseaudio.configFile = mkDefault "${getBin overriddenPackage}/etc/pulse/default.pa";
@@ -228,19 +231,16 @@ in {
 
       sound.enable = true;
 
-      environment.etc = [
-        { target = "asound.conf";
-          source = alsaConf; }
+      environment.etc = {
+        "asound.conf".source = alsaConf;
 
-        { target = "pulse/daemon.conf";
-          source = writeText "daemon.conf" (lib.generators.toKeyValue {} cfg.daemon.config); }
+        "pulse/daemon.conf".source = writeText "daemon.conf"
+          (lib.generators.toKeyValue {} cfg.daemon.config);
 
-        { target = "openal/alsoft.conf";
-          source = writeText "alsoft.conf" "drivers=pulse"; }
+        "openal/alsoft.conf".source = writeText "alsoft.conf" "drivers=pulse";
 
-        { target = "libao.conf";
-          source = writeText "libao.conf" "default_driver=pulse"; }
-      ];
+        "libao.conf".source = writeText "libao.conf" "default_driver=pulse";
+      };
 
       # Disable flat volumes to enable relative ones
       hardware.pulseaudio.daemon.config.flat-volumes = mkDefault "no";
@@ -252,6 +252,9 @@ in {
       security.rtkit.enable = true;
 
       systemd.packages = [ overriddenPackage ];
+
+      # PulseAudio is packaged with udev rules to handle various audio device quirks
+      services.udev.packages = [ overriddenPackage ];
     })
 
     (mkIf (cfg.extraModules != []) {
@@ -260,7 +263,7 @@ in {
           (drv: drv.override { pulseaudio = overriddenPackage; })
           cfg.extraModules;
         modulePaths = builtins.map
-          (drv: "${drv}/lib/pulse-${overriddenPackage.version}/modules")
+          (drv: "${drv}/${overriddenPackage.pulseDir}/modules")
           # User-provided extra modules take precedence
           (overriddenModules ++ [ overriddenPackage ]);
       in lib.concatStringsSep ":" modulePaths;
@@ -275,9 +278,8 @@ in {
     })
 
     (mkIf nonSystemWide {
-      environment.etc = singleton {
-        target = "pulse/default.pa";
-        source = myConfigFile;
+      environment.etc = {
+        "pulse/default.pa".source = myConfigFile;
       };
       systemd.user = {
         services.pulseaudio = {
@@ -286,6 +288,8 @@ in {
             RestartSec = "500ms";
             PassEnvironment = "DISPLAY";
           };
+        } // optionalAttrs config.services.jack.jackd.enable {
+          environment.JACK_PROMISCUOUS_SERVER = "jackaudio";
         };
         sockets.pulseaudio = {
           wantedBy = [ "sockets.target" ];

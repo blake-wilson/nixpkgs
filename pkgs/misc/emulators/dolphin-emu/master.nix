@@ -1,6 +1,6 @@
 { lib, stdenv, fetchFromGitHub, makeDesktopItem, pkgconfig, cmake
-, wrapQtAppsHook, qtbase, bluez, ffmpeg, libao, libGLU, libGL, pcre, gettext
-, libXrandr, libusb, lzo, libpthreadstubs, libXext, libXxf86vm, libXinerama
+, wrapQtAppsHook, qtbase, bluez, ffmpeg_3, libao, libGLU, libGL, pcre, gettext
+, libXrandr, libusb1, lzo, libpthreadstubs, libXext, libXxf86vm, libXinerama
 , libSM, libXdmcp, readline, openal, udev, libevdev, portaudio, curl, alsaLib
 , miniupnpc, enet, mbedtls, soundtouch, sfml
 , vulkan-loader ? null, libpulseaudio ? null
@@ -21,13 +21,13 @@ let
   };
 in stdenv.mkDerivation rec {
   pname = "dolphin-emu";
-  version = "5.0-11109";
+  version = "5.0-12716";
 
   src = fetchFromGitHub {
     owner = "dolphin-emu";
     repo = "dolphin";
-    rev = "93d7b3d15962a3393cf2971e14c4acf54d90cecd";
-    sha256 = "1kkx3agdsc0qmf3yymlzq315nypm34qvq04qpjqycpfhmpx8gdnq";
+    rev = "31524288e3b2450eaefff8202c6d26c4ba3f7333";
+    sha256 = "0vv3ahk6zdx2hx5diq4jkhl289wjybqcr4lwinrkfiywb83hcabg";
   };
 
   enableParallelBuilding = true;
@@ -35,9 +35,9 @@ in stdenv.mkDerivation rec {
   ++ lib.optional stdenv.isLinux wrapQtAppsHook;
 
   buildInputs = [
-    curl ffmpeg libao libGLU libGL pcre gettext libpthreadstubs libpulseaudio
+    curl ffmpeg_3 libao libGLU libGL pcre gettext libpthreadstubs libpulseaudio
     libXrandr libXext libXxf86vm libXinerama libSM readline openal libXdmcp lzo
-    portaudio libusb libpng hidapi miniupnpc enet mbedtls soundtouch sfml
+    portaudio libusb1 libpng hidapi miniupnpc enet mbedtls soundtouch sfml
     qtbase
   ] ++ lib.optionals stdenv.isLinux [
     bluez udev libevdev alsaLib vulkan-loader
@@ -71,6 +71,8 @@ in stdenv.mkDerivation rec {
   postInstall = ''
     cp -r ${desktopItem}/share/applications $out/share
     ln -sf $out/bin/dolphin-emu $out/bin/dolphin-emu-master
+  '' + lib.optionalString stdenv.hostPlatform.isLinux ''
+    install -D $src/Data/51-usb-device.rules $out/etc/udev/rules.d/51-usb-device.rules
   '';
 
   meta = with lib; {

@@ -1,5 +1,6 @@
 { stdenv
 , fetchFromGitHub
+, nix-update-script
 , desktop-file-utils
 , vala
 , gettext
@@ -19,13 +20,13 @@
 
 stdenv.mkDerivation rec {
   pname = "ephemeral";
-  version = "6.1.1";
+  version = "7.0.4";
 
   src = fetchFromGitHub {
     owner = "cassidyjames";
     repo = "ephemeral";
     rev = version;
-    sha256 = "1i77chbjjg8zda5bnn1wj4h00a88awfls5b3i3dqwgsi356hv4wb";
+    sha256 = "18chvfdmka21zvjgqfpinm3nrj0ba09szxhhm39anpvpbj92ra8j";
   };
 
   nativeBuildInputs = [
@@ -54,10 +55,16 @@ stdenv.mkDerivation rec {
     patchShebangs meson/post_install.py
   '';
 
+  passthru = {
+    updateScript = nix-update-script {
+      attrPath = pname;
+    };
+  };
+
   meta = with stdenv.lib; {
     description = "The always-incognito web browser";
-    homepage = https://github.com/cassidyjames/ephemeral;
-    maintainers = with maintainers; [ kjuvi ] ++ pantheon.maintainers;
+    homepage = "https://github.com/cassidyjames/ephemeral";
+    maintainers = with maintainers; [ xiorcale ] ++ pantheon.maintainers;
     platforms = platforms.linux;
     license = licenses.gpl3;
   };

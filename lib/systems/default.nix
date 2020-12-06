@@ -7,6 +7,7 @@ rec {
   inspect = import ./inspect.nix { inherit lib; };
   platforms = import ./platforms.nix { inherit lib; };
   examples = import ./examples.nix { inherit lib; };
+  architectures = import ./architectures.nix { inherit lib; };
 
   # Elaborate a `localSystem` or `crossSystem` so that it contains everything
   # necessary.
@@ -24,7 +25,7 @@ rec {
       system = parse.doubleFromSystem final.parsed;
       config = parse.tripleFromSystem final.parsed;
       # Just a guess, based on `system`
-      platform = platforms.selectBySystem final.system;
+      platform = platforms.select final;
       # Determine whether we are compatible with the provided CPU
       isCompatible = platform: parse.isCompatible final.parsed.cpu platform.parsed.cpu;
       # Derived meta-data
@@ -32,13 +33,13 @@ rec {
         /**/ if final.isDarwin              then "libSystem"
         else if final.isMinGW               then "msvcrt"
         else if final.isWasi                then "wasilibc"
+        else if final.isRedox               then "relibc"
         else if final.isMusl                then "musl"
         else if final.isUClibc              then "uclibc"
         else if final.isAndroid             then "bionic"
         else if final.isLinux /* default */ then "glibc"
-        else if final.isMsp430              then "newlib"
-        else if final.isVc4                 then "newlib"
         else if final.isAvr                 then "avrlibc"
+        else if final.isNone                then "newlib"
         else if final.isNetBSD              then "nblibc"
         # TODO(@Ericson2314) think more about other operating systems
         else                                     "native/impure";
@@ -66,6 +67,8 @@ rec {
           freebsd = "FreeBSD";
           openbsd = "OpenBSD";
           wasi = "Wasi";
+          redox = "Redox";
+          genode = "Genode";
         }.${final.parsed.kernel.name} or null;
 
          # uname -p
@@ -74,6 +77,7 @@ rec {
          # uname -r
          release = null;
       };
+      isStatic = final.isWasm || final.isRedox;
 
       kernelArch =
         if final.isAarch32 then "arm"
@@ -84,7 +88,7 @@ rec {
         else final.parsed.cpu.name;
 
       qemuArch =
-        if final.isArm then "arm"
+        if final.isAarch32 then "arm"
         else if final.isx86_64 then "x86_64"
         else if final.isx86 then "i386"
         else {
@@ -123,6 +127,7 @@ rec {
         else throw "Don't know how to run ${final.config} executables.";
 
     } // mapAttrs (n: v: v final.parsed) inspect.predicates
+      // mapAttrs (n: v: v final.platform.gcc.arch or "default") architectures.predicates
       // args;
   in assert final.useAndroidPrebuilt -> final.isAndroid;
      assert lib.foldl

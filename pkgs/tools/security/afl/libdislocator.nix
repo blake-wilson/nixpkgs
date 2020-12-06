@@ -5,7 +5,7 @@ stdenv.mkDerivation {
   pname = "libdislocator";
 
   src = afl.src;
-  sourceRoot = "${afl.name}/libdislocator";
+  sourceRoot = "${afl.src.name}/libdislocator";
 
   makeFlags = [ "PREFIX=$(out)" ];
 
@@ -22,7 +22,7 @@ stdenv.mkDerivation {
   '';
 
   meta = with stdenv.lib; {
-    homepage = "http://lcamtuf.coredump.cx/afl/";
+    homepage = "https://lcamtuf.coredump.cx/afl/";
     description = ''
       Drop-in replacement for the libc allocator which improves
       the odds of bumping into heap-related security bugs in

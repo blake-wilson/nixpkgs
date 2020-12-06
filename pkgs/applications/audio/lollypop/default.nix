@@ -1,17 +1,23 @@
 { lib
 , fetchgit
+, nix-update-script
 , meson
 , ninja
 , pkgconfig
 , python3
 , gtk3
 , gst_all_1
+, libhandy
 , libsecret
 , libsoup
 , appstream-glib
 , desktop-file-utils
 , totem-pl-parser
 , gobject-introspection
+, glib-networking
+, gdk-pixbuf
+, glib
+, pango
 , wrapGAppsHook
 , lastFMSupport ? true
 , youtubeSupport ? true
@@ -19,7 +25,7 @@
 
 python3.pkgs.buildPythonApplication rec  {
   pname = "lollypop";
-  version = "1.2.5";
+  version = "1.4.5";
 
   format = "other";
   doCheck = false;
@@ -28,7 +34,7 @@ python3.pkgs.buildPythonApplication rec  {
     url = "https://gitlab.gnome.org/World/lollypop";
     rev = "refs/tags/${version}";
     fetchSubmodules = true;
-    sha256 = "148p3ab7nnfz13hgjkx1cf2ahq9mgl72csrl35xy6d0nkfqbfr8r";
+    sha256 = "1i5qcpp3fpkda08g6nkiiff8lsjmv5xsvpa0512kigq5z0lsagrx";
   };
 
   nativeBuildInputs = [
@@ -42,6 +48,9 @@ python3.pkgs.buildPythonApplication rec  {
   ];
 
   buildInputs = with gst_all_1; [
+    gdk-pixbuf
+    glib
+    glib-networking
     gst-libav
     gst-plugins-bad
     gst-plugins-base
@@ -49,7 +58,9 @@ python3.pkgs.buildPythonApplication rec  {
     gst-plugins-ugly
     gstreamer
     gtk3
+    libhandy
     libsoup
+    pango
     totem-pl-parser
   ] ++ lib.optional lastFMSupport libsecret;
 
@@ -79,15 +90,22 @@ python3.pkgs.buildPythonApplication rec  {
   # argument
   dontWrapGApps = true;
 
-  makeWrapperArgs = [
-    "\${gappsWrapperArgs[@]}"
-  ];
+  preFixup = ''
+    makeWrapperArgs+=("''${gappsWrapperArgs[@]}")
+  '';
+
+  passthru = {
+    updateScript = nix-update-script {
+      attrPath = pname;
+    };
+  };
+
 
   meta = with lib; {
-    description = "A modern music player for GNOME";
-    homepage = https://wiki.gnome.org/Apps/Lollypop;
-    license = licenses.gpl3Plus;
     changelog = "https://gitlab.gnome.org/World/lollypop/tags/${version}";
+    description = "A modern music player for GNOME";
+    homepage = "https://wiki.gnome.org/Apps/Lollypop";
+    license = licenses.gpl3Plus;
     maintainers = with maintainers; [ worldofpeace ];
     platforms = platforms.linux;
   };

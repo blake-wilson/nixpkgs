@@ -2,9 +2,8 @@
 , fetchFromGitLab
 , meson
 , ninja
-, pkgconfig
+, pkg-config
 , python3
-, libxml2Python
 , docbook_xml_dtd_43
 , docbook_xsl
 , libxslt
@@ -13,16 +12,18 @@
 , withDblatex ? false, dblatex
 }:
 
-stdenv.mkDerivation rec {
+python3.pkgs.buildPythonApplication rec {
   pname = "gtk-doc";
-  version = "1.32";
+  version = "1.33.0";
+
+  format = "other";
 
   src = fetchFromGitLab {
     domain = "gitlab.gnome.org";
     owner = "GNOME";
     repo = pname;
-    rev = "GTK_DOC_${stdenv.lib.replaceStrings ["."] ["_"] version }";
-    sha256 = "14fihxj662gg4ln1ngff6s52zzkpbcc58qa0nxysxypnhp0h4ypk";
+    rev = version;
+    sha256 = "ahOTEWwVVwHt8TDWBnPKHIAUq0GXllEvMRmaKul1Tq0=";
   };
 
   patches = [
@@ -32,36 +33,40 @@ stdenv.mkDerivation rec {
   outputDevdoc = "out";
 
   nativeBuildInputs = [
+    pkg-config
     gettext
     meson
     ninja
+    libxslt # for xsltproc
   ];
 
   buildInputs = [
     docbook_xml_dtd_43
     docbook_xsl
     libxslt
-    pkgconfig
-    python3
-    python3.pkgs.pygments # Needed for https://gitlab.gnome.org/GNOME/gtk-doc/blob/GTK_DOC_1_32/meson.build#L42
-    libxml2Python
-  ]
-  ++ stdenv.lib.optional withDblatex dblatex
-  ;
+  ] ++ stdenv.lib.optionals withDblatex [
+    dblatex
+  ];
+
+  pythonPath = with python3.pkgs; [
+    pygments # Needed for https://gitlab.gnome.org/GNOME/gtk-doc/blob/GTK_DOC_1_32/meson.build#L42
+    (anytree.override { withGraphviz = false; })
+    lxml
+  ];
 
   mesonFlags = [
     "-Dtests=false"
     "-Dyelp_manual=false"
   ];
 
-  # Make pygments available for binaries, python.withPackages creates a wrapper
-  # but scripts are not allowed in shebangs so we link it into sys.path.
-  postInstall = ''
-    ln -s ${python3.pkgs.pygments}/${python3.sitePackages}/* $out/share/gtk-doc/python/
-  '';
-
   doCheck = false; # requires a lot of stuff
   doInstallCheck = false; # fails
+
+  postFixup = ''
+    # Do not propagate Python
+    substituteInPlace $out/nix-support/propagated-build-inputs \
+      --replace "${python3}" ""
+  '';
 
   passthru = {
     # Consumers are expected to copy the m4 files to their source tree, let them reuse the patch

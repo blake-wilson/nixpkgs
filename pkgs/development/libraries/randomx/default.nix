@@ -2,7 +2,7 @@
 
 stdenv.mkDerivation rec {
   pname = "randomX";
-  version = "1.1.6";
+  version = "1.1.8";
 
   nativeBuildInputs = [ cmake ];
 
@@ -10,12 +10,12 @@ stdenv.mkDerivation rec {
     owner = "tevador";
     repo = pname;
     rev = "v${version}";
-    sha256 = "1qd0rbzgxdy87wwy0n6ca29bcq25j5ndnfgmx8iyf225m4rcwngf";
+    sha256 = "13h2cw8drq7xn3v8fbpxrlsl8zq3fs8gd2pc1pv28ahr9qqjz1gc";
   };
 
   meta = with stdenv.lib; {
     description = "Proof of work algorithm based on random code execution";
-    homepage = https://github.com/tevador/RandomX;
+    homepage = "https://github.com/tevador/RandomX";
     license = licenses.bsd3;
     maintainers = with maintainers; [ rnhmjoj ];
     platforms = platforms.unix;

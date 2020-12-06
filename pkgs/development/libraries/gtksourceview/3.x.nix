@@ -1,5 +1,5 @@
 { stdenv, fetchurl, pkgconfig, atk, cairo, glib, gtk3, pango, vala
-, libxml2, perl, intltool, gettext, gnome3, gobject-introspection, dbus, xvfb_run, shared-mime-info }:
+, libxml2, perl, intltool, gettext, gobject-introspection, dbus, xvfb_run, shared-mime-info }:
 
 stdenv.mkDerivation rec {
   pname = "gtksourceview";
@@ -42,17 +42,10 @@ stdenv.mkDerivation rec {
       make check
   '';
 
-  passthru = {
-    updateScript = gnome3.updateScript {
-      packageName = "gtksourceview";
-      attrPath = "gnome3.gtksourceview";
-    };
-  };
-
   meta = with stdenv.lib; {
-    homepage = https://wiki.gnome.org/Projects/GtkSourceView;
+    homepage = "https://wiki.gnome.org/Projects/GtkSourceView";
     platforms = with platforms; linux ++ darwin;
     license = licenses.lgpl21;
-    maintainers = gnome3.maintainers;
+    maintainers = teams.gnome.members;
   };
 }

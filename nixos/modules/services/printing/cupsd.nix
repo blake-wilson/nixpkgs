@@ -112,6 +112,15 @@ in
 
 {
 
+  imports = [
+    (mkChangedOptionModule [ "services" "printing" "gutenprint" ] [ "services" "printing" "drivers" ]
+      (config:
+        let enabled = getAttrFromPath [ "services" "printing" "gutenprint" ] config;
+        in if enabled then [ pkgs.gutenprint ] else [ ]))
+    (mkRemovedOptionModule [ "services" "printing" "cupsFilesConf" ] "")
+    (mkRemovedOptionModule [ "services" "printing" "cupsdConf" ] "")
+  ];
+
   ###### interface
 
   options = {
@@ -141,6 +150,16 @@ in
         example = [ "*:631" ];
         description = ''
           A list of addresses and ports on which to listen.
+        '';
+      };
+
+      allowFrom = mkOption {
+        type = types.listOf types.str;
+        default = [ "localhost" ];
+        example = [ "all" ];
+        apply = concatMapStringsSep "\n" (x: "Allow ${x}");
+        description = ''
+          From which hosts to allow unconditional access.
         '';
       };
 
@@ -279,9 +298,8 @@ in
 
   config = mkIf config.services.printing.enable {
 
-    users.users = singleton
-      { name = "cups";
-        uid = config.ids.uids.cups;
+    users.users.cups =
+      { uid = config.ids.uids.cups;
         group = "lp";
         description = "CUPS printing services";
       };
@@ -395,19 +413,19 @@ in
 
         <Location />
           Order allow,deny
-          Allow localhost
+          ${cfg.allowFrom}
         </Location>
 
         <Location /admin>
           Order allow,deny
-          Allow localhost
+          ${cfg.allowFrom}
         </Location>
 
         <Location /admin/conf>
           AuthType Basic
           Require user @SYSTEM
           Order allow,deny
-          Allow localhost
+          ${cfg.allowFrom}
         </Location>
 
         <Policy default>

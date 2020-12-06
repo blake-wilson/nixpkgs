@@ -39,7 +39,7 @@ lib.makeOverridable (
 , meta ? {}
 , patches ? []
 , gemPath ? []
-, dontStrip ? true
+, dontStrip ? false
 # Assume we don't have to build unless strictly necessary (e.g. the source is a
 # git checkout).
 # If you need to apply patches, make sure to set `dontBuild = false`;
@@ -49,6 +49,11 @@ lib.makeOverridable (
 , propagatedUserEnvPkgs ? []
 , buildFlags ? []
 , passthru ? {}
+# bundler expects gems to be stored in the cache directory for certain actions
+# such as `bundler install --redownload`.
+# At the cost of increasing the store size, you can keep the gems to have closer
+# alignment with what Bundler expects.
+, keepGemCache ? false
 , ...} @ attrs:
 
 let
@@ -205,8 +210,11 @@ stdenv.mkDerivation ((builtins.removeAttrs attrs ["source"]) // {
       $gempkg $gemFlags -- $buildFlags
 
     # looks like useless files which break build repeatability and consume space
-    rm -fv $out/${ruby.gemPath}/doc/*/*/created.rid || true
-    rm -fv $out/${ruby.gemPath}/gems/*/ext/*/mkmf.log || true
+    pushd $out/${ruby.gemPath}
+    rm -fv doc/*/*/created.rid || true
+    rm -fv {gems/*/ext/*,extensions/*/*/*}/{Makefile,mkmf.log,gem_make.out} || true
+    ${if keepGemCache then "" else "rm -fvr cache"}
+    popd
 
     # write out metadata and binstubs
     spec=$(echo $out/${ruby.gemPath}/specifications/*.gemspec)

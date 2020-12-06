@@ -2,13 +2,13 @@
 
 stdenv.mkDerivation rec {
   pname = "abcm2ps";
-  version = "8.14.6";
+  version = "8.14.10";
 
   src = fetchFromGitHub {
     owner = "leesavide";
     repo = "abcm2ps";
     rev = "v${version}";
-    sha256 = "1gqjqbd8wj0655vi8gcg2r5jqzafdlnfjzwa9z331ywhrskpm53w";
+    sha256 = "0x20vmf94n9s4r2q45543yi39fkc0jg9wd1imihjcqmb2sz3x3vm";
   };
 
   configureFlags = [
@@ -24,7 +24,7 @@ stdenv.mkDerivation rec {
   buildInputs = [ freetype pango ];
 
   meta = with stdenv.lib; {
-    homepage = http://moinejf.free.fr/;
+    homepage = "http://moinejf.free.fr/";
     license = licenses.gpl3;
     description = "A command line program which converts ABC to music sheet in PostScript or SVG format";
     platforms = platforms.unix;

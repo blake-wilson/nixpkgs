@@ -3,7 +3,7 @@
 
  buildPythonPackage rec {
   pname = "solo-python";
-  version = "0.0.18";
+  version = "0.0.26";
   format = "flit";
   disabled = pythonOlder "3.6"; # only python>=3.6 is supported
 
@@ -11,7 +11,7 @@
     owner = "solokeys";
     repo = pname;
     rev = version;
-    sha256 = "01mgppjvxlr93vrgz7bzisghpg1vqyaj4cg5wngk0h499iyx4d9q";
+    sha256 = "05rwqrhr1as6zqhg63d6wga7l42jm2azbav5w6ih8mx5zbxf61yz";
   };
 
   # replaced pinned fido, with unrestricted fido version

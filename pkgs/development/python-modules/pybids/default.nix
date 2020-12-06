@@ -2,6 +2,7 @@
 , lib
 , fetchPypi
 , isPy27
+, click
 , num2words
 , numpy
 , scipy
@@ -15,15 +16,16 @@
 }:
 
 buildPythonPackage rec {
-  version = "0.9.5";
+  version = "0.12.3";
   pname = "pybids";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "0e8f8466067ff3023f53661c390c02702fcd5fe712bdd5bf167ffb0c2b920430";
+    sha256 = "a084172ae5b26a5f26b17186ade98400cda52d9244d9f0b329041741ea82b5db";
   };
 
   propagatedBuildInputs = [
+    click
     num2words
     numpy
     scipy
@@ -42,7 +44,7 @@ buildPythonPackage rec {
 
   meta = with lib; {
     description = "Python tools for querying and manipulating BIDS datasets";
-    homepage = https://github.com/bids-standard/pybids;
+    homepage = "https://github.com/bids-standard/pybids";
     license = licenses.mit;
     maintainers = with maintainers; [ jonringer ];
   };

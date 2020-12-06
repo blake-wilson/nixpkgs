@@ -2,11 +2,11 @@
 
 python.pkgs.buildPythonPackage rec {
   pname   = "tld";
-  version = "0.9.8";
+  version = "0.12.2";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "5963b22029e632a17bde87e35a19dc8c5b17266fb8c58e4d550d5593307e3a72";
+    sha256 = "cf8410a7ed7b9477f563fa158dabef5117d8374cba55f65142ba0af6dcd15d4d";
   };
 
   propagatedBuildInputs = with python.pkgs; [ six ];
@@ -30,10 +30,10 @@ python.pkgs.buildPythonPackage rec {
   ];
 
   meta = with stdenv.lib; {
-    homepage = https://github.com/barseghyanartur/tld;
+    homepage = "https://github.com/barseghyanartur/tld";
     description = "Extracts the top level domain (TLD) from the URL given";
     license = licenses.lgpl21;
-    maintainers = with maintainers; [ genesis ];
+    maintainers = with maintainers; [ ];
   };
 
 }

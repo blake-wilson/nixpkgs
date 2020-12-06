@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, pkgconfig, systemd, utillinux, coreutils, wall, hostname, man
+{ stdenv, fetchurl, pkgconfig, systemd, util-linux, coreutils, wall, hostname, man
 , enableCgiScripts ? true, gd
 }:
 
@@ -14,7 +14,7 @@ stdenv.mkDerivation rec {
   };
 
   nativeBuildInputs = [ pkgconfig ];
-  buildInputs = [ utillinux man ] ++ stdenv.lib.optional enableCgiScripts gd;
+  buildInputs = [ util-linux man ] ++ stdenv.lib.optional enableCgiScripts gd;
 
   prePatch = ''
     sed -e "s,\$(INSTALL_PROGRAM) \$(STRIP),\$(INSTALL_PROGRAM)," \
@@ -54,7 +54,7 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "Daemon for controlling APC UPSes";
-    homepage = http://www.apcupsd.com/;
+    homepage = "http://www.apcupsd.com/";
     license = licenses.gpl2;
     platforms = platforms.linux;
     maintainers = [ maintainers.bjornfor ];

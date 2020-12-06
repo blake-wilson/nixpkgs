@@ -1,8 +1,10 @@
-{ stdenv, fetchFromGitHub
+{ lib, stdenv, fetchFromGitHub
 , vala, cmake, ninja, wrapGAppsHook, pkgconfig, gettext
 , gobject-introspection, gnome3, glib, gdk-pixbuf, gtk3, glib-networking
 , xorg, libXdmcp, libxkbcommon
 , libnotify, libsoup, libgee
+, librsvg, libsignal-protocol-c
+, fetchpatch
 , libgcrypt
 , epoxy
 , at-spi2-core
@@ -14,15 +16,15 @@
 , icu
  }:
 
-stdenv.mkDerivation {
-  name = "dino-unstable-2019-10-28";
+stdenv.mkDerivation rec {
+  pname = "dino";
+  version = "0.2.0";
 
   src = fetchFromGitHub {
     owner = "dino";
     repo = "dino";
-    rev = "388cc56674487e7b9e339637369fc55f0e271daf";
-    sha256 = "1v8rnjbzi8qhwb1fv787byxk8ygfs16z2j64h0s6sd3asr4n0kz1";
-    fetchSubmodules = true;
+    rev = "v${version}";
+    sha256 = "0wy1hb3kz3k4gqqwx308n37cqag2d017jwfz0b5s30nkx2pbwspw";
   };
 
   nativeBuildInputs = [
@@ -49,23 +51,39 @@ stdenv.mkDerivation {
     libgcrypt
     libsoup
     pcre
-    xorg.libxcb
-    xorg.libpthreadstubs
-    libXdmcp
-    libxkbcommon
     epoxy
     at-spi2-core
     dbus
     icu
+    libsignal-protocol-c
+    librsvg
+  ] ++ lib.optionals (!stdenv.isDarwin) [
+    xorg.libxcb
+    xorg.libpthreadstubs
+    libXdmcp
+    libxkbcommon
   ];
 
-  enableParallelBuilding = true;
+  # Dino looks for plugins with a .so filename extension, even on macOS where
+  # .dylib is appropriate, and despite the fact that it builds said plugins with
+  # that as their filename extension
+  #
+  # Therefore, on macOS rename all of the plugins to use correct names that Dino
+  # will load
+  #
+  # See https://github.com/dino/dino/wiki/macOS
+  postFixup = lib.optionalString (stdenv.isDarwin) ''
+    cd "$out/lib/dino/plugins/"
+    for f in *.dylib; do
+      mv "$f" "$(basename "$f" .dylib).so"
+    done
+  '';
 
   meta = with stdenv.lib; {
     description = "Modern Jabber/XMPP Client using GTK/Vala";
-    homepage = https://github.com/dino/dino;
+    homepage = "https://github.com/dino/dino";
     license = licenses.gpl3;
-    platforms = platforms.linux;
-    maintainers = [ maintainers.mic92 ];
+    platforms = platforms.linux ++ platforms.darwin;
+    maintainers = with maintainers; [ mic92 qyliss ];
   };
 }

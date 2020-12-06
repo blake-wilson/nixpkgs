@@ -1,7 +1,7 @@
 { lib
 , stdenv
 , buildPythonPackage
-, fetchPypi
+, fetchFromGitHub
 , aiofiles
 , graphene
 , itsdangerous
@@ -9,21 +9,26 @@
 , pyyaml
 , requests
 , ujson
+, python-multipart
 , pytest
-, python
 , uvicorn
 , isPy27
 , darwin
+, databases
+, aiosqlite
 }:
 
 buildPythonPackage rec {
   pname = "starlette";
-  version = "0.12.13";
+
+  version = "0.13.8";
   disabled = isPy27;
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "9597bc28e3c4659107c1c4a45ec32dc45e947d78fe56230222be673b2c36454a";
+  src = fetchFromGitHub {
+    owner = "encode";
+    repo = pname;
+    rev = version;
+    sha256 = "11i0yd8cqwscixajl734g11vf8pghki11c81chzfh8ifmj6mf9jk";
   };
 
   propagatedBuildInputs = [
@@ -35,17 +40,22 @@ buildPythonPackage rec {
     requests
     ujson
     uvicorn
+    python-multipart
+    databases
   ] ++ stdenv.lib.optional stdenv.isDarwin [ darwin.apple_sdk.frameworks.ApplicationServices ];
 
+  checkInputs = [
+    pytest
+    aiosqlite
+  ];
+
   checkPhase = ''
-    ${python.interpreter} -c """
-from starlette.applications import Starlette
-app = Starlette(debug=True)
-"""
+    pytest --ignore=tests/test_graphql.py
   '';
+  pythonImportsCheck = [ "starlette" ];
 
   meta = with lib; {
-    homepage = https://www.starlette.io/;
+    homepage = "https://www.starlette.io/";
     description = "The little ASGI framework that shines";
     license = licenses.bsd3;
     maintainers = with maintainers; [ wd15 ];

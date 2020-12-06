@@ -1,7 +1,7 @@
 { config, fetchurl, stdenv, wrapGAppsHook, autoreconfHook
-, curl, dbus, dbus-glib, enchant, gtk2, gnutls, gnupg, gpgme
+, curl, dbus, dbus-glib, enchant, gtk2, gnutls, gnupg, gpgme, gumbo
 , libarchive, libcanberra-gtk2, libetpan, libnotify, libsoup, libxml2, networkmanager
-, openldap, perl, pkgconfig, poppler, python, shared-mime-info, webkitgtk24x-gtk2
+, openldap, perl, pkgconfig, poppler, python, shared-mime-info
 , glib-networking, gsettings-desktop-schemas, libSM, libytnef, libical
 # Build options
 # TODO: A flag to build the manual.
@@ -13,7 +13,7 @@
 , enableNetworkManager ? config.networking.networkmanager.enable or false
 , enablePgp ? true
 , enablePluginArchive ? false
-, enablePluginFancy ? false
+, enablePluginLitehtmlViewer ? false
 , enablePluginNotificationDialogs ? true
 , enablePluginNotificationSounds ? true
 , enablePluginPdf ? false
@@ -31,20 +31,22 @@ with stdenv.lib;
 
 stdenv.mkDerivation rec {
   pname = "claws-mail";
-  version = "3.17.4";
+  version = "3.17.7";
 
   src = fetchurl {
-    url = "http://www.claws-mail.org/download.php?file=releases/claws-mail-${version}.tar.xz";
-    sha256 = "00mfhaac16sv67rwiq98hr4nl5zmd1h2afswwwksdcsi3q9x23jr";
+    url = "https://www.claws-mail.org/download.php?file=releases/claws-mail-${version}.tar.xz";
+    sha256 = "1j6x09621wng0lavh53nwzh9vqjzpspl8kh5azh7kbihpi4ldfb0";
   };
 
   outputs = [ "out" "dev" ];
 
-  patches = [ ./mime.patch ];
+  patches = [
+    ./mime.patch
+  ];
 
   preConfigure = ''
     # autotools check tries to dlopen libpython as a requirement for the python plugin
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${python}/lib
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH''${LD_LIBRARY_PATH:+:}${python}/lib
   '';
 
   postPatch = ''
@@ -64,12 +66,11 @@ stdenv.mkDerivation rec {
     ++ optional enablePluginArchive libarchive
     ++ optional enablePluginNotificationSounds libcanberra-gtk2
     ++ optional enablePluginNotificationDialogs libnotify
-    ++ optional enablePluginFancy libsoup
+    ++ optional enablePluginLitehtmlViewer gumbo
     ++ optional enablePluginRssyl libxml2
     ++ optional enableNetworkManager networkmanager
     ++ optional enableLdap openldap
     ++ optional enablePluginPdf poppler
-    ++ optional enablePluginFancy webkitgtk24x-gtk2
     ++ optional enablePluginVcalendar libical;
 
   configureFlags =
@@ -81,7 +82,7 @@ stdenv.mkDerivation rec {
       "--disable-pgpmime-plugin"
     ]
     ++ optional (!enablePluginArchive) "--disable-archive-plugin"
-    ++ optional (!enablePluginFancy) "--disable-fancy-plugin"
+    ++ optional (!enablePluginLitehtmlViewer) "--disable-litehtml_viewer-plugin"
     ++ optional (!enablePluginPdf) "--disable-pdf_viewer-plugin"
     ++ optional (!enablePluginPython) "--disable-python-plugin"
     ++ optional (!enablePluginRavatar) "--disable-libravatar-plugin"
@@ -108,9 +109,9 @@ stdenv.mkDerivation rec {
 
   meta = {
     description = "The user-friendly, lightweight, and fast email client";
-    homepage = https://www.claws-mail.org/;
+    homepage = "https://www.claws-mail.org/";
     license = licenses.gpl3;
     platforms = platforms.linux;
-    maintainers = with maintainers; [ fpletz globin ];
+    maintainers = with maintainers; [ fpletz globin orivej ];
   };
 }

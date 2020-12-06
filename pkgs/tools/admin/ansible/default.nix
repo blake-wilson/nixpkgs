@@ -1,27 +1,32 @@
-{ python3Packages, fetchurl }:
+{ python3Packages, fetchurl, fetchFromGitHub }:
 
-{
-  ansible = with python3Packages; toPythonApplication ansible;
+rec {
+  ansible = ansible_2_10;
 
-  ansible_2_8 = with python3Packages; toPythonApplication ansible;
-
-  ansible_2_7 = with python3Packages; toPythonApplication (ansible.overridePythonAttrs(old: rec {
+  # The python module stays at v2.9.x until the related package set has caught up. Therefore v2.10 gets an override
+  # for now.
+  ansible_2_10 = python3Packages.toPythonApplication (python3Packages.ansible.overridePythonAttrs (old: rec {
     pname = "ansible";
-    version = "2.7.11";
+    version = "2.10.0";
 
-    src = fetchurl {
-      url = "https://releases.ansible.com/ansible/${pname}-${version}.tar.gz";
-      sha256 = "0zipzm9al6k74h88b6zkddpcbxqs4cms7lidid6wn1vx3d3dxrp7";
+    # TODO: migrate to fetchurl, when release becomes available on releases.ansible.com
+    src = fetchFromGitHub {
+      owner = pname;
+      repo = pname;
+      rev = "v${version}";
+      sha256 = "0k9rs5ajx0chaq0xr1cj4x7fr5n8kd4y856miss6k01iv2m7yx42";
     };
   }));
 
-  ansible_2_6 = with python3Packages; toPythonApplication (ansible.overridePythonAttrs(old: rec {
+  ansible_2_9 = python3Packages.toPythonApplication python3Packages.ansible;
+
+  ansible_2_8 = python3Packages.toPythonApplication (python3Packages.ansible.overridePythonAttrs (old: rec {
     pname = "ansible";
-    version = "2.6.17";
+    version = "2.8.14";
 
     src = fetchurl {
       url = "https://releases.ansible.com/ansible/${pname}-${version}.tar.gz";
-      sha256 = "0ixr3g1nb02xblqyk87bzag8sj8phy37m24xflabfl1k2zfh0313";
+      sha256 = "19ga0c9qs2b216qjg5k2yknz8ksjn8qskicqspg2d4b8x2nr1294";
     };
   }));
 }

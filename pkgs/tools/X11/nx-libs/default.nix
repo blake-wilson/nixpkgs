@@ -1,13 +1,15 @@
-{ stdenv, autoconf, automake, fetchFromGitHub, libgcc, libjpeg_turbo,
-  libpng, libtool, libxml2, pkgconfig, which, xorg }:
+{ stdenv, autoconf, automake, fetchFromGitHub, libgcc, libjpeg_turbo
+, libpng, libtool, libxml2, pkgconfig, which, xorg
+, libtirpc
+}:
 stdenv.mkDerivation rec {
   pname = "nx-libs";
-  version = "3.5.99.22";
+  version = "3.5.99.25";
   src = fetchFromGitHub {
     owner = "ArcticaProject";
     repo = "nx-libs";
     rev = version;
-    sha256 = "0ipq93s2knv2xbb919d777mrc7v4k9l5bk0d4x6ji1bgispfa7jl";
+    sha256 = "01aqdwy0i4nxdyfa24bwnrqjz93q0idihdaqals2yjqpg160nwfc";
   };
 
   nativeBuildInputs = [ autoconf automake libtool pkgconfig which
@@ -15,7 +17,11 @@ stdenv.mkDerivation rec {
   buildInputs = [ libgcc libjpeg_turbo libpng libxml2 xorg.fontutil
     xorg.libXcomposite xorg.libXdamage xorg.libXdmcp xorg.libXext xorg.libXfont2
     xorg.libXinerama xorg.libXpm xorg.libXrandr xorg.libXtst xorg.pixman
-    xorg.xkbcomp xorg.xkeyboardconfig ];
+    xorg.xkbcomp xorg.xkeyboardconfig libtirpc
+  ];
+
+  NIX_CFLAGS_COMPILE = [ "-I${libtirpc.dev}/include/tirpc" ];
+  NIX_LDFLAGS = [ "-ltirpc" ];
 
   enableParallelBuilding = true;
 
@@ -36,7 +42,7 @@ stdenv.mkDerivation rec {
 
   meta = {
     description = "NX X server based on Xnest";
-    homepage = https://github.com/ArcticaProject/nx-libs;
+    homepage = "https://github.com/ArcticaProject/nx-libs";
     license = stdenv.lib.licenses.gpl2;
     maintainers = with stdenv.lib.maintainers; [ jD91mZM2 ];
     platforms = stdenv.lib.platforms.linux;

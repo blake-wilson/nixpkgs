@@ -1,16 +1,27 @@
-{ stdenv, lib, fetchurl, libftdi1, libusb1, pkgconfig, hidapi }:
+{ stdenv
+, lib
+, fetchgit
+, autoreconfHook
+, pkg-config
+, hidapi
+, libftdi1
+, libusb1
+}:
 
 stdenv.mkDerivation rec {
   pname = "openocd";
-  version = "0.10.0";
+  version = "unstable-2020-11-11";
 
-  src = fetchurl {
-    url = "mirror://sourceforge/openocd/openocd-${version}.tar.bz2";
-    sha256 = "1bhn2c85rdz4gf23358kg050xlzh7yxbbwmqp24c0akmh3bff4kk";
+  src = fetchgit {
+    url = "https://git.code.sf.net/p/openocd/code";
+    rev = "06c7a53f1fff20bcc4be9e63f83ae98664777f34";
+    sha256 = "0g0w7g94r88ylfpwswnhh8czlf5iqvd991ssn4gfcfd725lpdb01";
+    fetchSubmodules = true;
   };
 
-  nativeBuildInputs = [ pkgconfig ];
-  buildInputs = [ libftdi1 libusb1 hidapi ];
+  nativeBuildInputs = [ autoreconfHook pkg-config ];
+
+  buildInputs = [ hidapi libftdi1 libusb1 ];
 
   configureFlags = [
     "--enable-jtag_vpi"
@@ -26,10 +37,8 @@ stdenv.mkDerivation rec {
   ];
 
   NIX_CFLAGS_COMPILE = lib.optionals stdenv.cc.isGNU [
-    "-Wno-implicit-fallthrough"
-    "-Wno-format-truncation"
-    "-Wno-format-overflow"
-    "-Wno-error=tautological-compare"
+    "-Wno-error=cpp"
+    "-Wno-error=strict-prototypes" # fixes build failure with hidapi 0.10.0
   ];
 
   postInstall = lib.optionalString stdenv.isLinux ''
@@ -53,7 +62,7 @@ stdenv.mkDerivation rec {
       "remote target" for source-level debugging of embedded systems using the
       GNU GDB program.
     '';
-    homepage = http://openocd.sourceforge.net/;
+    homepage = "https://openocd.sourceforge.net/";
     license = licenses.gpl2Plus;
     maintainers = with maintainers; [ bjornfor ];
     platforms = platforms.unix;

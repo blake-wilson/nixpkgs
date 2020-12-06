@@ -8,11 +8,11 @@
 
 buildPythonPackage rec {
   pname = "google-cloud-vision";
-  version = "0.39.0";
+  version = "1.0.0";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "f33aea6721d453901ded268dee61a01ab77d4cd215a76edc3cc61b6028299d3e";
+    sha256 = "18e78b190c81d200ae4f6a46d4af57422d68b3b05b0540d5cd1806e3874142bf";
   };
 
   checkInputs = [ mock ];
@@ -26,7 +26,7 @@ buildPythonPackage rec {
 
   meta = with stdenv.lib; {
     description = "Cloud Vision API API client library";
-    homepage = https://github.com/GoogleCloudPlatform/google-cloud-python;
+    homepage = "https://github.com/GoogleCloudPlatform/google-cloud-python";
     license = licenses.asl20;
     maintainers = [ maintainers.costrouc ];
   };

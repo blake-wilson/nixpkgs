@@ -36,16 +36,15 @@ stdenv.mkDerivation rec {
     cp ${mimisrc}/xdg-open $out/bin/xdg-open
   '' + ''
     sed  '2s#.#\
-    cut()   { ${coreutils}/bin/cut  "$@"; }\
     sed()   { ${gnused}/bin/sed     "$@"; }\
     grep()  { ${gnugrep}/bin/grep   "$@"; }\
     egrep() { ${gnugrep}/bin/egrep  "$@"; }\
     file()  { ${file}/bin/file      "$@"; }\
     awk()   { ${gawk}/bin/awk       "$@"; }\
-    sort()  { ${coreutils}/bin/sort "$@"; }\
     xset()  { ${xset}/bin/xset      "$@"; }\
     perl()  { PERL5LIB=${perlPath} ${perlPackages.perl}/bin/perl "$@"; }\
     mimetype() { ${perlPackages.FileMimeInfo}/bin/mimetype "$@"; }\
+    PATH=$PATH:'$out'/bin:${coreutils}/bin\
     &#' -i "$out"/bin/*
 
     substituteInPlace $out/bin/xdg-open \
@@ -57,11 +56,11 @@ stdenv.mkDerivation rec {
     substituteInPlace $out/bin/xdg-email \
       --replace "/bin/echo" "${coreutils}/bin/echo"
 
-    sed 's# which # type -P #g' -i "$out"/bin/*
+    sed 's|\bwhich\b|type -P|g' -i "$out"/bin/*
   '';
 
   meta = with stdenv.lib; {
-    homepage = https://www.freedesktop.org/wiki/Software/xdg-utils/;
+    homepage = "https://www.freedesktop.org/wiki/Software/xdg-utils/";
     description = "A set of command line tools that assist applications with a variety of desktop integration tasks";
     license = if mimiSupport then licenses.gpl2 else licenses.free;
     maintainers = [ maintainers.eelco ];

@@ -1,19 +1,26 @@
-{ stdenv, fetchurl, gtk3
-, pkgconfig, gnome3, dbus, xvfb_run }:
-let
-  version = "5.0.1";
+{ stdenv
+, fetchurl
+, gtk3
+, pkgconfig
+, gobject-introspection
+, gnome3
+, dbus
+, xvfb_run
+}:
+
+stdenv.mkDerivation rec {
   pname = "amtk";
-in stdenv.mkDerivation {
-  name = "${pname}-${version}";
+  version = "5.2.0";
 
   src = fetchurl {
     url = "mirror://gnome/sources/${pname}/${stdenv.lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
-    sha256 = "09yy95w1s83c43mh9vha1jbb780yighf5pd2j0ygjmc68sjg871d";
+    sha256 = "0y3hmmflw4i0y0yb9a8rlihbv3cbwnvdcf1n5jycwzpq9jxla1c2";
   };
 
   nativeBuildInputs = [
     pkgconfig
     dbus
+    gobject-introspection
   ];
 
   buildInputs = [
@@ -31,7 +38,7 @@ in stdenv.mkDerivation {
   passthru.updateScript = gnome3.updateScript { packageName = pname; };
 
   meta = with stdenv.lib; {
-    homepage = https://wiki.gnome.org/Projects/Amtk;
+    homepage = "https://wiki.gnome.org/Projects/Amtk";
     description = "Actions, Menus and Toolbars Kit for GTK applications";
     maintainers = [ maintainers.manveru ];
     license = licenses.lgpl21Plus;

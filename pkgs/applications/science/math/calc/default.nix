@@ -1,4 +1,4 @@
-{ stdenv, lib, fetchurl, utillinux, makeWrapper
+{ stdenv, lib, fetchurl, util-linux, makeWrapper
 , enableReadline ? true, readline, ncurses }:
 
 stdenv.mkDerivation rec {
@@ -19,7 +19,7 @@ stdenv.mkDerivation rec {
       --replace '-install_name ''${LIBDIR}/libcustcalc''${LIB_EXT_VERSION}' '-install_name ''${T}''${LIBDIR}/libcustcalc''${LIB_EXT_VERSION}'
   '';
 
-  buildInputs = [ utillinux makeWrapper ]
+  buildInputs = [ util-linux makeWrapper ]
              ++ lib.optionals enableReadline [ readline ncurses ];
 
   makeFlags = [
@@ -40,7 +40,7 @@ stdenv.mkDerivation rec {
 
   meta = with lib; {
     description = "C-style arbitrary precision calculator";
-    homepage = http://www.isthe.com/chongo/tech/comp/calc/;
+    homepage = "http://www.isthe.com/chongo/tech/comp/calc/";
     license = licenses.lgpl21;
     maintainers = with maintainers; [ matthewbauer ];
     platforms = platforms.all;

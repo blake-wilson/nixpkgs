@@ -1,17 +1,17 @@
 { stdenv, fetchurl, makeDesktopItem, wrapGAppsHook
-, atk, at-spi2-atk, alsaLib, cairo, cups, dbus, expat, gdk-pixbuf, glib, gtk3
-, freetype, fontconfig, nss, nspr, pango, udev, libX11, libxcb, libXi
+, atk, at-spi2-atk, at-spi2-core, alsaLib, cairo, cups, dbus, expat, gdk-pixbuf, glib, gtk3
+, freetype, fontconfig, nss, nspr, pango, udev, libuuid, libX11, libxcb, libXi
 , libXcursor, libXdamage, libXrandr, libXcomposite, libXext, libXfixes
 , libXrender, libXtst, libXScrnSaver
 }:
 
 stdenv.mkDerivation rec {
   pname = "postman";
-  version = "7.12.0";
+  version = "7.36.0";
 
   src = fetchurl {
     url = "https://dl.pstmn.io/download/version/${version}/linux64";
-    sha256 = "0sz7cidajrsj43vq5g8jrkxlrp97r7n8dfr9gp8l0wxnidiqm401";
+    sha256 = "1wdbwlli9lzxxcwbc94fybfq6ipzvsv0waqcr1mjqzlfjqaqgrsb";
     name = "${pname}.tar.gz";
   };
 
@@ -25,13 +25,14 @@ stdenv.mkDerivation rec {
     comment = "API Development Environment";
     desktopName = "Postman";
     genericName = "Postman";
-    categories = "Application;Development;";
+    categories = "Development;";
   };
 
   buildInputs = [
     stdenv.cc.cc.lib
     atk
     at-spi2-atk
+    at-spi2-core
     alsaLib
     cairo
     cups
@@ -46,6 +47,7 @@ stdenv.mkDerivation rec {
     nspr
     pango
     udev
+    libuuid
     libX11
     libxcb
     libXi
@@ -92,7 +94,7 @@ stdenv.mkDerivation rec {
   '';
 
   meta = with stdenv.lib; {
-    homepage = https://www.getpostman.com;
+    homepage = "https://www.getpostman.com";
     description = "API Development Environment";
     license = licenses.postman;
     platforms = [ "x86_64-linux" ];

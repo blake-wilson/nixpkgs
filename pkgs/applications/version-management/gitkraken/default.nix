@@ -1,9 +1,9 @@
 { stdenv, libXcomposite, libgnome-keyring, makeWrapper, udev, curl, alsaLib
 , libXfixes, atk, gtk3, libXrender, pango, gnome3, cairo, freetype, fontconfig
 , libX11, libXi, libxcb, libXext, libXcursor, glib, libXScrnSaver, libxkbfile, libXtst
-, nss, nspr, cups, fetchurl, expat, gdk-pixbuf, libXdamage, libXrandr, dbus
-, dpkg, makeDesktopItem, openssl, wrapGAppsHook, at-spi2-atk, libuuid
-, e2fsprogs, krb5
+, nss, nspr, cups, fetchzip, expat, gdk-pixbuf, libXdamage, libXrandr, dbus
+, makeDesktopItem, openssl, wrapGAppsHook, at-spi2-atk, at-spi2-core, libuuid
+, e2fsprogs, krb5, libdrm, mesa
 }:
 
 with stdenv.lib;
@@ -13,12 +13,15 @@ let
 in
 stdenv.mkDerivation rec {
   pname = "gitkraken";
-  version = "6.3.1";
+  version = "7.4.1";
 
-  src = fetchurl {
-    url = "https://release.axocdn.com/linux/GitKraken-v${version}.deb";
-    sha256 = "071i3z6jym6f5nfy2mq36m45jywpk53w1vpzr2n599pabdkavj89";
+  src = fetchzip {
+    url = "https://release.axocdn.com/linux/GitKraken-v${version}.tar.gz";
+    sha256 = "1c9cyxx5sqvnilf6xp3ildq3lwl6mj8v1vl0wzyjpaiqky99lj9p";
   };
+
+  dontBuild = true;
+  dontConfigure = true;
 
   libPath = makeLibraryPath [
     stdenv.cc.cc.lib
@@ -54,9 +57,12 @@ stdenv.mkDerivation rec {
     libgnome-keyring
     openssl
     at-spi2-atk
+    at-spi2-core
     libuuid
     e2fsprogs
     krb5
+    libdrm
+    mesa
   ];
 
   desktopItem = makeDesktopItem {
@@ -65,31 +71,31 @@ stdenv.mkDerivation rec {
     icon = "gitkraken";
     desktopName = "GitKraken";
     genericName = "Git Client";
-    categories = "Application;Development;";
+    categories = "Development;";
     comment = "Graphical Git client from Axosoft";
   };
 
-  nativeBuildInputs = [ dpkg makeWrapper wrapGAppsHook ];
+  nativeBuildInputs = [ makeWrapper wrapGAppsHook ];
   buildInputs = [ gtk3 gnome3.adwaita-icon-theme ];
-
-  unpackCmd = ''
-    mkdir out
-    dpkg -x $curSrc out
-  '';
 
   installPhase = ''
     runHook preInstall
-    mkdir $out
-    pushd usr
-    pushd share
-    substituteInPlace applications/gitkraken.desktop \
-      --replace /usr/share/gitkraken $out/bin
-    popd
-    rm -rf bin/gitkraken share/lintian
-    cp -av share bin $out/
-    popd
 
+    mkdir -p $out/share/gitkraken/
+    cp -R $src/* $out/share/gitkraken/
+
+    mkdir -p $out/bin
     ln -s $out/share/gitkraken/gitkraken $out/bin/gitkraken
+
+    mkdir -p $out/share/applications
+    cp ${desktopItem}/share/applications/* $out/share/applications/
+
+    substituteInPlace $out/share/applications/gitkraken.desktop \
+      --replace $out/usr/share/gitkraken $out/bin
+
+    mkdir -p $out/share/pixmaps
+    cp gitkraken.png $out/share/pixmaps/gitkraken.png
+
     runHook postInstall
   '';
 
@@ -104,7 +110,7 @@ stdenv.mkDerivation rec {
   '';
 
   meta = {
-    homepage = https://www.gitkraken.com/;
+    homepage = "https://www.gitkraken.com/";
     description = "The downright luxurious and most popular Git client for Windows, Mac & Linux";
     license = licenses.unfree;
     platforms = platforms.linux;

@@ -12,7 +12,7 @@
 , pythonPackages
 , uhd
 , log4cpp
-, openblas
+, blas, lapack
 , matio
 , pugixml
 , protobuf
@@ -20,13 +20,13 @@
 
 stdenv.mkDerivation rec {
   pname = "gnss-sdr";
-  version = "0.0.11";
+  version = "0.0.13";
 
   src = fetchFromGitHub {
     owner = "gnss-sdr";
     repo = "gnss-sdr";
     rev = "v${version}";
-    sha256 = "0ajj0wx68yyzigppxxa1wag3hzkrjj8dqq8k28rj0jhp8a6bw2q7";
+    sha256 = "0a3k47fl5dizzhbqbrbmckl636lznyjby2d2nz6fz21637hvrnby";
   };
 
   buildInputs = [
@@ -41,12 +41,13 @@ stdenv.mkDerivation rec {
     orc
     pkgconfig
     pythonPackages.Mako
+    pythonPackages.six
 
     # UHD support is optional, but gnuradio is built with it, so there's
     # nothing to be gained by leaving it out.
     uhd
     log4cpp
-    openblas
+    blas lapack
     matio
     pugixml
     protobuf
@@ -63,8 +64,8 @@ stdenv.mkDerivation rec {
     # armadillo is built using both, so skip checking for them.
     "-DBLAS=YES"
     "-DLAPACK=YES"
-    "-DBLAS_LIBRARIES=-lopenblas"
-    "-DLAPACK_LIBRARIES=-lopenblas"
+    "-DBLAS_LIBRARIES=-lblas"
+    "-DLAPACK_LIBRARIES=-llapack"
 
     # Similarly, it doesn't actually use gfortran despite checking for
     # its presence.
@@ -73,7 +74,7 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "An open source Global Navigation Satellite Systems software-defined receiver";
-    homepage = https://gnss-sdr.org/;
+    homepage = "https://gnss-sdr.org/";
     license = licenses.gpl3Plus;
     platforms = platforms.linux;
   };

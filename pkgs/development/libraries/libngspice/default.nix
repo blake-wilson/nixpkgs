@@ -4,11 +4,11 @@
 # the ngspice derivation.
 stdenv.mkDerivation rec {
   pname = "libngspice";
-  version = "30";
+  version = "33";
 
   src = fetchurl {
     url = "mirror://sourceforge/ngspice/ngspice-${version}.tar.gz";
-    sha256 = "15v0jdfy2a2zxp8dmy04fdp7w7a4vwvffcwa688r81b86wphxzh8";
+    sha256 = "1wa1hmpn13spmxqgbb1m7vgy32mwvjqwrxhymzll8z65q5nbd7dr";
   };
 
   nativeBuildInputs = [ flex bison ];
@@ -18,9 +18,9 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "The Next Generation Spice (Electronic Circuit Simulator)";
-    homepage = http://ngspice.sourceforge.net;
+    homepage = "http://ngspice.sourceforge.net";
     license = with licenses; [ bsd3 gpl2Plus lgpl2Plus ]; # See https://sourceforge.net/p/ngspice/ngspice/ci/master/tree/COPYING
     maintainers = with maintainers; [ bgamari ];
-    platforms = platforms.linux;
+    platforms = platforms.unix;
   };
 }

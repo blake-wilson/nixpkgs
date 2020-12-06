@@ -8,12 +8,12 @@
 
 buildPythonPackage rec {
   pname = "imbalanced-learn";
-  version = "0.5.0";
+  version = "0.7.0";
   disabled = isPy27; # scikit-learn>=0.21 doesn't work on python2
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "1m8r055mvkws0s449s1dyrkgricls6basnszwbwqwrw6g19n1xsx";
+    sha256 = "da59de0d1c0fa66f62054dd9a0a295a182563aa1abbb3bf9224a3678fcfe8fa4";
   };
 
   propagatedBuildInputs = [ scikitlearn ];
@@ -30,7 +30,7 @@ buildPythonPackage rec {
 
   meta = with stdenv.lib; {
     description = "Library offering a number of re-sampling techniques commonly used in datasets showing strong between-class imbalance";
-    homepage = https://github.com/scikit-learn-contrib/imbalanced-learn;
+    homepage = "https://github.com/scikit-learn-contrib/imbalanced-learn";
     license = licenses.mit;
   };
 }

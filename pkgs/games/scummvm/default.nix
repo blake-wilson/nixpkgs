@@ -4,11 +4,11 @@
 
 stdenv.mkDerivation rec {
   pname = "scummvm";
-  version = "2.1.0";
+  version = "2.2.0";
 
   src = fetchurl {
     url = "http://scummvm.org/frs/scummvm/${version}/${pname}-${version}.tar.xz";
-    sha256 = "6b50c6596a1536b52865f556dc05ded20f86b6ffabe4bccbd746b5587b15f727";
+    sha256 = "FGllflk72Ky8+sC4ObCG9kDr8SBjPpPxFsq2UrWyc4c=";
   };
 
   nativeBuildInputs = [ nasm ];
@@ -34,7 +34,7 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "Program to run certain classic graphical point-and-click adventure games (such as Monkey Island)";
-    homepage = https://www.scummvm.org/;
+    homepage = "https://www.scummvm.org/";
     license = licenses.gpl2;
     maintainers = [ maintainers.peterhoeg ];
     platforms = platforms.linux;

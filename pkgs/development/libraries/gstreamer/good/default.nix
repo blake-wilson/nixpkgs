@@ -1,9 +1,10 @@
 { stdenv
 , fetchurl
 , meson
+, nasm
 , ninja
 , pkgconfig
-, python
+, python3
 , gst-plugins-base
 , orc
 , bzip2
@@ -29,42 +30,45 @@
 , mpg123
 , twolame
 , gtkSupport ? false, gtk3 ? null
-  # As of writing, jack2 incurs a Qt dependency (big!) via `ffado`.
-  # In the future we should probably split `ffado`.
-, enableJack ? false, jack2
+, raspiCameraSupport ? false, libraspberrypi ? null
+, enableJack ? true, libjack2
 , libXdamage
 , libXext
 , libXfixes
 , ncurses
+, wayland
+, wayland-protocols
 , xorg
 , libgudev
 , wavpack
 }:
 
 assert gtkSupport -> gtk3 != null;
+assert raspiCameraSupport -> ((libraspberrypi != null) && stdenv.isLinux && stdenv.isAarch64);
 
 let
   inherit (stdenv.lib) optionals;
 in
 stdenv.mkDerivation rec {
   pname = "gst-plugins-good";
-  version = "1.16.1";
+  version = "1.18.1";
 
   outputs = [ "out" "dev" ];
 
   src = fetchurl {
     url = "${meta.homepage}/src/${pname}/${pname}-${version}.tar.xz";
-    sha256 = "07wgz9anf4ram2snp8n1wv6l0q3pd00iaw8bvw3wgklg05lvxflz";
+    sha256 = "0v329xi4qhlfh9aksfyviryqk9lclm4wj1lxrjnbdv4haldfj472";
   };
-
-  patches = [ ./fix_pkgconfig_includedir.patch ];
 
   nativeBuildInputs = [
     pkgconfig
-    python
+    python3
     meson
     ninja
     gettext
+    nasm
+  ] ++ optionals stdenv.isLinux [
+    wayland-protocols
   ];
 
   buildInputs = [
@@ -93,6 +97,8 @@ stdenv.mkDerivation rec {
     xorg.libXfixes
     xorg.libXdamage
     wavpack
+  ] ++ optionals raspiCameraSupport [
+    libraspberrypi
   ] ++ optionals gtkSupport [
     # for gtksink
     gtk3
@@ -104,17 +110,19 @@ stdenv.mkDerivation rec {
     libavc1394
     libiec61883
     libgudev
-  ] ++ optionals (stdenv.isLinux && enableJack) [
-    jack2
+    wayland
+  ] ++ optionals enableJack [
+    libjack2
   ];
 
   mesonFlags = [
     "-Dexamples=disabled" # requires many dependencies and probably not useful for our users
+    "-Ddoc=disabled" # `hotdoc` not packaged in nixpkgs as of writing
     "-Dqt5=disabled" # not clear as of writing how to correctly pass in the required qt5 deps
   ] ++ optionals (!gtkSupport) [
     "-Dgtk3=disabled"
-  ] ++ optionals (!stdenv.isLinux || !enableJack) [
-    "-Djack=disabled" # unclear whether Jack works on Darwin
+  ] ++ optionals (!enableJack) [
+    "-Djack=disabled"
   ] ++ optionals (!stdenv.isLinux) [
     "-Ddv1394=disabled" # Linux only
     "-Doss4=disabled" # Linux only
@@ -124,8 +132,14 @@ stdenv.mkDerivation rec {
     "-Dv4l2=disabled" # Linux-only
     "-Dximagesrc=disabled" # Linux-only
     "-Dpulse=disabled" # TODO check if we can keep this enabled
+  ] ++ optionals (!raspiCameraSupport) [
+    "-Drpicamsrc=disabled"
   ];
 
+  postPatch = ''
+    patchShebangs \
+      scripts/extract-release-date-from-doap-file.py
+  '';
 
   NIX_LDFLAGS = [
     # linking error on Darwin

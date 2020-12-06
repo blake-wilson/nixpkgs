@@ -32,12 +32,23 @@
 
 stdenv.mkDerivation rec {
   pname = "nautilus";
-  version = "3.34.1";
+  version = "3.38.2";
 
   src = fetchurl {
     url = "mirror://gnome/sources/${pname}/${stdenv.lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
-    sha256 = "1wvp0272wky2v1pcx6z27275crb48j9903v6qzf8ki8hlqb2rkip";
+    sha256 = "19ln84d6s05h6cvx3c500bg5pvkz4k6p6ykmr2201rblq9afp76h";
   };
+
+  patches = [
+    # Allow changing extension directory using environment variable.
+    ./extension_dir.patch
+
+    # Hardcode required paths.
+    (substituteAll {
+      src = ./fix-paths.patch;
+      inherit tracker;
+    })
+  ];
 
   nativeBuildInputs = [
     desktop-file-utils
@@ -86,10 +97,6 @@ stdenv.mkDerivation rec {
     patchShebangs build-aux/meson/postinstall.py
   '';
 
-  patches = [
-    ./extension_dir.patch
-  ];
-
   passthru = {
     updateScript = gnome3.updateScript {
       packageName = pname;
@@ -99,9 +106,9 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "The file manager for GNOME";
-    homepage = https://wiki.gnome.org/Apps/Files;
+    homepage = "https://wiki.gnome.org/Apps/Files";
     license = licenses.gpl3Plus;
     platforms = platforms.linux;
-    maintainers = gnome3.maintainers;
+    maintainers = teams.gnome.members;
   };
 }

@@ -1,39 +1,48 @@
-{ stdenv
-, buildPythonPackage
-, fetchPypi
-, google_resumable_media
-, google_api_core
-, google_cloud_core
-, pytest
-, mock
-, setuptools
-}:
+{ lib, buildPythonPackage, fetchPypi, pytestCheckHook, pythonOlder
+, google_api_core, google_auth, google-cloud-iam, google_cloud_core
+, google_cloud_kms, google_cloud_testutils, google_resumable_media, mock
+, requests }:
 
 buildPythonPackage rec {
   pname = "google-cloud-storage";
-  version = "1.20.0";
+  version = "1.33.0";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "2e7e2435978bda1c209b70a9a00b8cbc53c3b00d6f09eb2c991ebba857babf24";
+    sha256 = "900ba027bdee6b97f21cd22d1db3d1a6233ede5de2db4754db860438bdad72d2";
   };
 
-  propagatedBuildInputs = [
-    google_resumable_media
-    google_api_core
-    google_cloud_core
-    setuptools
-  ];
-  checkInputs = [ pytest mock ];
+  disabled = pythonOlder "3.5";
 
-  checkPhase = ''
-   pytest tests/unit
+  propagatedBuildInputs = [
+    google_api_core
+    google_auth
+    google_cloud_core
+    google_resumable_media
+    requests
+  ];
+  checkInputs = [
+    google-cloud-iam
+    google_cloud_kms
+    google_cloud_testutils
+    mock
+    pytestCheckHook
+  ];
+
+  # disable tests which require credentials
+  disabledTests = [ "create" "get" "post" "test_build_api_url" ];
+
+  # prevent google directory from shadowing google imports
+  # remove tests which require credentials
+  preCheck = ''
+    rm -r google
+    rm tests/system/test_system.py tests/unit/test_client.py
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Google Cloud Storage API client library";
-    homepage = https://github.com/GoogleCloudPlatform/google-cloud-python;
+    homepage = "https://github.com/googleapis/python-storage";
     license = licenses.asl20;
-    maintainers = [ maintainers.costrouc ];
+    maintainers = with maintainers; [ costrouc ];
   };
 }

@@ -18,13 +18,13 @@
 
 buildPythonPackage rec {
   pname = "ansible";
-  version = "2.8.4";
+  version = "2.9.12";
 
   src = fetchFromGitHub {
     owner = "ansible";
     repo = "ansible";
     rev = "v${version}";
-    sha256 = "1fp7zz8awfv70nn8i6x0ggx4472377hm7787x16qv2kz4nb069ki";
+    sha256 = "0c794k0cyl54807sh9in0l942ah6g6wlz5kf3qvy5lhd581zlgyb";
   };
 
   prePatch = ''
@@ -48,10 +48,10 @@ buildPythonPackage rec {
   doCheck = false;
 
   meta = with lib; {
-    homepage = http://www.ansible.com;
+    homepage = "http://www.ansible.com";
     description = "Radically simple IT automation";
     license = [ licenses.gpl3 ] ;
-    maintainers = with maintainers; [ joamaki costrouc ];
+    maintainers = with maintainers; [ joamaki costrouc hexa ];
     platforms = platforms.linux ++ platforms.darwin;
   };
 }

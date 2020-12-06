@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, pkgconfig, utillinux, bash }:
+{ stdenv, fetchurl, pkgconfig, util-linux, bash }:
 
 stdenv.mkDerivation rec {
   pname = "bcache-tools";
@@ -11,7 +11,7 @@ stdenv.mkDerivation rec {
   };
 
   nativeBuildInputs = [ pkgconfig ];
-  buildInputs = [ utillinux ];
+  buildInputs = [ util-linux ];
 
   # * Remove broken install rules (they ignore $PREFIX) for stuff we don't need
   #   anyway (it's distro specific stuff).
@@ -20,6 +20,7 @@ stdenv.mkDerivation rec {
     sed -e "/INSTALL.*initramfs\/hook/d" \
         -e "/INSTALL.*initcpio\/install/d" \
         -e "/INSTALL.*dracut\/module-setup.sh/d" \
+        -e "s/pkg-config/$PKG_CONFIG/" \
         -i Makefile
   '';
 
@@ -28,8 +29,12 @@ stdenv.mkDerivation rec {
     ./fix-static.patch
   ];
 
+  makeFlags = [
+    "PREFIX=${placeholder "out"}"
+    "UDEVLIBDIR=${placeholder "out"}/lib/udev/"
+  ];
+
   preBuild = ''
-    export makeFlags="$makeFlags PREFIX=\"$out\" UDEVLIBDIR=\"$out/lib/udev/\"";
     sed -e "s|/bin/sh|${bash}/bin/sh|" -i *.rules
   '';
 
@@ -49,7 +54,7 @@ stdenv.mkDerivation rec {
       User documentation is in Documentation/bcache.txt in the Linux kernel
       tree.
     '';
-    homepage = https://bcache.evilpiepirate.org/;
+    homepage = "https://bcache.evilpiepirate.org/";
     license = licenses.gpl2;
     platforms = platforms.linux;
     maintainers = [ maintainers.bjornfor ];

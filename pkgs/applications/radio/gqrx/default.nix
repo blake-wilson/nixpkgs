@@ -9,13 +9,13 @@ assert pulseaudioSupport -> libpulseaudio != null;
 
 mkDerivation rec {
   pname = "gqrx";
-  version = "2.11.5";
+  version = "2.14.2";
 
   src = fetchFromGitHub {
     owner = "csete";
     repo = "gqrx";
     rev = "v${version}";
-    sha256 = "0q9i0dhd6blagxzk84pzqjq8n4ym3jc1mkkhygg8yncr4vq2saaf";
+    sha256 = "15xlzfgmffq43wn74xjqc5p2m21i3lh28qqskd2jf2hhvanpcwcp";
   };
 
   nativeBuildInputs = [ cmake ];
@@ -38,11 +38,11 @@ mkDerivation rec {
       including Funcube Dongle Pro/Pro+, rtl-sdr, HackRF, and Universal
       Software Radio Peripheral (USRP) devices.
     '';
-    homepage = http://gqrx.dk/;
+    homepage = "https://gqrx.dk/";
     # Some of the code comes from the Cutesdr project, with a BSD license, but
     # it's currently unknown which version of the BSD license that is.
     license = licenses.gpl3Plus;
     platforms = platforms.linux;  # should work on Darwin / macOS too
-    maintainers = with maintainers; [ bjornfor the-kenny fpletz ];
+    maintainers = with maintainers; [ bjornfor fpletz ];
   };
 }

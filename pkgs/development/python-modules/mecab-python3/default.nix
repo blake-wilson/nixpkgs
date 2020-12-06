@@ -8,11 +8,11 @@
 
 buildPythonPackage rec {
   pname = "mecab-python3";
-  version = "0.996.2";
+  version = "1.0.2";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "a80383fba343dad247b486a9afa486b7f0ec6244cb8bbf2d6a24d2fab5f19180";
+    sha256 = "eefdff160ba231acb21afab5c775bc2e024b3164c637a23b599b270d45feb32d";
   };
 
   nativeBuildInputs = [
@@ -27,7 +27,7 @@ buildPythonPackage rec {
 
   meta = with lib; {
     description = "A python wrapper for mecab: Morphological Analysis engine";
-    homepage =  https://github.com/SamuraiT/mecab-python3;
+    homepage =  "https://github.com/SamuraiT/mecab-python3";
     license = with licenses; [ gpl2 lgpl21 bsd3 ]; # any of the three
     maintainers = with maintainers; [ ixxie ];
   };

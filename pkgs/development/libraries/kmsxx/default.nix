@@ -3,14 +3,14 @@
 
 stdenv.mkDerivation {
   pname = "kmsxx";
-  version = "2019-10-28";
+  version = "2020-08-04";
 
   src = fetchFromGitHub {
     owner = "tomba";
     repo = "kmsxx";
     fetchSubmodules = true;
-    rev = "d29da28c7f2a0212d834136fe64fb8ca96a0a235";
-    sha256 = "0r94qjyy3s36s32s1xkzij0g2pfwigmyrshw8ni2xli7mg87g1zm";
+    rev = "38bee3092f2d477f1baebfcae464f888d3d04bbe";
+    sha256 = "0xz4m9bk0naawxwpx5cy1j3cm6c8c9m5y551csk88y88x1g0z0xh";
   };
 
   enableParallelBuilding = true;
@@ -22,7 +22,7 @@ stdenv.mkDerivation {
 
   meta = with stdenv.lib; {
     description = "C++11 library, utilities and python bindings for Linux kernel mode setting";
-    homepage = https://github.com/tomba/kmsxx;
+    homepage = "https://github.com/tomba/kmsxx";
     license = licenses.mpl20;
     maintainers = with maintainers; [ gnidorah ];
     platforms = platforms.linux;

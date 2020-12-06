@@ -4,7 +4,7 @@
 
 let
   pname = "grilo";
-  version = "0.3.10"; # if you change minor, also change ./setup-hook.sh
+  version = "0.3.13"; # if you change minor, also change ./setup-hook.sh
 in stdenv.mkDerivation rec {
   name = "${pname}-${version}";
 
@@ -13,7 +13,7 @@ in stdenv.mkDerivation rec {
 
   src = fetchurl {
     url = "mirror://gnome/sources/${pname}/${stdenv.lib.versions.majorMinor version}/${name}.tar.xz";
-    sha256 = "1s7ilyywf18q26aj5c4709kfizqywjlnacp4jzmj9v9i9kkv4i3y";
+    sha256 = "0ywjvh7xw4ql1q4fvl0q5n06n08pga1g1nc9l7c3x5214gr3fj6i";
   };
 
   setupHook = ./setup-hook.sh;
@@ -36,9 +36,9 @@ in stdenv.mkDerivation rec {
   };
 
   meta = with stdenv.lib; {
-    homepage = https://wiki.gnome.org/Projects/Grilo;
+    homepage = "https://wiki.gnome.org/Projects/Grilo";
     description = "Framework that provides access to various sources of multimedia content, using a pluggable system";
-    maintainers = gnome3.maintainers;
+    maintainers = teams.gnome.members;
     license = licenses.lgpl2;
     platforms = platforms.linux;
   };

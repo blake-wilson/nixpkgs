@@ -4,11 +4,11 @@
 
 mkDerivation  rec {
   pname = "qsynth";
-  version = "0.6.0";
+  version = "0.6.3";
 
   src = fetchurl {
     url = "mirror://sourceforge/qsynth/${pname}-${version}.tar.gz";
-    sha256 = "173v0jqybi5szxxvj4n6wyg9sj54rmm6pxwhynx8wkm7nsbh0aij";
+    sha256 = "0xiqmpzpxjvh32vivfj6h33w0ahmyfjzjb41b6fnf92bbg9k6mqv";
   };
 
   nativeBuildInputs = [ autoconf pkgconfig ];
@@ -19,7 +19,7 @@ mkDerivation  rec {
 
   meta = with stdenv.lib; {
     description = "Fluidsynth GUI";
-    homepage = https://sourceforge.net/projects/qsynth;
+    homepage = "https://sourceforge.net/projects/qsynth";
     license = licenses.gpl2Plus;
     maintainers = with maintainers; [ goibhniu ];
     platforms = platforms.linux;

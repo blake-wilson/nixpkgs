@@ -1,5 +1,7 @@
 { stdenv
 , fetchFromGitHub
+, nix-update-script
+, fetchpatch
 , pantheon
 , pkgconfig
 , meson
@@ -14,18 +16,18 @@
 
 stdenv.mkDerivation rec {
   pname = "wingpanel-indicator-session";
-  version = "2.2.5";
+  version = "unstable-2020-09-13";
 
   src = fetchFromGitHub {
     owner = "elementary";
     repo = pname;
-    rev = version;
-    sha256 = "0lqh9g6qq09m744gncspm79lbwx1vjl1d6j2szwcq9f0jdm01pm5";
+    rev = "e65c95f46adbfd598ad61933394d7bc3c5998278";
+    sha256 = "sha256-QKOfgAc6pDQYpETrFunZB6+rF1P8XIf0pjft/t9aWW0=";
   };
 
   passthru = {
-    updateScript = pantheon.updateScript {
-      repoName = pname;
+    updateScript = nix-update-script {
+      attrPath = "pantheon.${pname}";
     };
   };
 
@@ -44,11 +46,9 @@ stdenv.mkDerivation rec {
     wingpanel
   ];
 
-  PKG_CONFIG_WINGPANEL_2_0_INDICATORSDIR = "${placeholder "out"}/lib/wingpanel";
-
   meta = with stdenv.lib; {
     description = "Session Indicator for Wingpanel";
-    homepage = https://github.com/elementary/wingpanel-indicator-session;
+    homepage = "https://github.com/elementary/wingpanel-indicator-session";
     license = licenses.gpl2Plus;
     platforms = platforms.linux;
     maintainers = pantheon.maintainers;

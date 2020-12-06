@@ -3,20 +3,22 @@
 , nbformat
 , pytest
 , pyyaml
+, toml
 }:
 
 buildPythonPackage rec {
   pname = "jupytext";
-  version = "1.2.4";
+  version = "1.5.2";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "490e1127033fceed5c49f7b1cde6aabffb059fe0a778a0e8b10d28d9eecef1f0";
+    sha256 = "1cebc9f5975b4c08db3de6d7d61b35f8c33a24cf2c8c04eee7b8a7aab8ddc39b";
   };
 
   propagatedBuildInputs = [
     pyyaml
     nbformat
+    toml
   ] ++ lib.optionals isPy27 [ mock ]; # why they put it in install_requires, who knows
 
   checkInputs = [
@@ -32,7 +34,7 @@ buildPythonPackage rec {
 
   meta = with lib; {
     description = "Jupyter notebooks as Markdown documents, Julia, Python or R scripts";
-    homepage = https://github.com/mwouts/jupytext;
+    homepage = "https://github.com/mwouts/jupytext";
     license = licenses.mit;
     maintainers = with maintainers; [ timokau ];
   };

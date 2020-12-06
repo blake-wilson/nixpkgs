@@ -68,12 +68,7 @@ in
 
     services.bind = {
 
-      enable = mkOption {
-        default = false;
-        description = "
-          Whether to enable BIND domain name server.
-        ";
-      };
+      enable = mkEnableOption "BIND domain name server";
 
       cacheNetworks = mkOption {
         default = ["127.0.0.0/24"];
@@ -178,9 +173,8 @@ in
 
     networking.resolvconf.useLocalResolver = mkDefault true;
 
-    users.users = singleton
-      { name = bindUser;
-        uid = config.ids.uids.bind;
+    users.users.${bindUser} =
+      { uid = config.ids.uids.bind;
         description = "BIND daemon user";
       };
 

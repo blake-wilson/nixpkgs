@@ -1,16 +1,34 @@
-{ stdenv, fetchFromGitHub, substituteAll, python3, openssl, folks, gsound
-, meson, ninja, libxml2, pkgconfig, gobject-introspection, wrapGAppsHook
-, glib, gtk3, at-spi2-core, upower, openssh, gnome3, gjs }:
+{ stdenv
+, fetchFromGitHub
+, substituteAll
+, openssl
+, gsound
+, meson
+, ninja
+, pkg-config
+, gobject-introspection
+, wrapGAppsHook
+, glib
+, glib-networking
+, gtk3
+, openssh
+, gnome3
+, gjs
+, nixosTests
+, gsettings-desktop-schemas
+}:
 
 stdenv.mkDerivation rec {
   pname = "gnome-shell-gsconnect";
-  version = "27";
+  version = "44";
+
+  outputs = [ "out" "installedTests" ];
 
   src = fetchFromGitHub {
     owner = "andyholmes";
     repo = "gnome-shell-extension-gsconnect";
     rev = "v${version}";
-    sha256 = "0bpg7hl81wir3c15ri8kbvr6xhalpkfmcyazwmmwyj5lxpn40ykk";
+    sha256 = "C+8mhK4UOs2iZplDyY45bCX0mMGgwVV/ZfaPpYUlWxA=";
   };
 
   patches = [
@@ -19,26 +37,24 @@ stdenv.mkDerivation rec {
       src = ./fix-paths.patch;
       gapplication = "${glib.bin}/bin/gapplication";
     })
+
+    # Allow installing installed tests to a separate output
+    ./installed-tests-path.patch
   ];
 
   nativeBuildInputs = [
-    meson ninja pkgconfig
+    meson
+    ninja
+    pkg-config
     gobject-introspection # for locating typelibs
     wrapGAppsHook # for wrapping daemons
-    libxml2 # xmllint
   ];
 
   buildInputs = [
-    (python3.withPackages (pkgs: [ python3.pkgs.pygobject3 ])) # for folks.py
     glib # libgobject
+    glib-networking
     gtk3
-    at-spi2-core # atspi
-    folks # libfolks
-    gnome3.nautilus # TODO: this contaminates the package with nautilus and gnome-autoar typelibs but it is only needed for the extension
-    gnome3.nautilus-python
     gsound
-    upower
-    gnome3.caribou
     gjs # for running daemon
     gnome3.evolution-data-server # for libebook-contacts typelib
   ];
@@ -51,12 +67,15 @@ stdenv.mkDerivation rec {
     "-Dopenssl_path=${openssl}/bin/openssl"
     "-Dsshadd_path=${openssh}/bin/ssh-add"
     "-Dsshkeygen_path=${openssh}/bin/ssh-keygen"
+    "-Dsession_bus_services_dir=${placeholder "out"}/share/dbus-1/services"
     "-Dpost_install=true"
+    "-Dinstalled_test_prefix=${placeholder ''installedTests''}"
   ];
 
   postPatch = ''
     patchShebangs meson/nmh.sh
     patchShebangs meson/post-install.sh
+    patchShebangs installed-tests/prepare-tests.sh
 
     # TODO: do not include every typelib everywhere
     # for example, we definitely do not need nautilus
@@ -66,24 +85,32 @@ stdenv.mkDerivation rec {
     done
   '';
 
-  preFixup = ''
-    # TODO: figure out why folks GIR does not contain shared-library attribute
-    # https://github.com/NixOS/nixpkgs/issues/47226
-    gappsWrapperArgs+=(--prefix LD_LIBRARY_PATH : "${stdenv.lib.makeLibraryPath [ folks ]}")
-  '';
-
   postFixup = ''
     # Let’s wrap the daemons
-    for file in $out/share/gnome-shell/extensions/gsconnect@andyholmes.github.io/service/{{daemon,nativeMessagingHost}.js,components/folks.py}; do
+    for file in $out/share/gnome-shell/extensions/gsconnect@andyholmes.github.io/service/{daemon,nativeMessagingHost}.js; do
+      echo "Wrapping program $file"
+      wrapGApp "$file"
+    done
+
+    # Wrap jasmine runner for tests
+    for file in $installedTests/libexec/installed-tests/gsconnect/minijasmine; do
       echo "Wrapping program $file"
       wrapGApp "$file"
     done
   '';
 
+  uuid = "gsconnect@andyholmes.github.io";
+
+  passthru = {
+    tests = {
+      installedTests = nixosTests.installed-tests.gsconnect;
+    };
+  };
+
   meta = with stdenv.lib; {
     description = "KDE Connect implementation for Gnome Shell";
-    homepage = https://github.com/andyholmes/gnome-shell-extension-gsconnect/wiki;
-    license = licenses.gpl2;
+    homepage = "https://github.com/andyholmes/gnome-shell-extension-gsconnect/wiki";
+    license = licenses.gpl2Plus;
     maintainers = with maintainers; [ etu ];
     platforms = platforms.linux;
   };

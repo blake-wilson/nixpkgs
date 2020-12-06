@@ -7,13 +7,13 @@
 
 stdenv.mkDerivation rec {
   pname = "toybox";
-  version = "0.8.2";
+  version = "0.8.4";
 
   src = fetchFromGitHub {
     owner = "landley";
     repo = pname;
     rev = version;
-    sha256 = "02mliqz2lry779ba6vmyaa13nxcmj91f8pyhzim9wvcnjq8vc5cj";
+    sha256 = "0cgbmv6qk1haj709hjx5q4sl7wgh91i459gzs1203adwc7rvk6jv";
   };
 
   buildInputs = lib.optionals enableStatic [ stdenv.cc.libc stdenv.cc.libc.static ];
@@ -44,7 +44,7 @@ stdenv.mkDerivation rec {
 
   makeFlags = [ "PREFIX=$(out)/bin" ] ++ lib.optional enableStatic "LDFLAGS=--static";
 
-  installTargets = "install_flat";
+  installTargets = [ "install_flat" ];
 
   # tests currently (as of 0.8.0) get stuck in an infinite loop...
   # ...this is fixed in latest git, so doCheck can likely be enabled for next release
@@ -57,9 +57,11 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "Lightweight implementation of some Unix command line utilities";
-    homepage = https://landley.net/toybox/;
+    homepage = "https://landley.net/toybox/";
     license = licenses.bsd0;
     platforms = with platforms; linux ++ darwin ++ freebsd;
+    # https://github.com/NixOS/nixpkgs/issues/101229
+    broken = stdenv.isDarwin;
     maintainers = with maintainers; [ hhm ];
     priority = 10;
   };

@@ -1,4 +1,4 @@
-{ lib, fetchPypi, buildPythonApplication, pythonOlder
+{ lib, fetchPypi, buildPythonPackage, pythonOlder
 , aspy-yaml
 , cached-property
 , cfgv
@@ -6,21 +6,29 @@
 , identify
 , importlib-metadata
 , importlib-resources
+, isPy27
 , nodeenv
+, python
 , six
 , toml
 , virtualenv
 }:
 
-buildPythonApplication rec {
+buildPythonPackage rec {
   pname = "pre-commit";
-  version = "1.20.0";
+  version = "2.7.1";
+  disabled = isPy27;
 
   src = fetchPypi {
     inherit version;
     pname = "pre_commit";
-    sha256 = "0vmv3hrivm0sm81cn59n2pmw8h323sg4sgncl910djby2a3jc5cz";
+    sha256 = "0w2a104yhbw1z92rcwpq0gdjsxvr2bwx5ry5xhlf2psnfkjx6ky5";
   };
+
+  patches = [
+    ./hook-tmpl-use-the-hardcoded-path-to-pre-commit.patch
+    ./languages-use-the-hardcoded-path-to-python-binaries.patch
+  ];
 
   propagatedBuildInputs = [
     aspy-yaml
@@ -31,16 +39,24 @@ buildPythonApplication rec {
     six
     toml
     virtualenv
-    importlib-metadata
-  ] ++ lib.optional (pythonOlder "3.7") importlib-resources
-    ++ lib.optional (pythonOlder "3.2") futures;
+  ] ++ lib.optional (pythonOlder "3.8") importlib-metadata
+    ++ lib.optional (pythonOlder "3.7") importlib-resources;
 
   # slow and impure
   doCheck = false;
 
+  preFixup = ''
+    substituteInPlace $out/${python.sitePackages}/pre_commit/resources/hook-tmpl \
+      --subst-var-by pre-commit $out
+    substituteInPlace $out/${python.sitePackages}/pre_commit/languages/python.py \
+      --subst-var-by virtualenv ${virtualenv}
+    substituteInPlace $out/${python.sitePackages}/pre_commit/languages/node.py \
+      --subst-var-by nodeenv ${nodeenv}
+  '';
+
   meta = with lib; {
     description = "A framework for managing and maintaining multi-language pre-commit hooks";
-    homepage = https://pre-commit.com/;
+    homepage = "https://pre-commit.com/";
     license = licenses.mit;
     maintainers = with maintainers; [ borisbabic ];
   };

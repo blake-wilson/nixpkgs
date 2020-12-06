@@ -1,8 +1,10 @@
 { pkgs, stdenv, fetchFromGitHub, makeWrapper, gawk, gnum4, gnused
 , libxml2, libxslt, ncurses, openssl, perl, autoconf
-, openjdk ? null # javacSupport
+# TODO: use jdk https://github.com/NixOS/nixpkgs/pull/89731
+, openjdk8 ? null # javacSupport
 , unixODBC ? null # odbcSupport
 , libGL ? null, libGLU ? null, wxGTK ? null, wxmac ? null, xorg ? null # wxSupport
+, parallelBuild ? false
 , withSystemd ? stdenv.isLinux, systemd # systemd support in epmd
 }:
 
@@ -16,7 +18,7 @@
 , enableThreads ? true
 , enableSmpSupport ? true
 , enableKernelPoll ? true
-, javacSupport ? false, javacPackages ? [ openjdk ]
+, javacSupport ? false, javacPackages ? [ openjdk8 ]
 , odbcSupport ? false, odbcPackages ? [ unixODBC ]
 , wxSupport ? true, wxPackages ? [ libGL libGLU wxGTK xorg.libX11 ]
 , preUnpack ? "", postUnpack ? ""
@@ -24,7 +26,7 @@
 , configureFlags ? [], configurePhase ? "", preConfigure ? "", postConfigure ? ""
 , buildPhase ? "", preBuild ? "", postBuild ? ""
 , installPhase ? "", preInstall ? "", postInstall ? ""
-, installTargets ? "install install-docs"
+, installTargets ? [ "install" "install-docs" ]
 , checkPhase ? "", preCheck ? "", postCheck ? ""
 , fixupPhase ? "", preFixup ? "", postFixup ? ""
 , meta ? {}
@@ -35,7 +37,7 @@ assert wxSupport -> (if stdenv.isDarwin
   else libGL != null && libGLU != null && wxGTK != null && xorg != null);
 
 assert odbcSupport -> unixODBC != null;
-assert javacSupport -> openjdk != null;
+assert javacSupport -> openjdk8 != null;
 
 let
   inherit (stdenv.lib) optional optionals optionalAttrs optionalString;
@@ -60,7 +62,7 @@ in stdenv.mkDerivation ({
   debugInfo = enableDebugInfo;
 
   # On some machines, parallel build reliably crashes on `GEN    asn1ct_eval_ext.erl` step
-  enableParallelBuilding = false;
+  enableParallelBuilding = parallelBuild;
 
   # Clang 4 (rightfully) thinks signed comparisons of pointers with NULL are nonsense
   prePatch = ''
@@ -88,7 +90,8 @@ in stdenv.mkDerivation ({
     ++ optional odbcSupport "--with-odbc=${unixODBC}"
     ++ optional wxSupport "--enable-wx"
     ++ optional withSystemd "--enable-systemd"
-    ++ optional stdenv.isDarwin "--enable-darwin-64bit";
+    ++ optional stdenv.isDarwin "--enable-darwin-64bit"
+    ++ configureFlags;
 
   # install-docs will generate and install manpages and html docs
   # (PDFs are generated only when fop is available).
@@ -108,7 +111,7 @@ in stdenv.mkDerivation ({
   setupHook = ./setup-hook.sh;
 
   meta = with stdenv.lib; ({
-    homepage = https://www.erlang.org/;
+    homepage = "https://www.erlang.org/";
     downloadPage = "https://www.erlang.org/download.html";
     description = "Programming language used for massively scalable soft real-time systems";
 
@@ -121,9 +124,8 @@ in stdenv.mkDerivation ({
       tolerance.
     '';
 
-    # aarch64 is supposed to work but started failing in https://hydra.nixos.org/build/83735973
-    platforms = subtractLists [ "aarch64-linux" ] platforms.unix;
-    maintainers = with maintainers; [ the-kenny sjmackenzie couchemar gleber ];
+    platforms = platforms.unix;
+    maintainers = with maintainers; [ sjmackenzie couchemar gleber ];
     license = licenses.asl20;
   } // meta);
 }
@@ -131,7 +133,6 @@ in stdenv.mkDerivation ({
 // optionalAttrs (postUnpack != "")     { inherit postUnpack; }
 // optionalAttrs (patches != [])        { inherit patches; }
 // optionalAttrs (patchPhase != "")     { inherit patchPhase; }
-// optionalAttrs (configureFlags != []) { inherit configureFlags; }
 // optionalAttrs (configurePhase != "") { inherit configurePhase; }
 // optionalAttrs (preConfigure != "")   { inherit preConfigure; }
 // optionalAttrs (postConfigure != "")  { inherit postConfigure; }
@@ -142,7 +143,7 @@ in stdenv.mkDerivation ({
 // optionalAttrs (preCheck != "")       { inherit preCheck; }
 // optionalAttrs (postCheck != "")      { inherit postCheck; }
 // optionalAttrs (installPhase != "")   { inherit installPhase; }
-// optionalAttrs (installTargets != "") { inherit installTargets; }
+// optionalAttrs (installTargets != []) { inherit installTargets; }
 // optionalAttrs (preInstall != "")     { inherit preInstall; }
 // optionalAttrs (fixupPhase != "")     { inherit fixupPhase; }
 // optionalAttrs (preFixup != "")       { inherit preFixup; }

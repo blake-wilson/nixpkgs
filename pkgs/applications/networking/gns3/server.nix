@@ -1,18 +1,26 @@
-{ stable, branch, version, sha256Hash }:
+{ stable, branch, version, sha256Hash, mkOverride, commonOverrides }:
 
-{ stdenv, python3, fetchFromGitHub }:
+{ lib, stdenv, python3, fetchFromGitHub }:
 
 let
-  python = python3.override {
-    packageOverrides = self: super: {
-      jsonschema = super.jsonschema.overridePythonAttrs (oldAttrs: rec {
-        version = "2.6.0";
-        src = oldAttrs.src.override {
-          inherit version;
-          sha256 = "00kf3zmpp9ya4sydffpifn0j0mzm342a2vzh82p6r0vh10cg7xbg";
+  defaultOverrides = commonOverrides ++ [
+    (mkOverride "aiofiles" "0.5.0"
+      "98e6bcfd1b50f97db4980e182ddd509b7cc35909e903a8fe50d8849e02d815af")
+    (self: super: {
+      py-cpuinfo = super.py-cpuinfo.overridePythonAttrs (oldAttrs: rec {
+        version = "7.0.0";
+        src = fetchFromGitHub {
+           owner = "workhorsy";
+           repo = "py-cpuinfo";
+           rev = "v${version}";
+           sha256 = "10qfaibyb2syiwiyv74l7d97vnmlk079qirgnw3ncklqjs0s3gbi";
         };
       });
-    };
+    })
+  ];
+
+  python = python3.override {
+    packageOverrides = lib.foldr lib.composeExtensions (self: super: { }) defaultOverrides;
   };
 in python.pkgs.buildPythonPackage {
   pname = "gns3-server";
@@ -26,14 +34,16 @@ in python.pkgs.buildPythonPackage {
   };
 
   postPatch = ''
-    # Only 2.x is problematic:
-    sed -iE "s/prompt-toolkit==1.0.15/prompt-toolkit<2.0.0/" requirements.txt
+    # yarl 1.4+ only requires Python 3.6+
+    substituteInPlace requirements.txt \
+      --replace "aiohttp==3.6.2" "aiohttp>=3.6.2" \
+      --replace "yarl==1.3.0" ""
   '';
 
   propagatedBuildInputs = with python.pkgs; [
     aiohttp-cors yarl aiohttp multidict setuptools
-    jinja2 psutil zipstream raven jsonschema distro async_generator aiofiles
-    (python.pkgs.callPackage ../../../development/python-modules/prompt_toolkit/1.nix {})
+    jinja2 psutil zipstream sentry-sdk jsonschema distro async_generator aiofiles
+    prompt_toolkit py-cpuinfo
   ];
 
   # Requires network access
@@ -50,7 +60,8 @@ in python.pkgs.buildPythonPackage {
       Qemu/KVM. Clients like the GNS3 GUI control the server using a HTTP REST
       API.
     '';
-    homepage = https://www.gns3.com/;
+    homepage = "https://www.gns3.com/";
+    changelog = "https://github.com/GNS3/gns3-server/releases/tag/v${version}";
     license = licenses.gpl3Plus;
     platforms = platforms.linux;
     maintainers = with maintainers; [ primeos ];

@@ -4,17 +4,18 @@
 let
   unwrapped = mkDerivation rec {
     pname = "neovim-qt-unwrapped";
-    version = "0.2.12";
+    version = "0.2.16.1";
 
     src = fetchFromGitHub {
       owner  = "equalsraf";
       repo   = "neovim-qt";
       rev    = "v${version}";
-      sha256 = "09s3044j0y8nmyi8ykslfii6fx7k9mckmdvb0jn2xmdabpb60i20";
+      sha256 = "0x5brrim3f21bzdmh6wyrhrislwpx1248wbx56csvic6v78hzqny";
     };
 
     cmakeFlags = [
       "-DUSE_SYSTEM_MSGPACK=1"
+      "-DENABLE_TESTS=0"  # tests fail because xcb platform plugin is not found
     ];
 
     buildInputs = [
@@ -38,6 +39,7 @@ let
 
     meta = with stdenv.lib; {
       description = "Neovim client library and GUI, in Qt5";
+      homepage = "https://github.com/equalsraf/neovim-qt";
       license     = licenses.isc;
       maintainers = with maintainers; [ peterhoeg ];
       inherit (neovim.meta) platforms;

@@ -1,10 +1,15 @@
 { stdenv, fetchFromGitHub, which, coq }:
 
 let params = {
-  "8.10" = rec {
-    version = "1.1.0";
+  "8.11" = rec {
+    version = "1.6.0_8.11";
     rev = "v${version}";
-    sha256 = "06jyw7n27ylg02jvlaa3hs13hg8qgx47yn4dxhg9as1xri9a2rvm";
+    sha256 = "0ahxjnzmd7kl3gl38kyjqzkfgllncr2ybnw8bvgrc6iddgga7bpq";
+  };
+  "8.12" = rec {
+    version = "1.6.0";
+    rev = "v${version}";
+    sha256 = "0kf99i43mlf750fr7fric764mm495a53mg5kahnbp6zcjcxxrm0b";
   };
 };
   param = params.${coq.coq-version};
@@ -22,7 +27,7 @@ stdenv.mkDerivation rec {
   nativeBuildInputs = [ which ];
   buildInputs = [ coq coq.ocaml ] ++ (with coq.ocamlPackages; [ findlib elpi ]);
 
-  installFlags = "COQLIB=$(out)/lib/coq/${coq.coq-version}/";
+  installFlags = [ "COQLIB=$(out)/lib/coq/${coq.coq-version}/" ];
 
   meta = {
     description = "Coq plugin embedding ELPI.";

@@ -1,27 +1,33 @@
-{ stdenv, fetchFromGitHub, rustPlatform
+{ stdenv, fetchCrate, rustPlatform, installShellFiles
 , Security
 }:
 
 rustPlatform.buildRustPackage rec {
   pname = "hyperfine";
-  version = "1.8.0";
+  version = "1.11.0";
 
-  src = fetchFromGitHub {
-    owner  = "sharkdp";
-    repo   = pname;
-    rev    = "refs/tags/v${version}";
-    sha256 = "12bj5xifnpj5yni563b6b33lzmkgm7j1wk0c9859zw59b33ifd1l";
+  src = fetchCrate {
+    inherit pname version;
+    sha256 = "0dla2jzwcxkdx3n4fqkkh6wirqs2f31lvqsw2pjf1jbnnif54mzh";
   };
 
-  cargoSha256 = "1ias944wg55njjnap7w02b87bvb502vzkpjvsb704q5i9sr8hjry";
+  cargoSha256 = "12qdllhydd29xh20l5gir6qpj4a1nkzp8ics344rcwj8wsj7g5zw";
 
+  nativeBuildInputs = [ installShellFiles ];
   buildInputs = stdenv.lib.optional stdenv.isDarwin Security;
+
+  postInstall = ''
+    installManPage doc/hyperfine.1
+
+    installShellCompletion \
+      $releaseDir/build/hyperfine-*/out/hyperfine.{bash,fish} \
+      --zsh $releaseDir/build/hyperfine-*/out/_hyperfine
+  '';
 
   meta = with stdenv.lib; {
     description = "Command-line benchmarking tool";
-    homepage    = https://github.com/sharkdp/hyperfine;
+    homepage    = "https://github.com/sharkdp/hyperfine";
     license     = with licenses; [ asl20 /* or */ mit ];
     maintainers = [ maintainers.thoughtpolice ];
-    platforms   = platforms.all;
   };
 }

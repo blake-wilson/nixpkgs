@@ -15,7 +15,7 @@
 , libtiff
 , psmisc
 , sharutils
-, utillinux
+, util-linux
 , zlib
 ## optional packages (using `null` disables some functionality)
 , jbigkit ? null
@@ -30,8 +30,8 @@
 let
 
   name = "hylafaxplus-${version}";
-  version = "7.0.1";
-  sha256 = "0ckgmk0vffjifxgmb594fmjmmsq3q9gsasrk3g8sb2v7h6q4r2vz";
+  version = "7.0.3";
+  sha256 = "139iwcwrn9i5lragxi33ilzah72w59wg4midfjjgx5cly3ah0iy4";
 
   configSite = substituteAll {
     name = "hylafaxplus-config.site";
@@ -76,7 +76,7 @@ stdenv.mkDerivation {
     libtiff
     psmisc  # for `fuser` command
     sharutils  # for `uuencode` command
-    utillinux  # for `agetty` command
+    util-linux  # for `agetty` command
     zlib
     jbigkit  # optional
     lcms2  # optional
@@ -89,8 +89,8 @@ stdenv.mkDerivation {
   postInstallCheck = ''. ${./post-install-check.sh}'';
   meta = {
     description = "enterprise-class system for sending and receiving facsimiles";
-    downloadPage = https://hylafax.sourceforge.io/download.php;
-    homepage = https://hylafax.sourceforge.io;
+    downloadPage = "https://hylafax.sourceforge.io/download.php";
+    homepage = "https://hylafax.sourceforge.io";
     license = lib.licenses.bsd3;
     maintainers = [ lib.maintainers.yarny ];
     platforms = lib.platforms.linux;

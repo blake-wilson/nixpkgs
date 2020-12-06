@@ -2,11 +2,11 @@
 
 stdenv.mkDerivation rec {
   pname = "htslib";
-  version = "1.9";
+  version = "1.11";
 
   src = fetchurl {
     url = "https://github.com/samtools/htslib/releases/download/${version}/${pname}-${version}.tar.bz2";
-    sha256 = "16ljv43sc3fxmv63w7b2ff8m1s7h89xhazwmbm1bicz8axq8fjz0";
+    sha256 = "1mrq4mihzx37yqhj3sfz6da6mw49niia808bzsw2gkkgmadxvyng";
   };
 
   # perl is only used during the check phase.
@@ -16,7 +16,7 @@ stdenv.mkDerivation rec {
 
   configureFlags = [ "--enable-libcurl" ]; # optional but strongly recommended
 
-  installFlags = "prefix=$(out)";
+  installFlags = [ "prefix=$(out)" ];
 
   preCheck = ''
     patchShebangs test/
@@ -29,7 +29,7 @@ stdenv.mkDerivation rec {
   meta = with stdenv.lib; {
     description = "A C library for reading/writing high-throughput sequencing data";
     license = licenses.mit;
-    homepage = http://www.htslib.org/;
+    homepage = "http://www.htslib.org/";
     platforms = platforms.unix;
     maintainers = [ maintainers.mimame ];
   };

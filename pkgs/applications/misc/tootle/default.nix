@@ -1,5 +1,6 @@
 { stdenv
 , fetchFromGitHub
+, nix-update-script
 , fetchpatch
 , vala
 , meson
@@ -62,9 +63,15 @@ stdenv.mkDerivation rec {
     patchShebangs meson/post_install.py
   '';
 
+  passthru = {
+    updateScript = nix-update-script {
+      attrPath = pname;
+    };
+  };
+
   meta = with stdenv.lib; {
     description = "Simple Mastodon client designed for elementary OS";
-    homepage = https://github.com/bleakgrey/tootle;
+    homepage = "https://github.com/bleakgrey/tootle";
     license = licenses.gpl3;
     maintainers = with maintainers; [ dtzWill ];
   };

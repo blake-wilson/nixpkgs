@@ -1,34 +1,35 @@
 { stdenv, fetchurl, bzip2, gfortran, libX11, libXmu, libXt, libjpeg, libpng
-, libtiff, ncurses, pango, pcre, perl, readline, tcl, texLive, tk, xz, zlib
-, less, texinfo, graphviz, icu, pkgconfig, bison, imake, which, jdk, openblas
+, libtiff, ncurses, pango, pcre2, perl, readline, tcl, texLive, tk, xz, zlib
+, less, texinfo, graphviz, icu, pkgconfig, bison, imake, which, jdk, blas, lapack
 , curl, Cocoa, Foundation, libobjc, libcxx, tzdata, fetchpatch
 , withRecommendedPackages ? true
 , enableStrictBarrier ? false
 # R as of writing does not support outputting both .so and .a files; it outputs:
 #     --enable-R-static-lib conflicts with --enable-R-shlib and will be ignored
 , static ? false
-, javaSupport ? (!stdenv.hostPlatform.isAarch32 && !stdenv.hostPlatform.isAarch64)
 }:
 
+assert (!blas.isILP64) && (!lapack.isILP64);
+
 stdenv.mkDerivation rec {
-  name = "R-3.6.1";
+  name = "R-4.0.3";
 
   src = fetchurl {
-    url = "https://cran.r-project.org/src/base/R-3/${name}.tar.gz";
-    sha256 = "128kifbq0w25y8aq77w289ddax5i5w2djcfsqgffrb3i7syrxajv";
+    url = "https://cran.r-project.org/src/base/R-4/${name}.tar.gz";
+    sha256 = "03cypg2qf7v9mq9mr9alz9w5y9m5kdgwbc97bp26pyymg253m609";
   };
 
   dontUseImakeConfigure = true;
 
   buildInputs = [
     bzip2 gfortran libX11 libXmu libXt libXt libjpeg libpng libtiff ncurses
-    pango pcre perl readline texLive xz zlib less texinfo graphviz icu
-    pkgconfig bison imake which openblas curl tcl tk
-  ] ++ stdenv.lib.optionals stdenv.isDarwin [ Cocoa Foundation libobjc libcxx ]
-    ++ stdenv.lib.optional javaSupport jdk;
+    pango pcre2 perl readline texLive xz zlib less texinfo graphviz icu
+    pkgconfig bison imake which blas lapack curl tcl tk jdk
+  ] ++ stdenv.lib.optionals stdenv.isDarwin [ Cocoa Foundation libobjc libcxx ];
 
   patches = [
     ./no-usr-local-search-paths.patch
+    ./fix-failing-test.patch
   ];
 
   prePatch = stdenv.lib.optionalString stdenv.isDarwin ''
@@ -41,8 +42,8 @@ stdenv.mkDerivation rec {
     configureFlagsArray=(
       --disable-lto
       --with${stdenv.lib.optionalString (!withRecommendedPackages) "out"}-recommended-packages
-      --with-blas="-L${openblas}/lib -lopenblas"
-      --with-lapack="-L${openblas}/lib -lopenblas"
+      --with-blas="-L${blas}/lib -lblas"
+      --with-lapack="-L${lapack}/lib -llapack"
       --with-readline
       --with-tcltk --with-tcl-config="${tcl}/lib/tclConfig.sh" --with-tk-config="${tk}/lib/tkConfig.sh"
       --with-cairo
@@ -57,7 +58,7 @@ stdenv.mkDerivation rec {
       CC=$(type -p cc)
       CXX=$(type -p c++)
       FC="${gfortran}/bin/gfortran" F77="${gfortran}/bin/gfortran"
-      ${stdenv.lib.optionalString javaSupport "JAVA_HOME=\"${jdk}\""}
+      JAVA_HOME="${jdk}"
       RANLIB=$(type -p ranlib)
       R_SHELL="${stdenv.shell}"
   '' + stdenv.lib.optionalString stdenv.isDarwin ''
@@ -86,7 +87,7 @@ stdenv.mkDerivation rec {
   setupHook = ./setup-hook.sh;
 
   meta = with stdenv.lib; {
-    homepage = http://www.r-project.org/;
+    homepage = "http://www.r-project.org/";
     description = "Free software environment for statistical computing and graphics";
     license = licenses.gpl2Plus;
 
@@ -112,6 +113,6 @@ stdenv.mkDerivation rec {
     platforms = platforms.all;
     hydraPlatforms = platforms.linux;
 
-    maintainers = with maintainers; [ peti timokau ];
+    maintainers = with maintainers; [ peti ] ++ teams.sage.members;
   };
 }

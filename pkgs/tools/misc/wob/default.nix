@@ -1,22 +1,24 @@
 { stdenv, fetchFromGitHub
-, meson, ninja, pkg-config, wayland # wayland-scanner
-, wayland-protocols
+, meson, ninja, pkg-config, scdoc, wayland # wayland-scanner
+, wayland-protocols, libseccomp
 }:
 
 stdenv.mkDerivation rec {
   pname = "wob";
-  version = "0.4";
+  version = "0.10";
 
   src = fetchFromGitHub {
     owner = "francma";
     repo = pname;
     rev = version;
-    fetchSubmodules = true;
-    sha256 = "1z0vwss3ix5mf7mqpm4dzlv1bblddfi47ykblj0nmscxn1sinr7j";
+    sha256 = "0v7xm8zd9237v5j5h79pd0x6dkal5fgg1ly9knssjpv3hswwyv40";
   };
 
-  nativeBuildInputs = [ meson ninja pkg-config wayland ];
-  buildInputs = [ wayland-protocols ];
+  nativeBuildInputs = [ meson ninja pkg-config scdoc wayland ];
+  buildInputs = [ wayland-protocols ]
+    ++ stdenv.lib.optional stdenv.isLinux libseccomp;
+
+  mesonFlags = stdenv.lib.optional stdenv.isLinux "-Dseccomp=enabled";
 
   meta = with stdenv.lib; {
     description = "A lightweight overlay bar for Wayland";
@@ -25,6 +27,7 @@ stdenv.mkDerivation rec {
       inspired by xob.
     '';
     inherit (src.meta) homepage;
+    changelog = "https://github.com/francma/wob/releases/tag/${version}";
     license = licenses.isc;
     platforms = platforms.unix;
     maintainers = with maintainers; [ primeos ];

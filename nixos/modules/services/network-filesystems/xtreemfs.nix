@@ -100,17 +100,19 @@ in
 
       dir = {
         enable = mkOption {
+          type = types.bool;
           default = true;
           description = ''
             Whether to enable XtreemFS DIR service.
           '';
         };
+
         uuid = mkOption {
           example = "eacb6bab-f444-4ebf-a06a-3f72d7465e40";
           description = ''
             Must be set to a unique identifier, preferably a UUID according to
             RFC 4122. UUIDs can be generated with `uuidgen` command, found in
-            the `utillinux` package.
+            the `util-linux` package.
           '';
         };
         port = mkOption {
@@ -218,17 +220,19 @@ in
 
       mrc = {
         enable = mkOption {
+          type = types.bool;
           default = true;
           description = ''
             Whether to enable XtreemFS MRC service.
           '';
         };
+
         uuid = mkOption {
           example = "eacb6bab-f444-4ebf-a06a-3f72d7465e41";
           description = ''
             Must be set to a unique identifier, preferably a UUID according to
             RFC 4122. UUIDs can be generated with `uuidgen` command, found in
-            the `utillinux` package.
+            the `util-linux` package.
           '';
         };
         port = mkOption {
@@ -354,17 +358,19 @@ in
 
       osd = {
         enable = mkOption {
+          type = types.bool;
           default = true;
           description = ''
             Whether to enable XtreemFS OSD service.
           '';
         };
+
         uuid = mkOption {
           example = "eacb6bab-f444-4ebf-a06a-3f72d7465e42";
           description = ''
             Must be set to a unique identifier, preferably a UUID according to
             RFC 4122. UUIDs can be generated with `uuidgen` command, found in
-            the `utillinux` package.
+            the `util-linux` package.
           '';
         };
         port = mkOption {

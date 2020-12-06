@@ -1,17 +1,33 @@
-{ stdenv, buildPythonPackage, fetchPypi, pythonOlder, pyyaml
-, python-dateutil, requests, pymongo, raven, bcrypt, flask, pyjwt, flask-cors, psycopg2, pytz, flask-compress, jinja2
+{ stdenv, buildPythonPackage, fetchPypi, pythonOlder
+, bcrypt, blinker, flask, flask-compress, flask-cors, mohawk, psycopg2, pyjwt, pymongo, python-dateutil, pytz, pyyaml, requests, requests-hawk, sentry-sdk
 }:
 
 buildPythonPackage rec {
   pname = "alerta-server";
-  version = "7.4.1";
+  version = "8.1.0";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "a6f7740c97f2ae552a4b50bfb709596eabb01bf73715685c9b93ea9fec1821f3";
+    sha256 = "32a97eee95aea5527f6efa844c18b727fe4a6d61356ea3c0769a29a163ddcb7e";
   };
 
-  propagatedBuildInputs = [ python-dateutil requests pymongo raven bcrypt flask pyjwt flask-cors psycopg2 pytz flask-compress jinja2 pyyaml];
+  propagatedBuildInputs = [
+    bcrypt
+    blinker
+    flask
+    flask-compress
+    flask-cors
+    mohawk
+    psycopg2
+    pyjwt
+    pymongo
+    python-dateutil
+    pytz
+    pyyaml
+    requests
+    requests-hawk
+    sentry-sdk
+  ];
 
   doCheck = false; # We can't run the tests from Nix, because they rely on the presence of a working MongoDB server
 
@@ -22,7 +38,7 @@ buildPythonPackage rec {
   disabled = pythonOlder "3.5";
 
   meta = with stdenv.lib; {
-    homepage = https://alerta.io;
+    homepage = "https://alerta.io";
     description = "Alerta Monitoring System server";
     license = licenses.asl20;
   };

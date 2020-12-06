@@ -2,10 +2,10 @@
 
 stdenv.mkDerivation rec {
   pname = "spectmorph";
-  version = "0.5.0";
+  version = "0.5.2";
   src = fetchurl {
     url = "http://spectmorph.org/files/releases/${pname}-${version}.tar.bz2";
-    sha256 = "003wznv3sy1b4g55vqii9pr3i3bb3zmj7nqvwrz7vjsfn2xyd1bn";
+    sha256 = "0yrq7mknhk096wfsx0q3b6wwa2w5la0rxa113di26rrrw136xl1f";
   };
 
   buildInputs = [  libjack2 lv2 glib qt5.qtbase libao cairo libsndfile fftwFloat ];
@@ -14,7 +14,7 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "Allows to analyze samples of musical instruments, and to combine them (morphing) to construct hybrid sounds";
-    homepage = http://spectmorph.org;
+    homepage = "http://spectmorph.org";
     license = licenses.gpl3;
     platforms = [ "x86_64-linux" "i686-linux" ];
     maintainers = [ maintainers.magnetophon ];

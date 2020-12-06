@@ -10,7 +10,7 @@ stdenv.mkDerivation {
   outputs = [ "out" "dev" ];
 
   patches = binutils-unwrapped.patches ++ [
-    ../../tools/misc/binutils/build-components-separately.patch
+    (binutils-unwrapped.patchesDir + "/build-components-separately.patch")
   ];
 
   # We just want to build libopcodes
@@ -36,7 +36,7 @@ stdenv.mkDerivation {
 
   meta = with stdenv.lib; {
     description = "A library from binutils for manipulating machine code";
-    homepage = https://www.gnu.org/software/binutils/;
+    homepage = "https://www.gnu.org/software/binutils/";
     license = licenses.gpl3Plus;
     maintainers = with maintainers; [ ericson2314 ];
     platforms = platforms.unix;

@@ -25,6 +25,7 @@
 , epoxy
 , json-glib
 , libxkbcommon
+, libxml2
 , gmp
 , gnome3
 , gsettings-desktop-schemas
@@ -48,7 +49,7 @@ with stdenv.lib;
 
 stdenv.mkDerivation rec {
   pname = "gtk+3";
-  version = "3.24.12";
+  version = "3.24.23";
 
   outputs = [ "out" "dev" ] ++ optional withGtkDoc "devdoc";
   outputBin = "dev";
@@ -60,7 +61,7 @@ stdenv.mkDerivation rec {
 
   src = fetchurl {
     url = "mirror://gnome/sources/gtk+/${stdenv.lib.versions.majorMinor version}/gtk+-${version}.tar.xz";
-    sha256 = "10xyyhlfb0yk4hglngxh2zsv9xrxkqv343df8h01dvagc6jyp10k";
+    sha256 = "1cg2vbwbcp7bc84ky0b69ipgdr9djhspnf5k8lajb8jphcj4v1jx";
   };
 
   patches = [
@@ -70,12 +71,18 @@ stdenv.mkDerivation rec {
       url = "https://bug757142.bugzilla-attachments.gnome.org/attachment.cgi?id=344123";
       sha256 = "0g6fhqcv8spfy3mfmxpyji93k8d4p4q4fz1v9a1c1cgcwkz41d7p";
     })
-    # https://gitlab.gnome.org/GNOME/gtk/merge_requests/1002
-    ./patches/01-build-Fix-path-handling-in-pkgconfig.patch
+
+    # Fix path handling in pkg-config. MR for the gtk-3-24 branch:
+    # https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/2605
+    (fetchpatch {
+      url = "https://gitlab.gnome.org/GNOME/gtk/commit/6d9db8610eff8c12d594d53b7813d9eea1247801.patch";
+      sha256 = "0rd1kjh0m4mrj2hkcqlsq1j0d6ahn5c237fd211r158gd1jiwys0";
+    })
   ] ++ optionals stdenv.isDarwin [
     # X11 module requires <gio/gdesktopappinfo.h> which is not installed on Darwin
     # let’s drop that dependency in similar way to how other parts of the library do it
     # e.g. https://gitlab.gnome.org/GNOME/gtk/blob/3.24.4/gtk/gtk-launch.c#L31-33
+    # https://gitlab.gnome.org/GNOME/gtk/merge_requests/536
     ./patches/3.0-darwin-x11.patch
   ];
 
@@ -88,10 +95,7 @@ stdenv.mkDerivation rec {
 
   # These are the defines that'd you'd get with --enable-debug=minimum (default).
   # See: https://developer.gnome.org/gtk3/stable/gtk-building.html#extra-configuration-options
-  NIX_CFLAGS_COMPILE = [
-    "-DG_ENABLE_DEBUG"
-    "-DG_DISABLE_CAST_CHECKS"
-  ];
+  NIX_CFLAGS_COMPILE = "-DG_ENABLE_DEBUG -DG_DISABLE_CAST_CHECKS";
 
   postPatch = ''
     files=(
@@ -118,11 +122,12 @@ stdenv.mkDerivation rec {
     pkgconfig
     python3
     sassc
-    setupHooks
-  ] ++ optionals withGtkDoc [
+  ] ++ setupHooks ++ optionals withGtkDoc [
     docbook_xml_dtd_43
     docbook_xsl
     gtk-doc
+    # For xmllint
+    libxml2
   ];
 
   buildInputs = [
@@ -202,7 +207,7 @@ stdenv.mkDerivation rec {
       proprietary software with GTK without any license fees or
       royalties.
     '';
-    homepage = https://www.gtk.org/;
+    homepage = "https://www.gtk.org/";
     license = licenses.lgpl2Plus;
     maintainers = with maintainers; [ raskin vcunat lethalman worldofpeace ];
     platforms = platforms.all;

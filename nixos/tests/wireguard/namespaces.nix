@@ -1,3 +1,5 @@
+{ kernelPackages ? null }:
+
 let
   listenPort = 12345;
   socketNamespace = "foo";
@@ -13,7 +15,7 @@ let
 
 in
 
-import ../make-test.nix ({ pkgs, ...} : {
+import ../make-test-python.nix ({ pkgs, lib, ... } : {
   name = "wireguard-with-namespaces";
   meta = with pkgs.stdenv.lib.maintainers; {
     maintainers = [ asymmetric ];
@@ -23,6 +25,7 @@ import ../make-test.nix ({ pkgs, ...} : {
     # interface should be created in the socketNamespace
     # and not moved from there
     peer0 = pkgs.lib.attrsets.recursiveUpdate node {
+      boot = lib.mkIf (kernelPackages != null) { inherit kernelPackages; };
       networking.wireguard.interfaces.wg0 = {
         preSetup = ''
           ip netns add ${socketNamespace}
@@ -33,6 +36,7 @@ import ../make-test.nix ({ pkgs, ...} : {
     # interface should be created in the init namespace
     # and moved to the interfaceNamespace
     peer1 = pkgs.lib.attrsets.recursiveUpdate node {
+      boot = lib.mkIf (kernelPackages != null) { inherit kernelPackages; };
       networking.wireguard.interfaces.wg0 = {
         preSetup = ''
           ip netns add ${interfaceNamespace}
@@ -43,6 +47,7 @@ import ../make-test.nix ({ pkgs, ...} : {
     # interface should be created in the socketNamespace
     # and moved to the interfaceNamespace
     peer2 = pkgs.lib.attrsets.recursiveUpdate node {
+      boot = lib.mkIf (kernelPackages != null) { inherit kernelPackages; };
       networking.wireguard.interfaces.wg0 = {
         preSetup = ''
           ip netns add ${socketNamespace}
@@ -54,6 +59,7 @@ import ../make-test.nix ({ pkgs, ...} : {
     # interface should be created in the socketNamespace
     # and moved to the init namespace
     peer3 = pkgs.lib.attrsets.recursiveUpdate node {
+      boot = lib.mkIf (kernelPackages != null) { inherit kernelPackages; };
       networking.wireguard.interfaces.wg0 = {
         preSetup = ''
           ip netns add ${socketNamespace}
@@ -65,16 +71,14 @@ import ../make-test.nix ({ pkgs, ...} : {
   };
 
   testScript = ''
-    startAll();
+    start_all()
 
-    $peer0->waitForUnit("wireguard-wg0.service");
-    $peer1->waitForUnit("wireguard-wg0.service");
-    $peer2->waitForUnit("wireguard-wg0.service");
-    $peer3->waitForUnit("wireguard-wg0.service");
+    for machine in peer0, peer1, peer2, peer3:
+        machine.wait_for_unit("wireguard-wg0.service")
 
-    $peer0->succeed("ip -n ${socketNamespace} link show wg0");
-    $peer1->succeed("ip -n ${interfaceNamespace} link show wg0");
-    $peer2->succeed("ip -n ${interfaceNamespace} link show wg0");
-    $peer3->succeed("ip link show wg0");
+    peer0.succeed("ip -n ${socketNamespace} link show wg0")
+    peer1.succeed("ip -n ${interfaceNamespace} link show wg0")
+    peer2.succeed("ip -n ${interfaceNamespace} link show wg0")
+    peer3.succeed("ip link show wg0")
   '';
 })

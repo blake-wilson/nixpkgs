@@ -1,30 +1,33 @@
-{ stdenv 
+{ stdenv
 , fetchFromGitHub
+, fetchpatch
 , qttools
 , qtmultimedia
 , liblo
 , gst_all_1
 , qmake
 , pkgconfig
+, wrapQtAppsHook
 }:
 
 with stdenv;
 
 mkDerivation rec {
 
-  version = "0.6.1";
+  version = "0.6.2";
   pname = "mapmap";
 
   src = fetchFromGitHub {
     owner = "mapmapteam";
     repo = "mapmap";
     rev = version;
-    sha256 = "15km6xmfkxhrflq4sl9m9r85zi4shrr4k5h15x17v7x0qkc3xgsh";
+    sha256 = "1pyb3vz19lbfz2hrfqm9a29vnajw1bigdrblbmcy32imkf4isfvm";
   };
 
   nativeBuildInputs = [
     qmake
     pkgconfig
+    wrapQtAppsHook
   ];
 
   buildInputs = [
@@ -35,6 +38,14 @@ mkDerivation rec {
     gst_all_1.gstreamermm
     gst_all_1.gst-libav
     gst_all_1.gst-vaapi
+  ];
+
+  patches = [
+    (fetchpatch {
+      name = "message-handler-segfault.patch";
+      url = "https://github.com/mapmapteam/mapmap/pull/519/commits/22eeee59ba7de6de7b73ecec3b0ea93bdc7f04e8.patch";
+      sha256 = "0is905a4lf9vvl5b1n4ky6shrnbs5kz9mlwfk78hrl4zabfmcl5l";
+    })
   ];
 
   installPhase = ''
@@ -53,12 +64,10 @@ mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "Open source video mapping software";
-    homepage = https://github.com/mapmapteam/mapmap;
+    homepage = "https://github.com/mapmapteam/mapmap";
     license = licenses.gpl3;
     maintainers = [ maintainers.erictapen ];
     platforms = platforms.linux;
-    # binary segfaults at the moment
-    broken = true;
   };
 
 }

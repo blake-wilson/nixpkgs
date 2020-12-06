@@ -4,11 +4,11 @@
 
 stdenv.mkDerivation rec {
   pname = "gnome-robots";
-  version = "3.34.0";
+  version = "3.38.0";
 
   src = fetchurl {
     url = "mirror://gnome/sources/gnome-robots/${stdenv.lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
-    sha256 = "18vnx5096d3mc2i7w4ma9hflsqfnvahl29aifjnvhdm5ji8qi0mb";
+    sha256 = "1qpzpsyj9i5dsfy7anfb2dcm602bjkcgqj86fxvnxy6llx56ks0z";
   };
 
   passthru = {
@@ -29,9 +29,9 @@ stdenv.mkDerivation rec {
   '';
 
   meta = with stdenv.lib; {
-    homepage = https://wiki.gnome.org/Apps/Robots;
+    homepage = "https://wiki.gnome.org/Apps/Robots";
     description = "Avoid the robots and make them crash into each other";
-    maintainers = gnome3.maintainers;
+    maintainers = teams.gnome.members;
     license = licenses.gpl2;
     platforms = platforms.linux;
   };

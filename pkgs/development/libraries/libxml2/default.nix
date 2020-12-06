@@ -1,5 +1,5 @@
-{ stdenv, lib, fetchurl
-, zlib, xz, python, ncurses, findXMLCatalogs
+{ stdenv, lib, fetchurl, fetchpatch
+, zlib, xz, libintl, python, gettext, ncurses, findXMLCatalogs
 , pythonSupport ? stdenv.buildPlatform == stdenv.hostPlatform
 , icuSupport ? false, icu ? null
 , enableShared ? stdenv.hostPlatform.libc != "msvcrt"
@@ -27,15 +27,27 @@ stdenv.mkDerivation rec {
     #   https://github.com/NixOS/nixpkgs/pull/63174
     #   https://github.com/NixOS/nixpkgs/pull/72342
     ./utf8-xmlErrorFuncHandler.patch
+    (fetchpatch {
+      name = "CVE-2020-7595.patch";
+      url = "https://gitlab.gnome.org/GNOME/libxml2/commit/0e1a49c8907645d2e155f0d89d4d9895ac5112b5.patch";
+      sha256 = "0klvaxkzakkpyq0m44l9xrpn5kwaii194sqsivfm6zhnb9hhl15l";
+    })
+    (fetchpatch {
+      name = "CVE-2019-20388.patch";
+      url = "https://gitlab.gnome.org/GNOME/libxml2/commit/6088a74bcf7d0c42e24cff4594d804e1d3c9fbca.patch";
+      sha256 = "070s7al2r2k92320h9cdfc2097jy4kk04d0disc98ddc165r80jl";
+    })
   ];
 
   outputs = [ "bin" "dev" "out" "man" "doc" ]
     ++ lib.optional pythonSupport "py"
     ++ lib.optional (enableStatic && enableShared) "static";
-  propagatedBuildOutputs = "out bin" + lib.optionalString pythonSupport " py";
 
   buildInputs = lib.optional pythonSupport python
+    ++ lib.optional (pythonSupport && python?isPy2 && python.isPy2) gettext
     ++ lib.optional (pythonSupport && python?isPy3 && python.isPy3) ncurses
+    ++ lib.optional (stdenv.isDarwin &&
+                     pythonSupport && python?isPy2 && python.isPy2) libintl
     # Libxml2 has an optional dependency on liblzma.  However, on impure
     # platforms, it may end up using that from /usr/lib, and thus lack a
     # RUNPATH for that, leading to undefined references for its users.
@@ -64,8 +76,8 @@ stdenv.mkDerivation rec {
 
   preInstall = lib.optionalString pythonSupport
     ''substituteInPlace python/libxml2mod.la --replace "${python}" "$py"'';
-  installFlags = lib.optionalString pythonSupport
-    ''pythondir="$(py)/lib/${python.libPrefix}/site-packages"'';
+  installFlags = lib.optional pythonSupport
+    "pythondir=\"${placeholder ''py''}/lib/${python.libPrefix}/site-packages\"";
 
   postFixup = ''
     moveToOutput bin/xml2-config "$dev"
@@ -78,7 +90,7 @@ stdenv.mkDerivation rec {
   passthru = { inherit version; pythonSupport = pythonSupport; };
 
   meta = {
-    homepage = http://xmlsoft.org/;
+    homepage = "http://xmlsoft.org/";
     description = "An XML parsing library for C";
     license = lib.licenses.mit;
     platforms = lib.platforms.all;

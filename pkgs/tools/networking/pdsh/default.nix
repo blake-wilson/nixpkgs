@@ -1,14 +1,15 @@
-{ stdenv, fetchurl, perl, readline, rsh, ssh }:
+{ stdenv, fetchurl, perl, readline, rsh, ssh, slurm, slurmSupport ? false }:
 
 stdenv.mkDerivation rec {
-  name = "pdsh-2.33";
+  name = "pdsh-2.34";
 
   src = fetchurl {
     url = "https://github.com/chaos/pdsh/releases/download/${name}/${name}.tar.gz";
-    sha256 = "0bwlkl9inj66iwvafg00pi3sk9n673phdi0kcc59y9nn55s0hs3k";
+    sha256 = "1s91hmhrz7rfb6h3l5k97s393rcm1ww3svp8dx5z8vkkc933wyxl";
   };
 
-  buildInputs = [ perl readline ssh ];
+  buildInputs = [ perl readline ssh ]
+    ++ (stdenv.lib.optional slurmSupport slurm);
 
   preConfigure = ''
     configureFlagsArray=(
@@ -18,6 +19,7 @@ stdenv.mkDerivation rec {
       ${if readline == null then "--without-readline" else "--with-readline"}
       ${if ssh == null then "--without-ssh" else "--with-ssh"}
       ${if rsh == false then "--without-rsh" else "--with-rsh"}
+      ${if slurmSupport then "--with-slurm" else "--without-slurm"}
       "--with-dshgroups"
       "--with-xcpu"
       "--disable-debug"
@@ -26,7 +28,7 @@ stdenv.mkDerivation rec {
   '';
 
   meta = {
-    homepage = https://github.com/chaos/pdsh;
+    homepage = "https://github.com/chaos/pdsh";
     description = "High-performance, parallel remote shell utility";
     license = stdenv.lib.licenses.gpl2;
 

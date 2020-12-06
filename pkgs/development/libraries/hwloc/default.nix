@@ -7,7 +7,7 @@ assert x11Support -> libX11 != null && cairo != null;
 with stdenv.lib;
 
 let
-  version = "2.1.0";
+  version = "2.3.0";
   versmm = versions.major version + "." + versions.minor version;
   name = "hwloc-${version}";
 
@@ -16,7 +16,7 @@ in stdenv.mkDerivation {
 
   src = fetchurl {
     url = "https://www.open-mpi.org/software/hwloc/v${versmm}/downloads/${name}.tar.bz2";
-    sha256 = "0qh8s7pphz0m5cwb7liqmc17xzfs23xhz5wn24r6ikvjyx99fhhr";
+    sha256 = "0r4a07ag1fv48ql2g64px0wrjpxlvkh6c7mhnkv9xxkkg04zc1xn";
   };
 
   configureFlags = [
@@ -80,7 +80,7 @@ in stdenv.mkDerivation {
 
     # https://www.open-mpi.org/projects/hwloc/license.php
     license = licenses.bsd3;
-    homepage = https://www.open-mpi.org/projects/hwloc/;
+    homepage = "https://www.open-mpi.org/projects/hwloc/";
     maintainers = with maintainers; [ fpletz markuskowa ];
     platforms = platforms.all;
   };

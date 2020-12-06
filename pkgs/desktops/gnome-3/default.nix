@@ -18,8 +18,6 @@ lib.makeScope pkgs.newScope (self: with self; {
     in
       lib.filter (x: !(builtins.elem (lib.getName x) namesToRemove)) packages;
 
-  maintainers = with pkgs.lib.maintainers; [ lethalman jtojnar hedning worldofpeace ];
-
   libsoup = pkgs.libsoup.override { gnomeSupport = true; };
   libchamplain = pkgs.libchamplain.override { libsoup = libsoup; };
   gnome3 = self // { recurseForDerivations = false; };
@@ -35,7 +33,6 @@ lib.makeScope pkgs.newScope (self: with self; {
 
   caribou = callPackage ./core/caribou { };
 
-  dconf = callPackage ./core/dconf { };
   dconf-editor = callPackage ./core/dconf-editor { };
 
   empathy = callPackage ./core/empathy { };
@@ -82,6 +79,8 @@ lib.makeScope pkgs.newScope (self: with self; {
 
   gnome-session = callPackage ./core/gnome-session { };
 
+  gnome-session-ctl = callPackage ./core/gnome-session/ctl.nix { };
+
   gnome-shell = callPackage ./core/gnome-shell { };
 
   gnome-shell-extensions = callPackage ./core/gnome-shell-extensions { };
@@ -108,10 +107,9 @@ lib.makeScope pkgs.newScope (self: with self; {
 
   mutter = callPackage ./core/mutter { };
 
-  # Needed for elementary's gala and greeter until they get around to adapting to all the API breaking changes in libmutter-3
-  # A more detailed explaination can be seen here https://decathorpe.com/2018/09/04/call-for-help-pantheon-on-fedora-29.html
-  # See Also: https://github.com/elementary/gala/issues/303
-  mutter328 = callPackage ./core/mutter/3.28.nix { };
+  # Needed for elementary's gala and greeter until 3.36 support has more bugfixes
+  # https://github.com/elementary/gala/issues/763
+  mutter334 = callPackage ./core/mutter/3.34 { };
 
   nautilus = callPackage ./core/nautilus { };
 
@@ -139,10 +137,6 @@ lib.makeScope pkgs.newScope (self: with self; {
     withGnome = true;
   };
 
-  networkmanagerapplet = pkgs.networkmanagerapplet.override {
-    withGnome = true;
-  };
-
   rygel = callPackage ./core/rygel { };
 
   simple-scan = callPackage ./core/simple-scan { };
@@ -150,8 +144,6 @@ lib.makeScope pkgs.newScope (self: with self; {
   sushi = callPackage ./core/sushi { };
 
   totem = callPackage ./core/totem { };
-
-  vino = callPackage ./core/vino { };
 
   yelp = callPackage ./core/yelp { };
 
@@ -173,8 +165,6 @@ lib.makeScope pkgs.newScope (self: with self; {
   gedit = callPackage ./apps/gedit { };
 
   ghex = callPackage ./apps/ghex { };
-
-  glade = callPackage ./apps/glade { };
 
   gnome-books = callPackage ./apps/gnome-books { };
 
@@ -276,8 +266,6 @@ lib.makeScope pkgs.newScope (self: with self; {
 
   gnome-panel = callPackage ./misc/gnome-panel { };
 
-  gnome-screensaver = callPackage ./misc/gnome-screensaver { };
-
   gnome-tweaks = callPackage ./misc/gnome-tweaks { };
 
   gpaste = callPackage ./misc/gpaste { };
@@ -329,7 +317,7 @@ lib.makeScope pkgs.newScope (self: with self; {
   inherit (pkgs) atk glib gobject-introspection gspell webkitgtk gtk3 gtkmm3
       libgtop libgudev libhttpseverywhere librsvg libsecret gdk_pixbuf gtksourceview gtksourceviewmm gtksourceview4
       easytag meld orca rhythmbox shotwell gnome-usage
-      clutter clutter-gst clutter-gtk cogl gtk-vnc libdazzle libgda libgit2-glib libgxps libgdata libgepub libcroco libpeas libgee geocode-glib libgweather librest libzapojit libmediaart gfbgraph gexiv2 folks totem-pl-parser gcr gsound libgnomekbd vte vte_290 gnome-menus gdl;
+      clutter clutter-gst clutter-gtk cogl gtk-vnc libdazzle libgda libgit2-glib libgxps libgdata libgepub libpeas libgee geocode-glib libgweather librest libzapojit libmediaart gfbgraph gexiv2 folks totem-pl-parser gcr gsound libgnomekbd vte vte_290 gnome-menus gdl;
   inherit (pkgs) gsettings-desktop-schemas; # added 2019-04-16
   inherit (pkgs) gnome-video-effects; # added 2019-08-19
   inherit (pkgs) gnome-online-accounts grilo grilo-plugins tracker tracker-miners gnome-photos; # added 2019-08-23
@@ -359,4 +347,18 @@ lib.makeScope pkgs.newScope (self: with self; {
   inherit (pkgs) gjs; # added 2019-01-05
 
   inherit (pkgs) yelp-tools; # added 2019-11-20
+
+  inherit (pkgs) dconf; # added 2019-11-30
+
+  inherit (pkgs) networkmanagerapplet; # added 2019-12-12
+
+  inherit (pkgs) glade; # added 2020-05-15
+
+  vino = throw "vino is deprecated, use gnome-remote-desktop instead."; # added 2020-03-13
+
+  gnome-screensaver = throw "gnome-screensaver is deprecated. If you are using GNOME Flashback, it now has a built-in lock screen. If you are using it elsewhere, you can try xscreenlock or other alternatives."; # added 2020-03-19
+
+  maintainers = lib.teams.gnome.members;
+
+  mutter328 = throw "Removed as Pantheon is upgraded to mutter334.";
 })

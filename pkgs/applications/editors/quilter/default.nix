@@ -1,16 +1,16 @@
-{ stdenv, fetchFromGitHub, pkgconfig, meson, ninja, python3, vala
+{ stdenv, fetchFromGitHub, nix-update-script, pkgconfig, meson, ninja, python3, vala
 , gtk3, desktop-file-utils, gtksourceview, webkitgtk, gtkspell3, pantheon
 , libgee, discount, wrapGAppsHook }:
 
 stdenv.mkDerivation rec {
   pname = "quilter";
-  version = "2.0.3";
+  version = "2.5.1";
 
   src = fetchFromGitHub {
     owner = "lainsce";
     repo = pname;
     rev = version;
-    sha256 = "13l8z3bchha4ax14s48pcqdxh8gnj4mlvv06lk9dwk9fplc93821";
+    sha256 = "0ya1iwzfzvrci083zyrjj6ac4ys25j90slpk8yydw9n99kb750rk";
   };
 
   nativeBuildInputs = [
@@ -39,9 +39,15 @@ stdenv.mkDerivation rec {
     patchShebangs meson/post_install.py
   '';
 
+  passthru = {
+    updateScript = nix-update-script {
+      attrPath = pname;
+    };
+  };
+
   meta = with stdenv.lib; {
     description = "Focus on your writing - designed for elementary OS";
-    homepage = https://github.com/lainsce/quilter;
+    homepage = "https://github.com/lainsce/quilter";
     license = licenses.gpl2Plus;
     maintainers = pantheon.maintainers;
     platforms = platforms.linux;

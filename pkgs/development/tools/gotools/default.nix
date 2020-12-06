@@ -2,26 +2,32 @@
 
 buildGoModule rec {
   pname = "gotools-unstable";
-  version = "2019-11-14";
-  rev = "4191b8cbba092238a318a71cdff48b20b4e1e5d8";
+  version = "2020-10-27";
+  rev = "eafbe7b904eb2418efc832e36ac634dc09084f10";
 
   src = fetchgit {
     inherit rev;
     url = "https://go.googlesource.com/tools";
-    sha256 = "16m62m303j4wqfjr1401xpqpb9m11bs6qc2dhf6x2za2d9pycish";
+    sha256 = "0884znfbm44f4ddjkm0g7qg2a257kwzv1ismd2m225f3c69n3mdg";
   };
 
-  # Build of golang.org/x/tools/gopls fails with:
-  #   can't load package: package golang.org/x/tools/gopls: unknown import path "golang.org/x/tools/gopls": cannot find module providing package golang.org/x/tools/gopls
-  # That is most probably caused by golang.org/x/tools/gopls containing a separate Go module.
-  # In order to fix this, we simply remove the module.
-  # Note that build of golang.org/x/tools/cmd/gopls provides identical binary as golang.org/x/tools/gopls.
-  # See https://github.com/NixOS/nixpkgs/pull/64335.
+  # The gopls folder contains a Go submodule which causes a build failure.
+  # Given that, we can't have the gopls binary be part of the gotools
+  # derivation.
+  #
+  # The attribute "gopls" provides the gopls binary.
+  #
+  # Related
+  #
+  # * https://github.com/NixOS/nixpkgs/pull/85868
+  # * https://github.com/NixOS/nixpkgs/issues/88716
   postPatch = ''
     rm -rf gopls
   '';
 
-  modSha256 = "16cfzmfr9jv8wz0whl433xdm614dk63fzjxv6l1xvkagjmki49iy";
+  vendorSha256 = "18qpjmmjpk322fvf81cafkpl3spv7hpdpymhympmld9isgzggfyz";
+
+  doCheck = false;
 
   postConfigure = ''
     # Make the builtin tools available here
@@ -40,9 +46,8 @@ buildGoModule rec {
   # Set GOTOOLDIR for derivations adding this to buildInputs
   postInstall = ''
     mkdir -p $out/nix-support
-    substituteAll ${../../go-modules/tools/setup-hook.sh} $out/nix-support/setup-hook.tmp
-    cat $out/nix-support/setup-hook.tmp >> $out/nix-support/setup-hook
-    rm $out/nix-support/setup-hook.tmp
+    substitute ${../../go-modules/tools/setup-hook.sh} $out/nix-support/setup-hook \
+      --subst-var-by bin $out
   '';
 
   # Do not copy this without a good reason for enabling

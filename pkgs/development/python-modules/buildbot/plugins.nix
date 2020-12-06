@@ -7,14 +7,12 @@
 
     src = fetchPypi {
       inherit pname version;
-      sha256 = "0awy96pb9s9g0nrmlrvqf5zi878z6mvj653inf9sm89x601a6lp1";
+      sha256 = "1hi44jbnafp7iqncad01hwr087aqmdszvc2if0d9gw6bm159zf4s";
     };
 
     # Remove unneccessary circular dependency on buildbot
     postPatch = ''
-      sed -i setup.py \
-        -e "/import buildbot/d" \
-        -e "s/'buildbot',//"
+      sed -i "s/'buildbot'//" setup.py
     '';
 
     buildInputs = [ buildbot-pkg mock ];
@@ -36,7 +34,7 @@
 
     src = fetchPypi {
       inherit pname version;
-      sha256 = "0bp7bbq6rq1kdg3pf8plcpc4amam0pks5dlmyqj6bn29skfa5h1j";
+      sha256 = "1vkh4kdlnm9z5r62b4vxx6qxc90g65gm1m4qxfc6xjk1265i1w6h";
     };
 
     buildInputs = [ buildbot-pkg ];
@@ -58,7 +56,7 @@
 
     src = fetchPypi {
       inherit pname version;
-      sha256 = "1mxxkqzh4a6574n2lk2ndi77d9g93hjpkwsqizj911n6ibsn4qw3";
+      sha256 = "0v94p1m9fb6m6ik5xyi7bs4jrsgvnyf3sl7f4w1qmb24xc47k2gj";
     };
 
     buildInputs = [ buildbot-pkg ];
@@ -80,7 +78,7 @@
 
     src = fetchPypi {
       inherit pname version;
-      sha256 = "1fkrd5crbgqgp8mr8qgfy559f59ys6hrspddzk3fwg5hrsckkjwr";
+      sha256 = "13bg289al6dmyrin3l6ih3sk7hm660m69kls3kpagg6j6nmpa5wz";
     };
 
     buildInputs = [ buildbot-pkg ];
@@ -102,7 +100,7 @@
 
     src = fetchPypi {
       inherit pname version;
-      sha256 = "0cvbizcc92df08xcs8w6ah51yfilxz7sx9g8bbdrvw6m586ziczb";
+      sha256 = "11cr7m7m8ah8qqjcqj7qvjjak62cx1sq41cazd4i3r07dyhc3ypn";
     };
 
     buildInputs = [ buildbot-pkg ];

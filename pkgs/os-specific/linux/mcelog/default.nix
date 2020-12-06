@@ -1,14 +1,14 @@
-{ stdenv, fetchFromGitHub, utillinux }:
+{ stdenv, fetchFromGitHub, util-linux }:
 
 stdenv.mkDerivation rec {
   pname = "mcelog";
-  version = "165";
+  version = "173";
 
   src = fetchFromGitHub {
     owner  = "andikleen";
     repo   = "mcelog";
     rev    = "v${version}";
-    sha256 = "1g242qz3jj7amgar497bbd8krljspwy89g1r32wz3fdpkn9m1w8s";
+    sha256 = "1ili11kqacn6jkjpk11vhycgygdl92mymgb1sx22lcwq2x0d248m";
   };
 
   postPatch = ''
@@ -20,7 +20,7 @@ stdenv.mkDerivation rec {
     substituteInPlace Makefile --replace '"unknown"' '"${version}"'
 
     for i in triggers/*; do
-      substituteInPlace $i --replace 'logger' '${utillinux}/bin/logger'
+      substituteInPlace $i --replace 'logger' '${util-linux}/bin/logger'
     done
   '';
 
@@ -44,7 +44,7 @@ stdenv.mkDerivation rec {
       including bad page offlining and automatic cache error handling. All
       errors are logged to /var/log/mcelog or syslog or the journal.
     '';
-    homepage = http://mcelog.org/;
+    homepage = "http://mcelog.org/";
     license = licenses.gpl2;
     platforms = platforms.linux;
   };

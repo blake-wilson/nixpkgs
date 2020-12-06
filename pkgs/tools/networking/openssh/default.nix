@@ -1,38 +1,48 @@
-{ stdenv, fetchurl, fetchpatch, zlib, openssl, libedit, pkgconfig, pam, autoreconfHook
+{ stdenv
+, fetchurl
+, fetchpatch
+, zlib
+, openssl
+, libedit
+, pkgconfig
+, pam
+, autoreconfHook
 , etcDir ? null
 , hpnSupport ? false
 , withKerberos ? true
 , withGssapiPatches ? false
 , kerberos
-, linkOpenssl? true
+, libfido2
+, withFIDO ? stdenv.hostPlatform.isUnix && !stdenv.hostPlatform.isMusl
+, linkOpenssl ? true
 }:
 
 let
 
+  version = "8.4p1";
+
   # **please** update this patch when you update to a new openssh release.
   gssapiPatch = fetchpatch {
     name = "openssh-gssapi.patch";
-    url = "https://salsa.debian.org/ssh-team/openssh/raw/"
-      + "e50a98bda787a3b9f53ed67bdccbbac0bde1f9ae"
-      + "/debian/patches/gssapi.patch";
-    sha256 = "14j9cabb3gkhkjc641zbiv29mbvsmgsvis3fbj8ywsd21zc7m2hv";
+    url = "https://salsa.debian.org/ssh-team/openssh/raw/debian/1%25${version}-2/debian/patches/gssapi.patch";
+    sha256 = "1z1ckzimlkm1dmr9f5fqjnjg28gsqcwx6xka0klak857548d2lp2";
   };
 
 in
 with stdenv.lib;
 stdenv.mkDerivation rec {
   pname = "openssh";
-  version = if hpnSupport then "7.8p1" else "8.1p1";
+  inherit version;
 
   src = if hpnSupport then
       fetchurl {
-        url = "https://github.com/rapier1/openssh-portable/archive/hpn-KitchenSink-7_8_P1.tar.gz";
-        sha256 = "05q5hxx7fzcgd8a5i0zk4fwvmnz4xqk04j489irnwm7cka7xdqxw";
+        url = "https://github.com/rapier1/openssh-portable/archive/hpn-KitchenSink-${replaceStrings [ "." "p" ] [ "_" "_P" ] version}.tar.gz";
+        sha256 = "1x2afjy1isslbg7qlvhhs4zhj2c8q2h1ljz0fc5b4h9pqcm9j540";
       }
     else
       fetchurl {
         url = "mirror://openbsd/OpenSSH/portable/${pname}-${version}.tar.gz";
-        sha256 = "1zwk3g57gb13br206k6jdhgnp6y1nibwswzraqspbl1m73pxpx82";
+        sha256 = "091b3pxdlj47scxx6kkf4agkx8c8sdacdxx8m1dw1cby80pd40as";
       };
 
   patches =
@@ -43,15 +53,10 @@ stdenv.mkDerivation rec {
       ./dont_create_privsep_path.patch
 
       ./ssh-keysign.patch
-    ] ++ optional hpnSupport
-      # CVE-2018-20685, can probably be dropped with next version bump
-      # See https://sintonen.fi/advisories/scp-client-multiple-vulnerabilities.txt
-      # for details
-      (fetchpatch {
-        name = "CVE-2018-20685.patch";
-        url = https://github.com/openssh/openssh-portable/commit/6010c0303a422a9c5fa8860c061bf7105eb7f8b2.patch;
-        sha256 = "0q27i9ymr97yb628y44qi4m11hk5qikb1ji1vhvax8hp18lwskds";
-      })
+
+      # See https://github.com/openssh/openssh-portable/pull/206
+      ./ssh-copy-id-fix-eof.patch
+    ]
     ++ optional withGssapiPatches (assert withKerberos; gssapiPatch);
 
   postPatch =
@@ -61,11 +66,10 @@ stdenv.mkDerivation rec {
       substituteInPlace Makefile.in --replace '$(INSTALL) -m 4711' '$(INSTALL) -m 0711'
     '';
 
-  nativeBuildInputs = [ pkgconfig ];
+  nativeBuildInputs = [ pkgconfig ] ++ optional (hpnSupport || withGssapiPatches) autoreconfHook;
   buildInputs = [ zlib openssl libedit pam ]
-    ++ optional withKerberos kerberos
-    ++ optional hpnSupport autoreconfHook
-    ;
+    ++ optional withFIDO libfido2
+    ++ optional withKerberos kerberos;
 
   preConfigure = ''
     # Setting LD causes `configure' and `make' to disagree about which linker
@@ -84,6 +88,7 @@ stdenv.mkDerivation rec {
     "--disable-strip"
     (if pam != null then "--with-pam" else "--without-pam")
   ] ++ optional (etcDir != null) "--sysconfdir=${etcDir}"
+    ++ optional withFIDO "--with-security-key-builtin=yes"
     ++ optional withKerberos (assert kerberos != null; "--with-kerberos5=${kerberos}")
     ++ optional stdenv.isDarwin "--disable-libutil"
     ++ optional (!linkOpenssl) "--without-openssl";
@@ -107,11 +112,11 @@ stdenv.mkDerivation rec {
   ];
 
   meta = {
-    homepage = http://www.openssh.com/;
     description = "An implementation of the SSH protocol";
+    homepage = "https://www.openssh.com/";
+    changelog = "https://www.openssh.com/releasenotes.html";
     license = stdenv.lib.licenses.bsd2;
     platforms = platforms.unix ++ platforms.windows;
     maintainers = with maintainers; [ eelco aneeshusa ];
-    broken = hpnSupport;
   };
 }

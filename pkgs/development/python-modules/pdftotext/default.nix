@@ -2,18 +2,18 @@
 
 buildPythonPackage rec {
   pname = "pdftotext";
-  version = "2.1.2";
+  version = "2.1.5";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "c8bdc47b08baa17b8e03ba1f960fc6335b183d2644eaf7300e088516758a6090";
+    sha256 = "98aeb8b07a4127e1a30223bd933ef080bbd29aa88f801717ca6c5618380b8aa6";
   };
 
   buildInputs = [ poppler ];
 
   meta = with lib; {
     description = "Simple PDF text extraction";
-    homepage = https://github.com/jalan/pdftotext;
+    homepage = "https://github.com/jalan/pdftotext";
     license = licenses.mit;
     maintainers = with maintainers; [ earvstedt ];
   };

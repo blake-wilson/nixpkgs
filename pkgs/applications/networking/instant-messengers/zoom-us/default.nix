@@ -1,12 +1,14 @@
-{ stdenv, fetchurl, mkDerivation, autoPatchelfHook
+{ stdenv, fetchurl, mkDerivation, autoPatchelfHook, bash
 , fetchFromGitHub
 # Dynamic libraries
 , dbus, glib, libGL, libX11, libXfixes, libuuid, libxcb, qtbase, qtdeclarative
-, qtimageformats, qtlocation, qtquickcontrols, qtquickcontrols2, qtscript, qtsvg
-, qttools, qtwayland, qtwebchannel, qtwebengine
+, qtgraphicaleffects, qtimageformats, qtlocation, qtquickcontrols
+, qtquickcontrols2, qtscript, qtsvg , qttools, qtwayland, qtwebchannel
+, qtwebengine
 # Runtime
-, coreutils, libjpeg_turbo, pciutils, procps, utillinux, libv4l
+, coreutils, faac, pciutils, procps, util-linux
 , pulseaudioSupport ? true, libpulseaudio ? null
+, alsaSupport ? stdenv.isLinux, alsaLib ? null
 }:
 
 assert pulseaudioSupport -> libpulseaudio != null;
@@ -14,11 +16,11 @@ assert pulseaudioSupport -> libpulseaudio != null;
 let
   inherit (stdenv.lib) concatStringsSep makeBinPath optional;
 
-  version = "3.0.317369.1110";
+  version = "5.4.53350.1027";
   srcs = {
     x86_64-linux = fetchurl {
       url = "https://zoom.us/client/${version}/zoom_x86_64.tar.xz";
-      sha256 = "0r4wp9qb1739xwr24kglc4sj8qaxwr4nh5p1igi3x6f1f8gczia7";
+      sha256 = "11va3px42y81bwy10mxm7mk0kf2sni9gwb422pq9djck2dgchw5x";
     };
   };
 
@@ -26,8 +28,8 @@ let
   desktopIntegration = fetchFromGitHub {
     owner = "flathub";
     repo = "us.zoom.Zoom";
-    rev = "0d294e1fdd2a4ef4e05d414bc680511f24d835d7";
-    sha256 = "0rm188844a10v8d6zgl2pnwsliwknawj09b02iabrvjw5w1lp6wl";
+    rev = "25e14f8141cdc682b4f7d9ebe15608619f5a19f2";
+    sha256 = "0w3pdd5484r3nsb4iahi37jdlm37vm1053sb8k2zlqb9s554zjwp";
   };
 
 in mkDerivation {
@@ -39,12 +41,13 @@ in mkDerivation {
   nativeBuildInputs = [ autoPatchelfHook ];
 
   buildInputs = [
-    dbus glib libGL libX11 libXfixes libuuid libxcb libjpeg_turbo
-    qtbase qtdeclarative qtlocation qtquickcontrols qtquickcontrols2 qtscript
-    qtwebchannel qtwebengine qtimageformats qtsvg qttools qtwayland
+    dbus glib libGL libX11 libXfixes libuuid libxcb faac qtbase
+    qtdeclarative qtgraphicaleffects qtlocation qtquickcontrols qtquickcontrols2
+    qtscript qtwebchannel qtwebengine qtimageformats qtsvg qttools qtwayland
   ];
 
-  runtimeDependencies = optional pulseaudioSupport libpulseaudio;
+  runtimeDependencies = optional pulseaudioSupport libpulseaudio
+    ++ optional alsaSupport alsaLib;
 
   installPhase =
     let
@@ -59,7 +62,6 @@ in mkDerivation {
         "zcacert.pem"
         "zoom"
         "zoom.sh"
-        "zoomlinux"
         "zopen"
       ];
     in ''
@@ -70,7 +72,10 @@ in mkDerivation {
       cp -ar ${files} $out/share/zoom-us
 
       # TODO Patch this somehow; tries to dlopen './libturbojpeg.so' from cwd
-      ln -s $(readlink -e "${libjpeg_turbo.out}/lib/libturbojpeg.so") $out/share/zoom-us/libturbojpeg.so
+      cp libturbojpeg.so $out/share/zoom-us/libturbojpeg.so
+
+      # Again, requires faac with a nonstandard filename.
+      ln -s $(readlink -e "${faac}/lib/libfaac.so") $out/share/zoom-us/libfaac1.so
 
       runHook postInstall
     '';
@@ -94,23 +99,38 @@ in mkDerivation {
         mkdir -p $out/share/icons/hicolor/$path/apps
         cp $icon $out/share/icons/hicolor/$path/apps/us.zoom.Zoom.png
     done
-
-    ln -s $out/share/zoom-us/zoom $out/bin/zoom-us
   '';
 
+  # $out/share/zoom-us isn't in auto-wrap directories list, need manual wrapping
+  dontWrapQtApps = true;
+
   qtWrapperArgs = [
-    ''--prefix PATH : ${makeBinPath [ coreutils glib.dev pciutils procps qttools.dev utillinux ]}''
-    ''--prefix LD_PRELOAD : ${libv4l}/lib/libv4l/v4l2convert.so''
+    ''--prefix PATH : ${makeBinPath [ coreutils glib.dev pciutils procps qttools.dev util-linux ]}''
+    # --run "cd ${placeholder "out"}/share/zoom-us"
+    # ^^ unfortunately, breaks run arg into multiple array elements, due to
+    # some bad array propagation. We'll do that in bash below
   ];
+
+  postFixup = ''
+    # Zoom expects "zopen" executable (needed for web login) to be present in CWD. Or does it expect
+    # everybody runs Zoom only after cd to Zoom package directory? Anyway, :facepalm:
+    qtWrapperArgs+=( --run "cd ${placeholder "out"}/share/zoom-us" )
+
+    for app in ZoomLauncher zopen zoom; do
+      wrapQtApp $out/share/zoom-us/$app
+    done
+
+    ln -s $out/share/zoom-us/ZoomLauncher $out/bin/zoom-us
+  '';
 
   passthru.updateScript = ./update.sh;
 
   meta = {
-    homepage = https://zoom.us/;
+    homepage = "https://zoom.us/";
     description = "zoom.us video conferencing application";
     license = stdenv.lib.licenses.unfree;
     platforms = builtins.attrNames srcs;
-    maintainers = with stdenv.lib.maintainers; [ danbst tadfisher ];
+    maintainers = with stdenv.lib.maintainers; [ danbst tadfisher doronbehar ];
   };
 
 }

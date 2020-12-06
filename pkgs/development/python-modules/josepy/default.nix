@@ -8,11 +8,11 @@
 
 buildPythonPackage rec {
   pname = "josepy";
-  version = "1.2.0";
+  version = "1.4.0";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "1lq2s1649zinfii9ccl1wk6aqpaj35r8xwz44020ylp9ky1rmv4w";
+    sha256 = "c37ff4b93606e6a452b72cdb992da5e0544be12912fac01b31ddbdd61f6d5bd0";
   };
 
   propagatedBuildInputs = [
@@ -27,7 +27,7 @@ buildPythonPackage rec {
 
   meta = with lib; {
     description = "JOSE protocol implementation in Python";
-    homepage = https://github.com/jezdez/josepy;
+    homepage = "https://github.com/jezdez/josepy";
     license = licenses.asl20;
     maintainers = with maintainers; [  ];
   };

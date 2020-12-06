@@ -1,14 +1,15 @@
 { stdenv, fetchurl, pkgconfig, libxml2, gnome3, dconf, nautilus
-, gtk3, gsettings-desktop-schemas, vte, intltool, which, libuuid, vala
-, desktop-file-utils, itstool, wrapGAppsHook, glib, pcre2 }:
+, gtk3, gsettings-desktop-schemas, vte, gettext, which, libuuid, vala
+, desktop-file-utils, itstool, wrapGAppsHook, glib, pcre2
+, libxslt, docbook-xsl-nons }:
 
 stdenv.mkDerivation rec {
   pname = "gnome-terminal";
-  version = "3.34.2";
+  version = "3.38.1";
 
   src = fetchurl {
     url = "mirror://gnome/sources/gnome-terminal/${stdenv.lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
-    sha256 = "0gc004f9b5k94gkdanmqjz3wqgnpny0l3nqm8zd19h4f0ps27mrv";
+    sha256 = "1lgkvla0fadg76j898p2x2fipqf8kkqbbmmsfkfpz11q9y1d966r";
   };
 
   buildInputs = [
@@ -18,7 +19,7 @@ stdenv.mkDerivation rec {
   ];
 
   nativeBuildInputs = [
-    pkgconfig intltool itstool which libxml2
+    pkgconfig gettext itstool which libxml2 libxslt docbook-xsl-nons
     vala desktop-file-utils wrapGAppsHook pcre2
   ];
 
@@ -42,9 +43,9 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "The GNOME Terminal Emulator";
-    homepage = https://wiki.gnome.org/Apps/Terminal;
+    homepage = "https://wiki.gnome.org/Apps/Terminal";
     platforms = platforms.linux;
     license = licenses.gpl3Plus;
-    maintainers = gnome3.maintainers;
+    maintainers = teams.gnome.members;
   };
 }

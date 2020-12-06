@@ -16,25 +16,32 @@
 , gst-plugins-bad
 , nasm
 , libvpx
-, python
+, python3
 }:
 
 stdenv.mkDerivation rec {
   pname = "gstreamer-vaapi";
-  version = "1.16.1";
+  version = "1.18.1";
 
   src = fetchurl {
     url = "${meta.homepage}/src/${pname}/${pname}-${version}.tar.xz";
-    sha256 = "0fk0nymvbfc04fv63fj2r6q9vvi431svhkrwpr7kdjvq3rphymyb";
+    sha256 = "1sm6x2qa7ng78w0w8q4mjs7pbpbbk8qkfgzhdmbb8l0bh513q3a0";
   };
 
-  outputs = [ "out" "dev" ];
+  outputs = [
+    "out"
+    "dev"
+    # "devdoc" # disabled until `hotdoc` is packaged in nixpkgs
+  ];
 
   nativeBuildInputs = [
     meson
     ninja
     pkgconfig
     bzip2
+
+    # documentation
+    # TODO add hotdoc here
   ];
 
   buildInputs = [
@@ -55,12 +62,18 @@ stdenv.mkDerivation rec {
     libGLU
     nasm
     libvpx
-    python
+    python3
   ];
 
   mesonFlags = [
     "-Dexamples=disabled" # requires many dependencies and probably not useful for our users
+    "-Ddoc=disabled" # `hotdoc` not packaged in nixpkgs as of writing
   ];
+
+  postPatch = ''
+    patchShebangs \
+      scripts/extract-release-date-from-doap-file.py
+  '';
 
   meta = with stdenv.lib; {
     description = "Set of VAAPI GStreamer Plug-ins";

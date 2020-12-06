@@ -10,17 +10,17 @@
 with stdenv.lib;
 
 stdenv.mkDerivation rec {
-  version = "0.9.2";
+  version = "0.9.7";
   pname = "nftables";
 
   src = fetchurl {
     url = "https://netfilter.org/projects/nftables/files/${pname}-${version}.tar.bz2";
-    sha256 = "1x8kalbggjq44j4916i6vyv1rb20dlh1dcsf9xvzqsry2j063djw";
+    sha256 = "1c1c2475nifncv0ng8z77h2dpanlsx0bhqm15k00jb3a6a68lszy";
   };
 
   nativeBuildInputs = [
     pkgconfig bison file flex
-    asciidoc docbook_xml_dtd_45 docbook_xsl findXMLCatalogs libxslt 
+    asciidoc docbook_xml_dtd_45 docbook_xsl findXMLCatalogs libxslt
   ];
 
   buildInputs = [
@@ -45,5 +45,6 @@ stdenv.mkDerivation rec {
     homepage = "https://netfilter.org/projects/nftables/";
     license = licenses.gpl2;
     platforms = platforms.linux;
+    maintainers = with maintainers; [ izorkin ];
   };
 }

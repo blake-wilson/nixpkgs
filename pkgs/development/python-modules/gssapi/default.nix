@@ -1,14 +1,13 @@
 { stdenv
 , lib
 , buildPythonPackage
+, pythonOlder
 , fetchFromGitHub
 , six
-, enum34
 , decorator
 , nose
 , krb5Full
 , darwin
-, isPy27
 , parameterized
 , shouldbe
 , cython
@@ -18,13 +17,14 @@
 
 buildPythonPackage rec {
   pname = "gssapi";
-  version = "1.6.1";
+  version = "1.6.10";
+  disabled = pythonOlder "3.6";
 
   src = fetchFromGitHub {
     owner = "pythongssapi";
     repo = "python-${pname}";
     rev = "v${version}";
-    sha256 = "0n13vb3v50vr04vrnql2w00gri0gcf08i0pr0q2p4w8scbsw7kjk";
+    sha256 = "11w8z9ik6zzv3pw3319mz91cgbfkgx0mffxbapqnhilzij2jad4q";
   };
 
   # It's used to locate headers
@@ -41,7 +41,7 @@ buildPythonPackage rec {
   propagatedBuildInputs =  [
     decorator
     six
-  ] ++ lib.optional isPy27 enum34;
+  ];
 
   buildInputs = lib.optionals stdenv.isDarwin [
     darwin.apple_sdk.frameworks.GSS
@@ -55,15 +55,24 @@ buildPythonPackage rec {
     six
   ];
 
-  doCheck = !stdenv.isDarwin; # many failures on darwin
+  doCheck = pythonOlder "3.8"  # `shouldbe` not available
+    && !stdenv.isDarwin;  # many failures on darwin
 
+  # skip tests which fail possibly due to be an upstream issue (see
+  # https://github.com/pythongssapi/python-gssapi/issues/220)
   checkPhase = ''
+    # some tests don't respond to being disabled through nosetests -x
+    echo $'\ndel CredsTestCase.test_add_with_impersonate' >> gssapi/tests/test_high_level.py
+    echo $'\ndel TestBaseUtilities.test_acquire_creds_impersonate_name' >> gssapi/tests/test_raw.py
+    echo $'\ndel TestBaseUtilities.test_add_cred_impersonate_name' >> gssapi/tests/test_raw.py
+
     export PYTHONPATH="$out/${python.sitePackages}:$PYTHONPATH"
-    ${python.interpreter} setup.py nosetests
+    ${python.interpreter} setup.py nosetests -e 'ext_test_\d.*'
   '';
+  pythonImportsCheck = [ "gssapi" ];
 
   meta = with lib; {
-    homepage = https://pypi.python.org/pypi/gssapi;
+    homepage = "https://pypi.python.org/pypi/gssapi";
     description = "Python GSSAPI Wrapper";
     license = licenses.mit;
   };

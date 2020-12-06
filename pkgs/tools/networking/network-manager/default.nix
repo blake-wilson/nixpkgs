@@ -4,17 +4,17 @@
 , gobject-introspection, modemmanager, openresolv, libndp, newt, libsoup
 , ethtool, gnused, iputils, kmod, jansson, gtk-doc, libxslt
 , docbook_xsl, docbook_xml_dtd_412, docbook_xml_dtd_42, docbook_xml_dtd_43
-, openconnect, curl, meson, ninja, libpsl }:
+, openconnect, curl, meson, ninja, libpsl, mobile-broadband-provider-info, runtimeShell }:
 
 let
   pythonForDocs = python3.withPackages (pkgs: with pkgs; [ pygobject3 ]);
 in stdenv.mkDerivation rec {
   pname = "network-manager";
-  version = "1.20.6";
+  version = "1.26.0";
 
   src = fetchurl {
     url = "mirror://gnome/sources/NetworkManager/${stdenv.lib.versions.majorMinor version}/NetworkManager-${version}.tar.xz";
-    sha256 = "0fa5my2czxxlr0lcrzm4zcbcfmvzflnzg1n0yrf6wssa07qaklp8";
+    sha256 = "0isdqwp58d7r92sqsk7l2vlqwy518n8b7c7z94jk9gc1bdmjf8sj";
   };
 
   outputs = [ "out" "dev" "devdoc" "man" "doc" ];
@@ -41,7 +41,6 @@ in stdenv.mkDerivation rec {
     "-Dcrypto=gnutls"
     "-Dsession_tracking=systemd"
     "-Dmodem_manager=true"
-    "-Dpolkit_agent=true"
     "-Dnmtui=true"
     "-Ddocs=true"
     "-Dtests=no"
@@ -49,22 +48,31 @@ in stdenv.mkDerivation rec {
     # Allow using iwd when configured to do so
     "-Diwd=true"
     "-Dlibaudit=yes-disabled-by-default"
+    # We don't use firewalld in NixOS
+    "-Dfirewalld_zone=false"
   ];
 
   patches = [
     (substituteAll {
       src = ./fix-paths.patch;
-      inherit iputils kmod openconnect ethtool gnused dbus;
-      inherit (stdenv) shell;
+      inherit iputils kmod openconnect ethtool gnused systemd polkit;
+      inherit runtimeShell;
     })
 
     # Meson does not support using different directories during build and
     # for installation like Autotools did with flags passed to make install.
     ./fix-install-paths.patch
+
+    # Fix build
+    # https://gitlab.freedesktop.org/NetworkManager/NetworkManager/-/merge_requests/620
+    (fetchpatch {
+      url = "https://gitlab.freedesktop.org/NetworkManager/NetworkManager/commit/54e25f23f53af889703dfc50d51a8afeeea8a439.patch";
+      sha256 = "oy/AZhOC15anWeIMYJfDBcITqJ7CiU715he68XvPRxk=";
+    })
   ];
 
   buildInputs = [
-    systemd libselinux audit libpsl libuuid polkit ppp libndp curl
+    systemd libselinux audit libpsl libuuid polkit ppp libndp curl mobile-broadband-provider-info
     bluez5 dnsmasq gobject-introspection modemmanager readline newt libsoup jansson
   ];
 
@@ -101,7 +109,7 @@ in stdenv.mkDerivation rec {
   };
 
   meta = with stdenv.lib; {
-    homepage = https://wiki.gnome.org/Projects/NetworkManager;
+    homepage = "https://wiki.gnome.org/Projects/NetworkManager";
     description = "Network configuration and management tool";
     license = licenses.gpl2Plus;
     maintainers = with maintainers; [ phreedom domenkozar obadz worldofpeace ];

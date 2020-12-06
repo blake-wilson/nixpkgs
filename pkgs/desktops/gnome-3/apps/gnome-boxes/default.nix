@@ -11,12 +11,15 @@
 , gobject-introspection
 , libxml2
 , gtk3
+, gtksourceview4
 , gtk-vnc
 , freerdp
 , libvirt
 , spice-gtk
 , python3
+, appstream-glib
 , spice-protocol
+, libhandy_0
 , libsoup
 , libosinfo
 , systemd
@@ -34,7 +37,7 @@
 , mtools
 , cdrkit
 , libcdio
-, libusb
+, libusb1
 , libarchive
 , acl
 , libgudev
@@ -51,16 +54,17 @@
 
 stdenv.mkDerivation rec {
   pname = "gnome-boxes";
-  version = "3.34.2";
+  version = "3.38.2";
 
   src = fetchurl {
-    url = "mirror://gnome/sources/gnome-boxes/${stdenv.lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
-    sha256 = "1rqdjf61cbi3zcpzr6cfkj3lcfrdlhs20bl65lxw2xrwk4jn0ph5";
+    url = "mirror://gnome/sources/${pname}/${stdenv.lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
+    sha256 = "1zjvng0izbws3506998l3dwsxjbm7wnhqipb8nmqzvi096czvajl";
   };
 
   doCheck = true;
 
   nativeBuildInputs = [
+    appstream-glib # for appstream-util
     desktop-file-utils
     gettext
     gobject-introspection
@@ -89,17 +93,19 @@ stdenv.mkDerivation rec {
     gnome3.adwaita-icon-theme
     gtk-vnc
     gtk3
+    gtksourceview4
     json-glib
     libapparmor
     libarchive
     libcap
     libcap_ng
     libgudev
+    libhandy_0
     libosinfo
     librsvg
     libsecret
     libsoup
-    libusb
+    libusb1
     libvirt
     libvirt-glib
     libxml2
@@ -133,9 +139,9 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "Simple GNOME 3 application to access remote or virtual systems";
-    homepage = https://wiki.gnome.org/Apps/Boxes;
+    homepage = "https://wiki.gnome.org/Apps/Boxes";
     license = licenses.gpl3;
     platforms = platforms.linux;
-    maintainers = gnome3.maintainers;
+    maintainers = teams.gnome.members;
   };
 }

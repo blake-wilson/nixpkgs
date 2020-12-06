@@ -5,9 +5,11 @@
   supportedSystems ? [ "x86_64-linux" "x86_64-darwin" "aarch64-linux" ]
 , # Strip most of attributes when evaluating to spare memory usage
   scrubJobs ? true
+, # Attributes passed to nixpkgs. Don't build packages marked as unfree.
+  nixpkgsArgs ? { config = { allowUnfree = false; inHydra = true; }; }
 }:
 
-with import ./release-lib.nix { inherit supportedSystems scrubJobs; };
+with import ./release-lib.nix { inherit supportedSystems scrubJobs nixpkgsArgs; };
 
 let
   nativePlatforms = all;
@@ -135,6 +137,11 @@ in
   /* Linux on the fuloong */
   fuloongminipc = mapTestOnCross lib.systems.examples.fuloongminipc linuxCommon;
 
+  /* Javacript */
+  ghcjs = mapTestOnCross lib.systems.examples.ghcjs {
+    haskell.packages.ghcjs.hello = nativePlatforms;
+  };
+
   /* Linux on Raspberrypi */
   rpi = mapTestOnCross lib.systems.examples.raspberryPi rpiCommon;
   rpi-musl = mapTestOnCross lib.systems.examples.muslpi rpiCommon;
@@ -155,6 +162,10 @@ in
   aarch64-embedded = mapTestOnCross lib.systems.examples.aarch64-embedded embedded;
   i686-embedded = mapTestOnCross lib.systems.examples.i686-embedded embedded;
   x86_64-embedded = mapTestOnCross lib.systems.examples.x86_64-embedded embedded;
+
+  # we test `embedded` instead of `linuxCommon` because very few packages
+  # successfully cross-compile to Redox so far
+  x86_64-redox = mapTestOnCross lib.systems.examples.x86_64-unknown-redox embedded;
 
   /* Cross-built bootstrap tools for every supported platform */
   bootstrapTools = let

@@ -1,6 +1,6 @@
 { lib, stdenv, fetchurl, bison, cmake, pkgconfig
 , boost, icu, libedit, libevent, lz4, ncurses, openssl, protobuf, re2, readline, zlib
-, numactl, perl, cctools, CoreServices, developer_cmds
+, numactl, perl, cctools, CoreServices, developer_cmds, libtirpc, rpcsvc-proto
 }:
 
 let
@@ -18,12 +18,12 @@ self = stdenv.mkDerivation rec {
     ./libutils.patch
   ];
 
-  nativeBuildInputs = [ bison cmake pkgconfig ];
+  nativeBuildInputs = [ bison cmake pkgconfig rpcsvc-proto ];
 
   buildInputs = [
     boost icu libedit libevent lz4 ncurses openssl protobuf re2 readline zlib
   ] ++ lib.optionals stdenv.isLinux [
-    numactl
+    numactl libtirpc
   ] ++ lib.optionals stdenv.isDarwin [
     cctools CoreServices developer_cmds
   ];
@@ -31,7 +31,6 @@ self = stdenv.mkDerivation rec {
   outputs = [ "out" "static" ];
 
   cmakeFlags = [
-    "-DCMAKE_OSX_DEPLOYMENT_TARGET=10.12" # For std::shared_timed_mutex.
     "-DCMAKE_SKIP_BUILD_RPATH=OFF" # To run libmysql/libmysql_api_test during build.
     "-DFORCE_UNSUPPORTED_COMPILER=1" # To configure on Darwin.
     "-DWITH_ROUTER=OFF" # It may be packaged separately.

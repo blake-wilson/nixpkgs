@@ -1,12 +1,12 @@
-{ stdenv, fetchzip, autoPatchelfHook, xorg, gtk2, gnome2, gtk3, nss, alsaLib, udev, unzip, wrapGAppsHook }:
+{ stdenv, lib, fetchzip, autoPatchelfHook, xorg, gtk2, gnome2, gtk3, nss, alsaLib, udev, unzip, wrapGAppsHook }:
 
-stdenv.mkDerivation rec{
+stdenv.mkDerivation rec {
   pname = "cypress";
-  version = "3.6.1";
+  version = "6.0.0";
 
   src = fetchzip {
     url = "https://cdn.cypress.io/desktop/${version}/linux-x64/cypress.zip";
-    sha256 = "0vlfmhsz7zkp3bjsgqmp9n716d5znicl42hm0m9hl7ndvgm9z9z0";
+    sha256 = "0hii7kp48ba07gsd521wwl288p808xr2wqgk1iidxkzj2v6g71by";
   };
 
   # don't remove runtime deps
@@ -20,7 +20,7 @@ stdenv.mkDerivation rec{
     nss gtk2 alsaLib gnome2.GConf gtk3 unzip
   ];
 
-  runtimeDependencies = [ udev.lib ];
+  runtimeDependencies = [ (lib.getLib udev) ];
 
   installPhase = ''
     mkdir -p $out/bin $out/opt/cypress
@@ -30,7 +30,7 @@ stdenv.mkDerivation rec{
     mkdir -p $out/bin/resources/app
     printf '{"version":"%b"}' $version > $out/bin/resources/app/package.json
     # Cypress now looks for binary_state.json in bin
-    echo '{"verified": true}' > $out/bin/binary_state.json
+    echo '{"verified": true}' > $out/binary_state.json
     ln -s $out/opt/cypress/Cypress $out/bin/Cypress
   '';
 

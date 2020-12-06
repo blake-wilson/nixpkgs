@@ -1,6 +1,6 @@
 { stdenv, lib, fetchFromGitHub, pkgs
 , autoconf, automake, curl, iprange, iproute, ipset, iptables, iputils
-, kmod, nettools, procps, tcpdump, traceroute, utillinux, whois
+, kmod, nettools, procps, tcpdump, traceroute, util-linux, whois
 
 # If true, just install FireQOS without FireHOL
 , onlyQOS ? false
@@ -86,7 +86,7 @@ stdenv.mkDerivation rec {
   nativeBuildInputs = [ autoconf automake ];
   buildInputs = [
     curl iprange iproute ipset iptables iputils kmod
-    nettools procps tcpdump traceroute utillinux whois
+    nettools procps tcpdump traceroute util-linux whois
   ];
 
   preConfigure = "./autogen.sh";
@@ -100,9 +100,9 @@ stdenv.mkDerivation rec {
       FireHOL, an iptables stateful packet filtering firewall for humans!
       FireQOS, a TC based bandwidth shaper for humans!
     '';
-    homepage = https://firehol.org/;
+    homepage = "https://firehol.org/";
     license = licenses.gpl2;
-    maintainers = with maintainers; [ geistesk ];
+    maintainers = with maintainers; [ oxzi ];
     platforms = platforms.linux;
   };
 }

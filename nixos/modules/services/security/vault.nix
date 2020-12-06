@@ -131,10 +131,13 @@ in
 
       restartIfChanged = false; # do not restart on "nixos-rebuild switch". It would seal the storage and disrupt the clients.
 
+      startLimitIntervalSec = 60;
+      startLimitBurst = 3;
       serviceConfig = {
         User = "vault";
         Group = "vault";
         ExecStart = "${cfg.package}/bin/vault server -config ${configFile}";
+        ExecReload = "${pkgs.coreutils}/bin/kill -SIGHUP $MAINPID";
         PrivateDevices = true;
         PrivateTmp = true;
         ProtectSystem = "full";
@@ -144,8 +147,6 @@ in
         KillSignal = "SIGINT";
         TimeoutStopSec = "30s";
         Restart = "on-failure";
-        StartLimitInterval = "60s";
-        StartLimitBurst = 3;
       };
 
       unitConfig.RequiresMountsFor = optional (cfg.storagePath != null) cfg.storagePath;

@@ -1,21 +1,24 @@
-{ stdenv, fetchpatch, python, buildPythonPackage, isPy37
+{ buildPackages, stdenv, fetchpatch, python, buildPythonPackage, isPy37
 , protobuf, google_apputils, pyext, libcxx, isPy27
 , disabled, doCheck ? true }:
 
 with stdenv.lib;
 
 buildPythonPackage {
-  inherit (protobuf) name src version;
+  inherit (protobuf) pname src version;
   inherit disabled;
   doCheck = doCheck && !isPy27; # setuptools>=41.4 no longer collects correctly on python2
 
-  NIX_CFLAGS_COMPILE =
+  NIX_CFLAGS_COMPILE = toString (
     # work around python distutils compiling C++ with $CC
     optional stdenv.isDarwin "-I${libcxx}/include/c++/v1"
-    ++ optional (versionOlder protobuf.version "2.7.0") "-std=c++98";
+    ++ optional (versionOlder protobuf.version "2.7.0") "-std=c++98"
+  );
+
+  outputs = [ "out" "dev" ];
 
   propagatedBuildInputs = [ google_apputils ];
-  propagatedNativeBuildInputs = [ protobuf ];  # For protoc.
+  propagatedNativeBuildInputs = [ buildPackages.protobuf ];  # For protoc.
   nativeBuildInputs = [ google_apputils pyext ];
   buildInputs = [ protobuf ];
 
@@ -42,9 +45,9 @@ buildPythonPackage {
 
   preBuild = ''
     # Workaround for https://github.com/google/protobuf/issues/2895
-    ${python.interpreter} setup.py build
+    ${python.pythonForBuild.interpreter} setup.py build
   '' + optionalString (versionAtLeast protobuf.version "2.6.0") ''
-    ${python.interpreter} setup.py build_ext --cpp_implementation
+    ${python.pythonForBuild.interpreter} setup.py build_ext --cpp_implementation
   '';
 
   installFlags = optional (versionAtLeast protobuf.version "2.6.0")
@@ -59,7 +62,7 @@ buildPythonPackage {
 
   meta = {
     description = "Protocol Buffers are Google's data interchange format";
-    homepage = https://developers.google.com/protocol-buffers/;
+    homepage = "https://developers.google.com/protocol-buffers/";
     license = licenses.bsd3;
   };
 

@@ -1,30 +1,36 @@
-{ stdenv, fetchFromGitHub, pkgconfig, autoreconfHook, openssl, db53, boost
-, zlib, miniupnpc, qtbase ? null , qttools ? null, utillinux, protobuf, qrencode, libevent
-, withGui }:
+{ stdenv, mkDerivation, fetchFromGitHub, pkgconfig, cmake, openssl, db53, boost
+, zlib, miniupnpc, qtbase ? null , qttools ? null, util-linux, protobuf, qrencode, libevent
+, withGui, python3, jemalloc, zeromq4 }:
 
 with stdenv.lib;
 
-stdenv.mkDerivation rec {
+mkDerivation rec {
 
   name = "bitcoin" + (toString (optional (!withGui) "d")) + "-abc-" + version;
-  version = "0.20.6";
+  version = "0.21.13";
 
   src = fetchFromGitHub {
     owner = "bitcoin-ABC";
     repo = "bitcoin-abc";
     rev = "v${version}";
-    sha256 = "1a65pykdjkiic67fcs8cg2qrvzzrqifa93r1bzza3gdyfdvgv3ww";
+    sha256 = "1x8xcdi1vcskggk9bqkwr3ah4vi9b7sj2h8hf7spac6dvz8lmzav";
   };
 
   patches = [ ./fix-bitcoin-qt-build.patch ];
 
-  nativeBuildInputs = [ pkgconfig autoreconfHook ];
-  buildInputs = [ openssl db53 boost zlib
-                  miniupnpc utillinux protobuf libevent ]
+  nativeBuildInputs = [ pkgconfig cmake ];
+  buildInputs = [ openssl db53 boost zlib python3 jemalloc zeromq4
+                  miniupnpc util-linux protobuf libevent ]
                   ++ optionals withGui [ qtbase qttools qrencode ];
 
-  configureFlags = [ "--with-boost-libdir=${boost.out}/lib" ]
-                     ++ optionals withGui [ "--with-gui=qt5" ];
+  cmakeFlags = optionals (!withGui) [
+    "-DBUILD_BITCOIN_QT=OFF"
+  ];
+
+  # many of the generated scripts lack execute permissions
+  postConfigure = ''
+    find ./. -type f -iname "*.sh" -exec chmod +x {} \;
+  '';
 
   enableParallelBuilding = true;
 
@@ -37,7 +43,7 @@ stdenv.mkDerivation rec {
 
       Bitcoin ABC is a fork of the Bitcoin Core software project.
     '';
-    homepage = https://bitcoinabc.org/;
+    homepage = "https://bitcoinabc.org/";
     maintainers = with maintainers; [ lassulus ];
     license = licenses.mit;
     broken = stdenv.isDarwin;

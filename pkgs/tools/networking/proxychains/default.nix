@@ -14,10 +14,13 @@ stdenv.mkDerivation rec {
     # Temporary work-around; most likely fixed by next upstream release
     sed -i Makefile -e '/-lpthread/a LDFLAGS+=-ldl'
   '';
+  postInstall = ''
+    cp src/proxychains.conf $out/etc
+  '';
 
   meta = {
     description = "Proxifier for SOCKS proxies";
-    homepage = http://proxychains.sourceforge.net;
+    homepage = "http://proxychains.sourceforge.net";
     license = stdenv.lib.licenses.gpl2Plus;
     platforms = stdenv.lib.platforms.linux;
   };

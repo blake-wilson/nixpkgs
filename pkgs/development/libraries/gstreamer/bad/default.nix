@@ -1,5 +1,6 @@
 { stdenv
 , fetchurl
+, fetchpatch
 , meson
 , ninja
 , gettext
@@ -9,14 +10,14 @@
 , gst-plugins-base
 , orc
 , gobject-introspection
-, enableZbar ? true
+, enableZbar ? false
 , faacSupport ? false
 , faac ? null
 , faad2
 , libass
 , libkate
 , libmms
-, librdf
+, lrdf
 , ladspaH
 , libnice
 , webrtc-audio-processing
@@ -28,6 +29,7 @@
 , libbs2b
 , libmodplug
 , mpeg2dec
+, libmicrodns
 , openjpeg
 , libopus
 , librsvg
@@ -64,6 +66,7 @@
 , wayland-protocols
 , wildmidi
 , fluidsynth
+, libva
 , libvdpau
 , wayland
 , libwebp
@@ -86,13 +89,13 @@ let
   inherit (stdenv.lib) optional optionals;
 in stdenv.mkDerivation rec {
   pname = "gst-plugins-bad";
-  version = "1.16.1";
+  version = "1.18.1";
 
   outputs = [ "out" "dev" ];
 
   src = fetchurl {
     url = "${meta.homepage}/src/${pname}/${pname}-${version}.tar.xz";
-    sha256 = "1dddqacxgp77f3nl153x5a6139wdphc9phds2fpqb2cv6faiqj2n";
+    sha256 = "1cn18cbqyysrxnrk5bpxdzd5xcws9g2kmm5rbv00cx6rhn69g5f1";
   };
 
   patches = [
@@ -103,16 +106,18 @@ in stdenv.mkDerivation rec {
     meson
     ninja
     pkgconfig
+    orc # for orcc
     python3
     gettext
     gobject-introspection
   ] ++ optionals stdenv.isLinux [
-    wayland-protocols
+    wayland # for wayland-scanner
   ];
 
   buildInputs = [
     gst-plugins-base
     orc
+    gobject-introspection
     faad2
     libass
     libkate
@@ -121,6 +126,7 @@ in stdenv.mkDerivation rec {
     libbs2b
     libmodplug
     mpeg2dec
+    libmicrodns
     openjpeg
     libopus
     librsvg
@@ -163,7 +169,9 @@ in stdenv.mkDerivation rec {
     faac
   ] ++ optionals stdenv.isLinux [
     bluez
+    libva # vaapi requires libva -> libdrm -> libpciaccess, which is Linux-only in nixpkgs
     wayland
+    wayland-protocols
   ] ++ optionals (!stdenv.isDarwin) [
     # wildmidi requires apple's OpenAL
     # TODO: package apple's OpenAL, fix wildmidi, include on Darwin
@@ -178,13 +186,12 @@ in stdenv.mkDerivation rec {
     libgudev
     libnice
     libofa
-    librdf
     sbc
     spandsp
 
     # ladspa plug-in
     ladspaH
-    librdf # TODO: make build on Darwin
+    lrdf # TODO: make build on Darwin
 
     # lv2 plug-in
     lilv
@@ -207,11 +214,14 @@ in stdenv.mkDerivation rec {
 
   mesonFlags = [
     "-Dexamples=disabled" # requires many dependencies and probably not useful for our users
+    "-Ddoc=disabled" # `hotdoc` not packaged in nixpkgs as of writing
 
+    "-Davtp=disabled"
     "-Ddts=disabled" # required `libdca` library not packaged in nixpkgs as of writing, and marked as "BIG FAT WARNING: libdca is still in early development"
     "-Dzbar=${if enableZbar then "enabled" else "disabled"}"
     "-Dfaac=${if faacSupport then "enabled" else "disabled"}"
     "-Diqa=disabled" # required `dssim` library not packaging in nixpkgs as of writing
+    "-Dmagicleap=disabled" # required `ml_audio` library not packaged in nixpkgs as of writing
     "-Dmsdk=disabled" # not packaged in nixpkgs as of writing / no Windows support
     # As of writing, with `libmpcdec` in `buildInputs` we get
     #   "Could not find libmpcdec header files, but Musepack was enabled via options"
@@ -228,19 +238,19 @@ in stdenv.mkDerivation rec {
     "-Dopenni2=disabled" # not packaged in nixpkgs as of writing
     "-Dopensles=disabled" # not packaged in nixpkgs as of writing
     "-Dsctp=disabled" # required `usrsctp` library not packaged in nixpkgs as of writing
+    "-Dsvthevcenc=disabled" # required `SvtHevcEnc` library not packaged in nixpkgs as of writing
     "-Dteletext=disabled" # required `zvbi` library not packaged in nixpkgs as of writing
     "-Dtinyalsa=disabled" # not packaged in nixpkgs as of writing
     "-Dvoaacenc=disabled" # required `vo-aacenc` library not packaged in nixpkgs as of writing
     "-Dvoamrwbenc=disabled" # required `vo-amrwbenc` library not packaged in nixpkgs as of writing
     "-Dvulkan=disabled" # Linux-only, and we haven't figured out yet which of the vulkan nixpkgs it needs
     "-Dwasapi=disabled" # not packaged in nixpkgs as of writing / no Windows support
+    "-Dwasapi2=disabled" # not packaged in nixpkgs as of writing / no Windows support
     "-Dwpe=disabled" # required `wpe-webkit` library not packaged in nixpkgs as of writing
-
-    # Requires CUDA and we haven't figured out how to make Meson find CUDA yet;
-    # it probably searches via pkgconfig, for which we have no .pc files,
-    # see https://github.com/NixOS/nixpkgs/issues/54395
-    "-Dnvdec=disabled"
-    "-Dnvenc=disabled"
+    "-Dzxing=disabled" # required `zxing-cpp` library not packaged in nixpkgs as of writing
+  ]
+  ++ optionals (!stdenv.isLinux) [
+    "-Dva=disabled" # see comment on `libva` in `buildInputs`
   ]
   ++ optionals stdenv.isDarwin [
     "-Dbluez=disabled"
@@ -255,6 +265,7 @@ in stdenv.mkDerivation rec {
     "-Ddvb=disabled"
     "-Dfbdev=disabled"
     "-Duvch264=disabled" # requires gudev
+    "-Dv4l2codecs=disabled" # requires gudev
     "-Dladspa=disabled" # requires lrdf
     "-Dwebrtc=disabled" # requires libnice, which as of writing doesn't work on Darwin in nixpkgs
     "-Dwildmidi=disabled" # see dependencies above
@@ -267,6 +278,14 @@ in stdenv.mkDerivation rec {
     # but its meson build system does not declare the dependency.
     "-Dapplemedia=disabled"
   ];
+
+  # Argument list too long
+  strictDeps = true;
+
+  postPatch = ''
+    patchShebangs \
+      scripts/extract-release-date-from-doap-file.py
+  '';
 
   # This package has some `_("string literal")` string formats
   # that trip up clang with format security enabled.

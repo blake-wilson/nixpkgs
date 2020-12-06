@@ -1,31 +1,41 @@
-{ stdenv
+{ clang
 , fetchFromGitHub
+, lib
+, llvmPackages
+, protobuf
 , rustPlatform
-, pkgconfig
-, openssl
 }:
-
 rustPlatform.buildRustPackage rec {
   pname = "polkadot";
-  version = "0.2.17";
+  version = "0.8.26-1";
 
   src = fetchFromGitHub {
     owner = "paritytech";
-    repo = "substrate";
-    rev = "19f4f4d4df3bb266086b4e488739f73d3d5e588c";
-    sha256 = "0v7g03rbml2afw0splmyjh9nqpjg0ldjw09hyc0jqd3qlhgxiiyj";
-  }; 
+    repo = "polkadot";
+    rev = "v${version}";
+    sha256 = "17ji1gjrx3gzw4msaz9kgvm132y14wgh8z183l3mfw1cj44a6kqk";
+  };
 
-  cargoSha256 = "19xcxpbkrbygghz9qi52vzviksxg28m7ibvl359vlhqv1cjxmpsq";
+  cargoSha256 = "07zwlwx02xw1y20br2c4grwv7bprhynqy7gav4qh3vw117ijpiqk";
 
-  buildInputs = [ pkgconfig openssl openssl.dev ];
+  nativeBuildInputs = [ clang ];
 
-  meta = with stdenv.lib; {
+  LIBCLANG_PATH = "${llvmPackages.libclang}/lib";
+  PROTOC = "${protobuf}/bin/protoc";
+
+  # NOTE: We don't build the WASM runtimes since this would require a more
+  # complicated rust environment setup. The resulting binary is still useful for
+  # live networks since those just use the WASM blob from the network chainspec.
+  BUILD_DUMMY_WASM_BINARY = 1;
+
+  # We can't run the test suite since we didn't compile the WASM runtimes.
+  doCheck = false;
+
+  meta = with lib; {
     description = "Polkadot Node Implementation";
-    homepage = https://polkadot.network;
+    homepage = "https://polkadot.network";
     license = licenses.gpl3;
-    maintainers = [ maintainers.akru ];
+    maintainers = with maintainers; [ akru andresilva RaghavSood ];
     platforms = platforms.linux;
-    broken = true;
   };
 }

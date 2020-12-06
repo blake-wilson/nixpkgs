@@ -1,10 +1,10 @@
-{ stdenv, fetchurl, fetchpatch
+{ stdenv, fetchurl
 , texlive
 , zlib, libiconv, libpng, libX11
 , freetype, gd, libXaw, icu, ghostscript, libXpm, libXmu, libXext
-, perl, perlPackages, pkgconfig, autoreconfHook
+, perl, perlPackages, python2Packages, pkgconfig
 , poppler, libpaper, graphite2, zziplib, harfbuzz, potrace, gmp, mpfr
-, cairo, pixman, xorg, clisp, biber, xxHash
+, brotli, cairo, pixman, xorg, clisp, biber, woff2, xxHash
 , makeWrapper, shortenPerlShebang
 }:
 
@@ -14,45 +14,25 @@
 let
   withSystemLibs = map (libname: "--with-system-${libname}");
 
-  year = "2019";
+  year = "2020";
   version = year; # keep names simple for now
 
   common = {
     src = fetchurl {
       urls = [
-        "http://ftp.math.utah.edu/pub/tex/historic/systems/texlive/${year}/texlive-${year}0410-source.tar.xz"
-              "ftp://tug.ctan.org/pub/tex/historic/systems/texlive/${year}/texlive-${year}0410-source.tar.xz"
+        "http://ftp.math.utah.edu/pub/tex/historic/systems/texlive/${year}/texlive-${year}0406-source.tar.xz"
+              "ftp://tug.ctan.org/pub/tex/historic/systems/texlive/${year}/texlive-${year}0406-source.tar.xz"
       ];
-      sha256 = "1dfps39q6bdr1zsbp9p74mvalmy3bycihv19sb9c6kg30kprz8nj";
+      sha256 = "0y4h4j2qg714srhvf1hvn165w7sanr1j2vzrsgc23kxvrc43sbz3";
     };
 
-    patches = [
-    ] ++ stdenv.lib.optionals (stdenv.lib.versionAtLeast (stdenv.lib.getVersion poppler) "0.76") [
-      (fetchpatch {
-        name = "pdftex-poppler0.76.patch";
-        url = "https://git.archlinux.org/svntogit/packages.git/plain/texlive-bin/trunk/pdftex-poppler0.76.patch?id=8cb784073cfd2299a6c301ce7bb0d89126a47f4e";
-        sha256 = "04x7myzysranddzjifxhahl7gjy407zkiyzfs5l9cbwzp6pqh7gh";
-
-        includes = [
-          "texk/web2c/pdftexdir/pdftoepdf-poppler0.76.0.cc"
-          "texk/web2c/pdftexdir/pdftosrc-poppler0.76.0.cc"
-        ];
-      })
-    ];
-
-    postPatch = let
-      popplerSuffix = if (stdenv.lib.versionAtLeast (stdenv.lib.getVersion poppler) "0.76") then "-poppler0.76.0" else "-poppler0.72.0";
-    in ''
+    prePatch = ''
       for i in texk/kpathsea/mktex*; do
         sed -i '/^mydir=/d' "$i"
       done
-      cp -pv texk/web2c/pdftexdir/pdftoepdf{${popplerSuffix},}.cc
-      cp -pv texk/web2c/pdftexdir/pdftosrc{${popplerSuffix},}.cc
+      cp -pv texk/web2c/pdftexdir/pdftoepdf{-poppler0.86.0,}.cc
+      cp -pv texk/web2c/pdftexdir/pdftosrc{-poppler0.83.0,}.cc
     '';
-
-    # remove when removing synctex-missing-header.patch
-    preAutoreconf = "pushd texk/web2c";
-    postAutoreconf = "popd";
 
     configureFlags = [
       "--with-banner-add=/NixOS.org"
@@ -75,6 +55,8 @@ let
       done
     '';
   };
+
+  withLuaJIT = !(stdenv.hostPlatform.isPower && stdenv.hostPlatform.is64bit);
 in rec { # un-indented
 
 inherit (common) cleanBrokenLinks;
@@ -85,11 +67,11 @@ core = stdenv.mkDerivation rec {
   pname = "texlive-bin";
   inherit version;
 
-  inherit (common) src patches postPatch preAutoreconf postAutoreconf;
+  inherit (common) src prePatch;
 
   outputs = [ "out" "doc" ];
 
-  nativeBuildInputs = [ pkgconfig autoreconfHook ];
+  nativeBuildInputs = [ pkgconfig ];
   buildInputs = [
     /*teckit*/ zziplib poppler mpfr gmp
     pixman gd freetype libpng libpaper zlib
@@ -100,7 +82,7 @@ core = stdenv.mkDerivation rec {
 
   preConfigure = ''
     rm -r libs/{cairo,freetype2,gd,gmp,graphite2,harfbuzz,icu,libpaper,libpng} \
-      libs/{mpfr,pixman,poppler,xpdf,zlib,zziplib}
+      libs/{lua53,luajit,mpfr,pixman,poppler,xpdf,zlib,zziplib}
     mkdir WorkDir
     cd WorkDir
   '';
@@ -108,13 +90,13 @@ core = stdenv.mkDerivation rec {
 
   configureFlags = common.configureFlags
     ++ [ "--without-x" ] # disable xdvik and xpdfopen
-    ++ map (what: "--disable-${what}") ([
+    ++ map (what: "--disable-${what}") [
+      "chktex"
       "dvisvgm" "dvipng" # ghostscript dependency
-      "luatex" "luajittex" "mp" "pmp" "upmp" "mf" # cairo would bring in X and more
+      "luatex" "luajittex" "luahbtex" "luajithbtex"
+      "mp" "pmp" "upmp" "mf" "mflua" "mfluajit" # cairo would bring in X and more
       "xetex" "bibtexu" "bibtex8" "bibtex-x" "upmendex" # ICU isn't small
-    ] ++ stdenv.lib.optional (stdenv.hostPlatform.isPower && stdenv.hostPlatform.is64bit) "mfluajit")
-    ++ [ "--without-system-harfbuzz" "--without-system-icu" ] # bogus configure
-    ;
+    ];
 
   enableParallelBuilding = true;
 
@@ -157,15 +139,12 @@ core = stdenv.mkDerivation rec {
     mv "$out"/share/{man,info} "$doc"/doc
   '' + cleanBrokenLinks;
 
-  # needed for poppler and xpdf
-  CXXFLAGS = stdenv.lib.optionalString stdenv.cc.isClang "-std=c++11";
-
   setupHook = ./setup-hook.sh; # TODO: maybe texmf-nix -> texmf (and all references)
   passthru = { inherit version buildInputs; };
 
   meta = with stdenv.lib; {
     description = "Basic binaries for TeX Live";
-    homepage    = http://www.tug.org/texlive;
+    homepage    = "http://www.tug.org/texlive";
     license     = stdenv.lib.licenses.gpl2;
     maintainers = with maintainers; [ vcunat veprbl lovek323 raskin jwiegley ];
     platforms   = platforms.all;
@@ -173,12 +152,12 @@ core = stdenv.mkDerivation rec {
 };
 
 
-inherit (core-big) metafont metapost luatex xetex;
+inherit (core-big) metafont mflua metapost luatex luahbtex luajittex xetex;
 core-big = stdenv.mkDerivation { #TODO: upmendex
   pname = "texlive-core-big.bin";
   inherit version;
 
-  inherit (common) src patches postPatch preAutoreconf postAutoreconf;
+  inherit (common) src prePatch;
 
   hardeningDisable = [ "format" ];
 
@@ -188,21 +167,20 @@ core-big = stdenv.mkDerivation { #TODO: upmendex
   configureFlags = common.configureFlags
     ++ withSystemLibs [ "kpathsea" "ptexenc" "cairo" "harfbuzz" "icu" "graphite2" ]
     ++ map (prog: "--disable-${prog}") # don't build things we already have
-      [ "tex" "ptex" "eptex" "uptex" "euptex" "aleph" "pdftex"
+      ([ "tex" "ptex" "eptex" "uptex" "euptex" "aleph" "pdftex"
         "web-progs" "synctex"
-        # luajittex is mostly not needed, see:
-        # http://tex.stackexchange.com/questions/97999/when-to-use-luajittex-in-favour-of-luatex
-        "luajittex" "mfluajit"
-      ];
+      ] ++ stdenv.lib.optionals (!withLuaJIT) [ "luajittex" "luajithbtex" "mfluajit" ]);
 
   configureScript = ":";
 
   # we use static libtexlua, because it's only used by a single binary
-  postConfigure = ''
+  postConfigure = let
+    luajit = stdenv.lib.optionalString withLuaJIT ",luajit";
+  in ''
     mkdir ./WorkDir && cd ./WorkDir
-    for path in libs/{teckit,lua53} texk/web2c; do
+    for path in libs/{teckit,lua53${luajit}} texk/web2c; do
       (
-        if [[ "$path" =~ "libs/lua5" ]]; then
+        if [[ "$path" =~ "libs/lua" ]]; then
           extraConfig="--enable-static --disable-shared"
         else
           extraConfig=""
@@ -221,38 +199,66 @@ core-big = stdenv.mkDerivation { #TODO: upmendex
 
   # now distribute stuff into outputs, roughly as upstream TL
   # (uninteresting stuff remains in $out, typically duplicates from `core`)
-  outputs = [ "out" "metafont" "metapost" "luatex" "xetex" ];
+  outputs = [
+    "out"
+    "metafont"
+    "mflua"
+    "metapost"
+    "luatex"
+    "luahbtex"
+    "luajittex"
+    "xetex"
+  ];
   postInstall = ''
     for output in $outputs; do
       mkdir -p "''${!output}/bin"
     done
 
     mv "$out/bin"/{inimf,mf,mf-nowin} "$metafont/bin/"
+    mv "$out/bin"/mflua{,-nowin} "$mflua/bin/"
     mv "$out/bin"/{*tomp,mfplain,*mpost} "$metapost/bin/"
-    mv "$out/bin"/{luatex,texlua*} "$luatex/bin/"
+    mv "$out/bin"/{luatex,texlua,texluac} "$luatex/bin/"
+    mv "$out/bin"/luahbtex "$luahbtex/bin/"
     mv "$out/bin"/xetex "$xetex/bin/"
-  '';
+  '' + stdenv.lib.optionalString withLuaJIT ''
+    mv "$out/bin"/mfluajit{,-nowin} "$mflua/bin/"
+    mv "$out/bin"/{luajittex,luajithbtex,texluajit,texluajitc} "$luajittex/bin/"
+  '' ;
 };
 
 
-dvisvgm = stdenv.mkDerivation {
-  pname = "texlive-dvisvgm.bin";
+chktex = stdenv.mkDerivation {
+  pname = "texlive-chktex.bin";
   inherit version;
 
   inherit (common) src;
 
   nativeBuildInputs = [ pkgconfig ];
-  # TODO: dvisvgm still uses vendored dependencies
-  buildInputs = [ core/*kpathsea*/ ghostscript zlib freetype potrace xxHash ];
+  buildInputs = [ core/*kpathsea*/ ];
 
-  preConfigure = "cd texk/dvisvgm";
-
-  # configure script has a bug: it refers to $HAVE_LIBGS but sets $have_libgs
-  # TODO: remove for texlive 2020?
-  HAVE_LIBGS = 1;
+  preConfigure = "cd texk/chktex";
 
   configureFlags = common.configureFlags
     ++ [ "--with-system-kpathsea" ];
+
+  enableParallelBuilding = true;
+};
+
+
+dvisvgm = stdenv.mkDerivation rec {
+  pname = "texlive-dvisvgm.bin";
+  version = "2.11";
+  # TODO: dvisvgm was switched to build from upstream sources
+  # to address https://github.com/NixOS/nixpkgs/issues/104847
+  # We might want to consider reverting that change in the future.
+
+  src = fetchurl {
+    url = "https://github.com/mgieseki/dvisvgm/releases/download/${version}/dvisvgm-${version}.tar.gz";
+    sha256 = "12b6h0h8rc487yjh3sq9zsdabm9cs2vqcrb0znnfi8277f87zf3j";
+  };
+
+  nativeBuildInputs = [ pkgconfig ];
+  buildInputs = [ core/*kpathsea*/ brotli ghostscript zlib freetype woff2 potrace xxHash ];
 
   enableParallelBuilding = true;
 };
@@ -315,6 +321,64 @@ latexindent = perlPackages.buildPerlPackage rec {
 };
 
 
+pygmentex = python2Packages.buildPythonApplication rec {
+  pname = "pygmentex";
+  inherit (src) version;
+
+  src = stdenv.lib.head (builtins.filter (p: p.tlType == "run") texlive.pygmentex.pkgs);
+
+  propagatedBuildInputs = with python2Packages; [ pygments chardet ];
+
+  dontBuild = true;
+
+  doCheck = false;
+
+  installPhase = ''
+    runHook preInstall
+
+    install -D ./scripts/pygmentex/pygmentex.py "$out"/bin/pygmentex
+
+    runHook postInstall
+  '';
+
+  meta = with stdenv.lib; {
+    homepage = "https://www.ctan.org/pkg/pygmentex";
+    description = "Auxiliary tool for typesetting code listings in LaTeX documents using Pygments";
+    longDescription = ''
+      PygmenTeX is a Python-based LaTeX package that can be used for
+      typesetting code listings in a LaTeX document using Pygments.
+
+      Pygments is a generic syntax highlighter for general use in all kinds of
+      software such as forum systems, wikis or other applications that need to
+      prettify source code.
+    '';
+    license = licenses.lppl13c;
+    maintainers = with maintainers; [ romildo ];
+  };
+};
+
+
+texlinks = stdenv.mkDerivation rec {
+  name = "texlinks.sh";
+
+  src = stdenv.lib.head (builtins.filter (p: p.tlType == "run") texlive.texlive-scripts-extra.pkgs);
+
+  dontBuild = true;
+  doCheck = false;
+
+  installPhase = ''
+    runHook preInstall
+
+    # Patch texlinks.sh back to 2015 version;
+    # otherwise some bin/ links break, e.g. xe(la)tex.
+    patch --verbose -R scripts/texlive-extra/texlinks.sh < '${./texlinks.diff}'
+    install -Dm555 scripts/texlive-extra/texlinks.sh "$out"
+
+    runHook postInstall
+  '';
+};
+
+
 inherit biber;
 bibtexu = bibtex8;
 bibtex8 = stdenv.mkDerivation {
@@ -361,7 +425,7 @@ xdvi = stdenv.mkDerivation {
 
 } # un-indented
 
-// stdenv.lib.optionalAttrs (!stdenv.isDarwin) # see #20062
+// stdenv.lib.optionalAttrs (!clisp.meta.broken) # broken on aarch64 and darwin (#20062)
 {
 
 xindy = stdenv.mkDerivation {

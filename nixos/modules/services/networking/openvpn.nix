@@ -11,7 +11,7 @@ let
   makeOpenVPNJob = cfg: name:
     let
 
-      path = (getAttr "openvpn-${name}" config.systemd.services).path;
+      path = makeBinPath (getAttr "openvpn-${name}" config.systemd.services).path;
 
       upScript = ''
         #! /bin/sh
@@ -73,6 +73,9 @@ let
 in
 
 {
+  imports = [
+    (mkRemovedOptionModule [ "services" "openvpn" "enable" ] "")
+  ];
 
   ###### interface
 

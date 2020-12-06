@@ -20,7 +20,12 @@ stdenv.mkDerivation rec {
   buildInputs = [ openssl c-ares libxml2 sqlite zlib libssh2 ] ++
     stdenv.lib.optional stdenv.isDarwin Security;
 
-  configureFlags = [ "--with-ca-bundle=/etc/ssl/certs/ca-certificates.crt" ];
+  outputs = [ "bin" "dev" "out" "doc" "man" ];
+
+  configureFlags = [
+    "--with-ca-bundle=/etc/ssl/certs/ca-certificates.crt"
+    "--enable-libaria2"
+  ];
 
   prePatch = ''
     patchShebangs doc/manual-src/en/mkapiref.py
@@ -32,10 +37,10 @@ stdenv.mkDerivation rec {
   enableParallelBuilding = true;
 
   meta = with stdenv.lib; {
-    homepage = https://aria2.github.io;
+    homepage = "https://aria2.github.io";
     description = "A lightweight, multi-protocol, multi-source, command-line download utility";
     license = licenses.gpl2Plus;
     platforms = platforms.unix;
-    maintainers = with maintainers; [ filalex77 koral ];
+    maintainers = with maintainers; [ Br1ght0ne koral ];
   };
 }

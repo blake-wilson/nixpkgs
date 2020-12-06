@@ -1,6 +1,6 @@
 {
-  mkDerivation, copyPathsToStore, lib, kdepimTeam,
-  extra-cmake-modules, shared-mime-info,
+  mkDerivation, lib, kdepimTeam,
+  extra-cmake-modules, shared-mime-info, qtbase,
   boost, kcompletion, kconfigwidgets, kcrash, kdbusaddons, kdesignerplugin,
   ki18n, kiconthemes, kio, kitemmodels, kwindowsystem, mysql, qttools,
 }:
@@ -10,8 +10,13 @@ mkDerivation {
   meta = {
     license = [ lib.licenses.lgpl21 ];
     maintainers = kdepimTeam;
+    broken = lib.versionOlder qtbase.version "5.13";
   };
-  patches = copyPathsToStore (lib.readPathsFromFile ./. ./series);
+  patches = [
+    ./0001-akonadi-paths.patch
+    ./0002-akonadi-timestamps.patch
+    ./0003-akonadi-revert-make-relocatable.patch
+  ];
   nativeBuildInputs = [ extra-cmake-modules shared-mime-info ];
   buildInputs = [
     kcompletion kconfigwidgets kcrash kdbusaddons kdesignerplugin ki18n

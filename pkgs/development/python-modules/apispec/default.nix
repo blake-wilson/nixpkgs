@@ -11,11 +11,11 @@
 
 buildPythonPackage rec {
   pname = "apispec";
-  version = "3.1.0";
+  version = "3.3.2";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "0rr32z9hbf8w4w1fs5gj2v0ixcq2vq7a3wssrlxagi5ii7ygap7y";
+    sha256 = "d23ebd5b71e541e031b02a19db10b5e6d5ef8452c552833e3e1afc836b40b1ad";
   };
 
   checkInputs = [
@@ -29,7 +29,7 @@ buildPythonPackage rec {
 
   meta = with lib; {
     description = "A pluggable API specification generator. Currently supports the OpenAPI Specification (f.k.a. the Swagger specification";
-    homepage = https://github.com/marshmallow-code/apispec;
+    homepage = "https://github.com/marshmallow-code/apispec";
     license = licenses.mit;
     maintainers = [ maintainers.costrouc ];
   };

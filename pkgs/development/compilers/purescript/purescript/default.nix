@@ -18,19 +18,19 @@ let
 
 in stdenv.mkDerivation rec {
   pname = "purescript";
-  version = "0.13.5";
+  version = "0.13.8";
 
   src =
     if stdenv.isDarwin
     then
     fetchurl {
       url = "https://github.com/${pname}/${pname}/releases/download/v${version}/macos.tar.gz";
-      sha256 = "19bb50m0cd738r353blgy21d842b3yj58xfbplk7bz59jawj9lym";
+      sha256 = "058w8w24g7xbdkn5l97jfj9dcg81vkfh3w8112anj982lynk6391";
     }
     else
     fetchurl {
       url = "https://github.com/${pname}/${pname}/releases/download/v${version}/linux64.tar.gz";
-      sha256 = "016wvwypgb4859f0n1lqsqv9a8cca2y8g7d6ffvzx6rncd115gxi";
+      sha256 = "01xb9sl6rmg02ypdrv4n0mkzmdr5y9rajcdmg9c3j46q7z6q9mxy";
     };
 
 
@@ -47,8 +47,8 @@ in stdenv.mkDerivation rec {
     install -D -m555 -T purs $PURS
     ${patchelf libPath}
 
-    mkdir -p $out/etc/bash_completion.d/
-    $PURS --bash-completion-script $PURS > $out/etc/bash_completion.d/purs-completion.bash
+    mkdir -p $out/share/bash-completion/completions
+    $PURS --bash-completion-script $PURS > $out/share/bash-completion/completions/purs-completion.bash
   '';
 
   passthru.tests = {
@@ -57,9 +57,9 @@ in stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "A strongly-typed functional programming language that compiles to JavaScript";
-    homepage = http://www.purescript.org/;
+    homepage = "https://www.purescript.org/";
     license = licenses.bsd3;
-    maintainers = [ maintainers.justinwoo ];
+    maintainers = with maintainers; [ justinwoo mbbx6spp cdepillabout ];
     platforms = [ "x86_64-linux" "x86_64-darwin" ];
   };
 }

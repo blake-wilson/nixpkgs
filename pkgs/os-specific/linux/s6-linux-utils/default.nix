@@ -4,8 +4,8 @@ with skawarePackages;
 
 buildPackage {
   pname = "s6-linux-utils";
-  version = "2.5.1.1";
-  sha256 = "00nw2phd9prgv29hzqzwjnh4y0ivkzhx3srn6n1rlyr4ydhikxi5";
+  version = "2.5.1.3";
+  sha256 = "0wbv02zxaami88xbj2zg63kspz05bbplswg0c6ncb5g9khf52wa4";
 
   description = "A set of minimalistic Linux-specific system utilities";
   platforms = stdenv.lib.platforms.linux;

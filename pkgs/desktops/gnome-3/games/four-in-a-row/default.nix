@@ -4,11 +4,11 @@
 
 stdenv.mkDerivation rec {
   pname = "four-in-a-row";
-  version = "3.34.1";
+  version = "3.38.1";
 
   src = fetchurl {
     url = "mirror://gnome/sources/four-in-a-row/${stdenv.lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
-    sha256 = "112pyrh2yvwy5b2a0b5crjpwp2vqqg4zgx6csll1bic6ccayv713";
+    sha256 = "10ji60bdfdzb6wk5dkwjc3yww7hqi3yjcx1k1z7x2521h2dpdli1";
   };
 
   nativeBuildInputs = [
@@ -30,9 +30,9 @@ stdenv.mkDerivation rec {
   };
 
   meta = with stdenv.lib; {
-    homepage = https://wiki.gnome.org/Apps/Four-in-a-row;
+    homepage = "https://wiki.gnome.org/Apps/Four-in-a-row";
     description = "Make lines of the same color to win";
-    maintainers = gnome3.maintainers;
+    maintainers = teams.gnome.members;
     license = licenses.gpl2;
     platforms = platforms.linux;
   };

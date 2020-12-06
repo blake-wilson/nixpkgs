@@ -1,26 +1,28 @@
-{ mkDerivation, lib, fetchFromGitHub, cmake
-, boost, libvorbis, libsndfile, minizip, gtest }:
+{ stdenv, mkDerivation, lib, fetchFromGitHub, cmake
+, boost, libvorbis, libsndfile, minizip, gtest, qtwebkit }:
 
 mkDerivation rec {
   pname = "lsd2dsl";
-  version = "0.4.1";
+  version = "0.5.2";
 
   src = fetchFromGitHub {
     owner = "nongeneric";
     repo = pname;
     rev = "v${version}";
-    sha256 = "15xjp5xxvl0qc4zp553n7djrbvdp63sfjw406idgxqinfmkqkqdr";
+    sha256 = "0s0la6zkg584is93p4nj1ha3pbnvadq84zgsv8nym3r35n7k8czi";
   };
 
   nativeBuildInputs = [ cmake ];
 
-  buildInputs = [ boost libvorbis libsndfile minizip gtest ];
+  buildInputs = [ boost libvorbis libsndfile minizip gtest qtwebkit ];
 
-  NIX_CFLAGS_COMPILE = "-Wno-error=unused-result";
+  NIX_CFLAGS_COMPILE = "-Wno-error=unused-result -Wno-error=missing-braces";
 
   installPhase = ''
-    install -Dm755 lsd2dsl $out/bin/lsd2dsl
-    install -m755 qtgui/lsd2dsl-qtgui $out/bin/lsd2dsl-qtgui
+    install -Dm755 console/lsd2dsl gui/lsd2dsl-qtgui -t $out/bin
+  '' + lib.optionalString stdenv.isDarwin ''
+    wrapQtApp $out/bin/lsd2dsl
+    wrapQtApp $out/bin/lsd2dsl-qtgui
   '';
 
   meta = with lib; {
@@ -31,6 +33,6 @@ mkDerivation rec {
     '';
     license = licenses.mit;
     maintainers = with maintainers; [ sikmir ];
-    platforms = with platforms; linux;
+    platforms = with platforms; linux ++ darwin;
   };
 }

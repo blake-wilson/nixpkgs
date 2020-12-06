@@ -5,7 +5,7 @@ with lib;
 let
 
   autologinArg = optionalString (config.services.mingetty.autologinUser != null) "--autologin ${config.services.mingetty.autologinUser}";
-  gettyCmd = extraArgs: "@${pkgs.utillinux}/sbin/agetty agetty --login-program ${pkgs.shadow}/bin/login ${autologinArg} ${extraArgs}";
+  gettyCmd = extraArgs: "@${pkgs.util-linux}/sbin/agetty agetty --login-program ${pkgs.shadow}/bin/login ${autologinArg} ${extraArgs}";
 
 in
 
@@ -102,7 +102,7 @@ in
         enable = mkDefault config.boot.isContainer;
       };
 
-    environment.etc = singleton
+    environment.etc.issue =
       { # Friendly greeting on the virtual consoles.
         source = pkgs.writeText "issue" ''
 
@@ -110,7 +110,6 @@ in
           ${config.services.mingetty.helpLine}
 
         '';
-        target = "issue";
       };
 
   };

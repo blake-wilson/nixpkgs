@@ -1,5 +1,5 @@
 { stdenv, fetchurl, makeWrapper, pkgconfig, nss, nspr, libqb
-, dbus, rdma-core, libstatgrab, net_snmp
+, dbus, rdma-core, libstatgrab, net-snmp
 , enableDbus ? false
 , enableInfiniBandRdma ? false
 , enableMonitoring ? false
@@ -9,11 +9,12 @@
 with stdenv.lib;
 
 stdenv.mkDerivation rec {
-  name = "corosync-2.4.3";
+  pname = "corosync";
+  version = "2.4.5";
 
   src = fetchurl {
-    url = "http://build.clusterlabs.org/corosync/releases/${name}.tar.gz";
-    sha256 = "15y5la04qn2lh1gabyifygzpa4dx3ndk5yhmaf7azxyjx0if9rxi";
+    url = "http://build.clusterlabs.org/corosync/releases/${pname}-${version}.tar.gz";
+    sha256 = "0pxs18vci9kq3qnqsg5i1h35jrxxiccwbm0mzja3g8j3izdsyvmb";
   };
 
   nativeBuildInputs = [ makeWrapper pkgconfig ];
@@ -23,7 +24,7 @@ stdenv.mkDerivation rec {
   ] ++ optional enableDbus dbus
     ++ optional enableInfiniBandRdma rdma-core
     ++ optional enableMonitoring libstatgrab
-    ++ optional enableSnmp net_snmp;
+    ++ optional enableSnmp net-snmp;
 
   configureFlags = [
     "--sysconfdir=/etc"
@@ -63,7 +64,7 @@ stdenv.mkDerivation rec {
   enableParallelBuilding = true;
 
   meta = {
-    homepage = http://corosync.org/;
+    homepage = "http://corosync.org/";
     description = "A Group Communication System with features for implementing high availability within applications";
     license = licenses.bsd3;
     platforms = platforms.linux;

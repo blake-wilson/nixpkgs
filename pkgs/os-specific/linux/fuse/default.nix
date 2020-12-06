@@ -1,8 +1,8 @@
-{ callPackage, utillinux }:
+{ callPackage, util-linux }:
 
 let
   mkFuse = args: callPackage (import ./common.nix args) {
-    inherit utillinux;
+    inherit util-linux;
   };
 in {
   fuse_2 = mkFuse {
@@ -11,7 +11,7 @@ in {
   };
 
   fuse_3 = mkFuse {
-    version = "3.8.0";
-    sha256Hash = "0zbj5l2pffs0q38lqfrnkafsgxf50mw5mqmh4m2jmqab1fxg5mip";
+    version = "3.10.0";
+    sha256Hash = "05ipzmlk6xci9v4sf0pap542b37aszghlchswl6s76fg6h3w4yms";
   };
 }

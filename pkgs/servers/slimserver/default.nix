@@ -3,11 +3,11 @@
 
 perlPackages.buildPerlPackage rec {
   pname = "slimserver";
-  version = "7.9.1";
+  version = "7.9.2";
 
   src = fetchurl {
     url = "https://github.com/Logitech/slimserver/archive/${version}.tar.gz";
-    sha256 = "0szp5zkmx2b5lncsijf97asjnl73fyijkbgbwkl1i7p8qnqrb4mp";
+    sha256 = "1rn9y7xvg5aqmgcbfpi7lcqy8d7hgwqx8b2llzpzrv7854zm1wcw";
   };
 
   buildInputs = [
@@ -93,7 +93,7 @@ perlPackages.buildPerlPackage rec {
   outputs = [ "out" ];
 
   meta = with stdenv.lib; {
-    homepage = https://github.com/Logitech/slimserver;
+    homepage = "https://github.com/Logitech/slimserver";
     description = "Server for Logitech Squeezebox players. This server is also called Logitech Media Server";
     # the firmware is not under a free license!
     # https://github.com/Logitech/slimserver/blob/public/7.9/License.txt

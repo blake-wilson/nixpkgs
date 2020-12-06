@@ -1,17 +1,28 @@
-{ stdenv, fetchFromGitHub, cmake, zlib, c-ares, pkgconfig, openssl, protobuf, gflags }:
+{ stdenv, fetchFromGitHub, fetchpatch, cmake, zlib, c-ares, pkgconfig, openssl, protobuf
+, gflags, abseil-cpp, libnsl
+}:
 
 stdenv.mkDerivation rec {
-  version = "1.25.0"; # N.B: if you change this, change pythonPackages.grpcio and pythonPackages.grpcio-tools to a matching version too
+  version = "1.34.0"; # N.B: if you change this, change pythonPackages.grpcio-tools to a matching version too
   pname = "grpc";
   src = fetchFromGitHub {
     owner = "grpc";
     repo = "grpc";
     rev = "v${version}";
-    sha256 = "02nbmbk1xpibjzvbhi8xpazmwry46ki24vks1sh2p0aqwy4hv6yb";
+    sha256 = "0kipk26kg2x06mrkhb74k8vk5cn4mr89kw1f9mb04n616wkxjyxy";
     fetchSubmodules = true;
   };
+  patches = [
+    # Fix build on armv6l (https://github.com/grpc/grpc/pull/21341)
+    (fetchpatch {
+      url = "https://github.com/grpc/grpc/commit/2f4cf1d9265c8e10fb834f0794d0e4f3ec5ae10e.patch";
+      sha256 = "0ams3jmgh9yzwmxcg4ifb34znamr7pb4qm0609kvil9xqvkqz963";
+    })
+  ];
+
   nativeBuildInputs = [ cmake pkgconfig ];
-  buildInputs = [ zlib c-ares c-ares.cmake-config openssl protobuf gflags ];
+  buildInputs = [ zlib c-ares c-ares.cmake-config openssl protobuf gflags abseil-cpp ]
+    ++ stdenv.lib.optionals stdenv.isLinux [ libnsl ];
 
   cmakeFlags =
     [ "-DgRPC_ZLIB_PROVIDER=package"
@@ -19,6 +30,7 @@ stdenv.mkDerivation rec {
       "-DgRPC_SSL_PROVIDER=package"
       "-DgRPC_PROTOBUF_PROVIDER=package"
       "-DgRPC_GFLAGS_PROVIDER=package"
+      "-DgRPC_ABSL_PROVIDER=package"
       "-DBUILD_SHARED_LIBS=ON"
       "-DCMAKE_SKIP_BUILD_RPATH=OFF"
     ];
@@ -30,7 +42,7 @@ stdenv.mkDerivation rec {
   '';
 
   preBuild = ''
-    export LD_LIBRARY_PATH=$(pwd):$LD_LIBRARY_PATH
+    export LD_LIBRARY_PATH=$(pwd)''${LD_LIBRARY_PATH:+:}$LD_LIBRARY_PATH
   '';
 
   NIX_CFLAGS_COMPILE = stdenv.lib.optionalString stdenv.cc.isClang "-Wno-error=unknown-warning-option";
@@ -41,6 +53,8 @@ stdenv.mkDerivation rec {
     description = "The C based gRPC (C++, Python, Ruby, Objective-C, PHP, C#)";
     license = licenses.asl20;
     maintainers = [ maintainers.lnl7 maintainers.marsam ];
-    homepage = https://grpc.io/;
+    homepage = "https://grpc.io/";
+    platforms = platforms.all;
+    changelog = "https://github.com/grpc/grpc/releases/tag/v${version}";
   };
 }

@@ -1,27 +1,28 @@
 { stdenv, fetchFromGitHub, cmake, pkgconfig, zip, gettext, perl
-, wxGTK31, libXext, libXi, libXt, libXtst, xercesc
+, wxGTK30, libXext, libXi, libXt, libXtst, xercesc
 , qrencode, libuuid, libyubikey, yubikey-personalization
-, curl, openssl
+, curl, openssl, file
 }:
 
 stdenv.mkDerivation rec {
   pname = "pwsafe";
-  version = "1.08.2";
+  version = "3.53.0";
 
   src = fetchFromGitHub {
     owner = pname;
     repo = pname;
-    rev = "${version}BETA";
-    sha256 = "14qwk3cv5psj7ll71ikyv452x55c7iwjw9765yrpij6741r4yjln";
+    rev = version;
+    sha256 = "0nh5jnf5yls2qv5hpfhm6i854zsknyh7d93c987a0cg14sg820fv";
   };
 
-  nativeBuildInputs = [ 
+  nativeBuildInputs = [
     cmake gettext perl pkgconfig zip
   ];
   buildInputs = [
-    libXext libXi libXt libXtst wxGTK31
+    libXext libXi libXt libXtst wxGTK30
     curl qrencode libuuid openssl xercesc
     libyubikey yubikey-personalization
+    file
   ];
 
   cmakeFlags = [

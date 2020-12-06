@@ -1,5 +1,6 @@
 { stdenv
 , fetchFromGitHub
+, nix-update-script
 , substituteAll
 , plymouth
 , pam
@@ -85,6 +86,12 @@ stdenv.mkDerivation rec {
       sha256 = "1zyx1qqajrmqcf9hbsapd39gmdanswd9l78rq7q6rdy4692il3yn";
     })
 
+    # https://github.com/canonical/lightdm/pull/104
+    (fetchpatch {
+      url = "https://github.com/canonical/lightdm/commit/03f218981733e50d810767f9d04e42ee156f7feb.patch";
+      sha256 = "07w18m2gpk29z6ym4y3lzsmg5dk3ffn39sq6lac26ap7narf4ma7";
+    })
+
     # Hardcode plymouth to fix transitions.
     # For some reason it can't find `plymouth`
     # even when it's in PATH in environment.systemPackages.
@@ -121,8 +128,15 @@ stdenv.mkDerivation rec {
     rm -rf $out/etc/apparmor.d $out/etc/init $out/etc/pam.d
   '';
 
+  passthru = {
+    updateScript = nix-update-script {
+      attrPath = pname;
+    };
+  };
+
+
   meta = {
-    homepage = https://github.com/CanonicalLtd/lightdm;
+    homepage = "https://github.com/CanonicalLtd/lightdm";
     description = "A cross-desktop display manager";
     platforms = platforms.linux;
     license = licenses.gpl3;

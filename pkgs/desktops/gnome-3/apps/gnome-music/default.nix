@@ -16,6 +16,7 @@
 , grilo-plugins
 , pkgconfig
 , gtk3
+, pango
 , glib
 , desktop-file-utils
 , appstream-glib
@@ -29,13 +30,13 @@
 
 python3.pkgs.buildPythonApplication rec {
   pname = "gnome-music";
-  version = "3.34.1";
+  version = "3.38.2";
 
   format = "other";
 
   src = fetchurl {
     url = "mirror://gnome/sources/${pname}/${stdenv.lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
-    sha256 = "128griji0ficf9agnlhfqh9wf819zdfcz5bbrr12nkxnhksnqv99";
+    sha256 = "0c2051wngf3jrifl5bv5kyqcci459n62vixxkryiryjcaqwbd1am";
   };
 
   nativeBuildInputs = [
@@ -53,6 +54,7 @@ python3.pkgs.buildPythonApplication rec {
 
   buildInputs = [
     gtk3
+    pango
     glib
     libmediaart
     gnome-online-accounts
@@ -91,6 +93,9 @@ python3.pkgs.buildPythonApplication rec {
 
   doCheck = false;
 
+  # handle setup hooks better
+  strictDeps = false;
+
   passthru = {
     updateScript = gnome3.updateScript {
       packageName = pname;
@@ -101,7 +106,7 @@ python3.pkgs.buildPythonApplication rec {
   meta = with stdenv.lib; {
     homepage = "https://wiki.gnome.org/Apps/Music";
     description = "Music player and management application for the GNOME desktop environment";
-    maintainers = gnome3.maintainers;
+    maintainers = teams.gnome.members;
     license = licenses.gpl2Plus;
     platforms = platforms.linux;
   };

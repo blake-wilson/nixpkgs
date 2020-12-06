@@ -1,10 +1,10 @@
-{requireFile, autoPatchelfHook, pkgs, pkgs_i686, licenseAccepted ? false}:
+{requireFile, autoPatchelfHook, pkgs, pkgsHostHost, pkgs_i686, licenseAccepted ? false}:
 
 { toolsVersion ? "25.2.5"
-, platformToolsVersion ? "28.0.1"
+, platformToolsVersion ? "29.0.6"
 , buildToolsVersions ? [ "28.0.3" ]
 , includeEmulator ? false
-, emulatorVersion ? "28.0.14"
+, emulatorVersion ? "30.0.3"
 , platformVersions ? []
 , includeSources ? false
 , includeDocs ? false
@@ -14,7 +14,7 @@
 , lldbVersions ? [ ]
 , cmakeVersions ? [ ]
 , includeNDK ? false
-, ndkVersion ? "18.1.5063045"
+, ndkVersion ? "21.0.6113669"
 , useGoogleAPIs ? false
 , useGoogleTVAddOns ? false
 , includeExtras ? []
@@ -144,7 +144,7 @@ rec {
   ) cmakeVersions;
 
   ndk-bundle = import ./ndk-bundle {
-    inherit deployAndroidPackage os autoPatchelfHook makeWrapper pkgs lib platform-tools;
+    inherit deployAndroidPackage os autoPatchelfHook makeWrapper pkgs pkgsHostHost lib platform-tools;
     package = packages.ndk-bundle.${ndkVersion};
   };
 

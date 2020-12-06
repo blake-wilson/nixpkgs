@@ -1,25 +1,32 @@
-{ stdenv, rustPlatform, fetchFromGitHub, cmake, pkgconfig, zlib }:
+{ stdenv
+, rustPlatform
+, fetchFromGitHub
+, pkg-config
+, zlib
+, Security
+}:
 
 rustPlatform.buildRustPackage rec {
   pname = "miniserve";
-  version = "0.2.1";
+  version = "0.10.3";
 
   src = fetchFromGitHub {
-    owner  = "svenstaro";
-    repo   = "miniserve";
-    rev    = "v${version}";
-    sha256 = "1g8ggqs4fyscb1r98qj22f61jgkqnr4vdyps0drrvydl9lafdmpl";
+    owner = "svenstaro";
+    repo = "miniserve";
+    rev = "v${version}";
+    sha256 = "17m0h0ib7fl0kijagcwdcnvrdcb6z3knix9dl17abg5ivbvkwz8q";
   };
 
-  cargoSha256 = "055mbrzg7v8a65awn1051b4b9ngxq25wy31gjq8kc93qsb7k0f2k";
+  cargoSha256 = "0ddc8b9wph4r1qcy24p8yiaq9s2knii0d7dh0w0qnzrn6cmm17dg";
 
-  nativeBuildInputs = [ cmake pkgconfig zlib ];
+  nativeBuildInputs = [ pkg-config zlib ];
+  buildInputs = stdenv.lib.optionals stdenv.isDarwin [ Security ];
 
   meta = with stdenv.lib; {
     description = "For when you really just want to serve some files over HTTP right now!";
-    homepage    = https://github.com/svenstaro/miniserve;
-    license     = with licenses; [ mit ];
-    maintainers = with maintainers; [ nequissimus ];
-    platforms   = platforms.linux;
+    homepage = "https://github.com/svenstaro/miniserve";
+    license = with licenses; [ mit ];
+    maintainers = with maintainers; [ zowoq ];
+    platforms = platforms.unix;
   };
 }

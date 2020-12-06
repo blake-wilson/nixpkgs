@@ -1,22 +1,28 @@
 { stdenv, buildPythonPackage, fetchPypi
 , itsdangerous, hypothesis
-, pytest, requests }:
+, pytestCheckHook, requests
+, pytest-timeout
+, isPy3k
+ }:
 
 buildPythonPackage rec {
   pname = "Werkzeug";
-  version = "0.16.0";
+  version = "1.0.1";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "7280924747b5733b246fe23972186c6b348f9ae29724135a6dfc1e53cea433e7";
+    sha256 = "6c80b1e5ad3665290ea39320b91e1be1e0d5f60652b964a3070216de83d2e47c";
   };
 
   propagatedBuildInputs = [ itsdangerous ];
-  checkInputs = [ pytest requests hypothesis ];
+  checkInputs = [ pytestCheckHook requests hypothesis pytest-timeout ];
 
-  checkPhase = ''
-    pytest ${stdenv.lib.optionalString stdenv.isDarwin "-k 'not test_get_machine_id'"}
-  '';
+  disabledTests = stdenv.lib.optionals stdenv.isDarwin [
+    "test_get_machine_id"
+  ];
+
+  # Python 2 pytest fails with INTERNALERROR due to a deprecation warning.
+  doCheck = isPy3k;
 
   meta = with stdenv.lib; {
     homepage = "https://palletsprojects.com/p/werkzeug/";

@@ -2,10 +2,10 @@
 , libsoup, gnome3 }:
 
 stdenv.mkDerivation rec {
-  name = "homebank-5.2.8";
+  name = "homebank-5.4.3";
   src = fetchurl {
     url = "http://homebank.free.fr/public/${name}.tar.gz";
-    sha256 = "13ampiv68y30kc0p2560g3yz8whqpwnidfcnb9lndv93b9ca767y";
+    sha256 = "02wd569viwy6ncy0144z9nxr3zmpl4shkqhz7zzwyky4gknxf8lj";
   };
 
   nativeBuildInputs = [ pkgconfig wrapGAppsHook ];
@@ -14,7 +14,7 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "Free, easy, personal accounting for everyone";
-    homepage = http://homebank.free.fr/;
+    homepage = "http://homebank.free.fr/";
     license = licenses.gpl2Plus;
     maintainers = with maintainers; [ pSub ];
     platforms = platforms.linux;

@@ -3,14 +3,14 @@
 }:
 
 let
-  version = "11.1";
+  version = "12.1";
   desktopItem = makeDesktopItem {
     name = "netbeans";
     exec = "netbeans";
     comment = "Integrated Development Environment";
     desktopName = "Apache NetBeans IDE";
     genericName = "Integrated Development Environment";
-    categories = "Application;Development;";
+    categories = "Development;";
     icon = "netbeans";
   };
 in
@@ -19,7 +19,7 @@ stdenv.mkDerivation {
   inherit version;
   src = fetchurl {
     url = "mirror://apache/netbeans/netbeans/${version}/netbeans-${version}-bin.zip";
-    sha512 = "bb061b9258d524b7b53b3b5ee9aa95111f7a391a5e2c5c0bc949164166af9a03d0cebbde2b47a8853fb765307b4c93ce8389a9c87bef26c92c08cdf446314e4d";
+    sha512 = "ad4bb5b191c784ed144b0b4831a8b95e0707c362917833c279d3f6fad11d7b3fb1f004f30121a941b694fc2ce323974b15072aa31cb5449111bc5d33d0d77103";
   };
 
   buildCommand = ''
@@ -60,7 +60,7 @@ stdenv.mkDerivation {
     description = "An integrated development environment for Java, C, C++ and PHP";
     homepage = "https://netbeans.apache.org/";
     license = stdenv.lib.licenses.asl20;
-    maintainers = with stdenv.lib.maintainers; [ sander rszibele ];
+    maintainers = with stdenv.lib.maintainers; [ sander rszibele asbachb ];
     platforms = stdenv.lib.platforms.unix;
   };
 }

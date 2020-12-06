@@ -1,17 +1,17 @@
 { pname, ffversion, meta, updateScript ? null
 , src, unpackPhase ? null, patches ? []
-, extraNativeBuildInputs ? [], extraConfigureFlags ? [], extraMakeFlags ? []
-, isIceCatLike ? false, icversion ? null
-, isTorBrowserLike ? false, tbversion ? null }:
+, extraNativeBuildInputs ? [], extraConfigureFlags ? [], extraMakeFlags ? [] }:
 
-{ lib, stdenv, pkgconfig, pango, perl, python2, python3, zip, libIDL
+{ lib, stdenv, pkgconfig, pango, perl, python2, python3, zip
 , libjpeg, zlib, dbus, dbus-glib, bzip2, xorg
-, freetype, fontconfig, file, nspr, nss, libnotify
+, freetype, fontconfig, file, nspr, nss, nss_3_53, libnotify
 , yasm, libGLU, libGL, sqlite, unzip, makeWrapper
-, hunspell, libXdamage, libevent, libstartup_notification, libvpx
-, icu, libpng, jemalloc, glib
-, autoconf213, which, gnused, cargo, rustc, llvmPackages
+, hunspell, libXdamage, libevent, libstartup_notification
+, libvpx_1_8
+, icu67, libpng, jemalloc, glib
+, autoconf213, which, gnused, rustPackages, rustPackages_1_45
 , rust-cbindgen, nodejs, nasm, fetchpatch
+, gnum4
 , debugBuild ? false
 
 ### optionals
@@ -23,20 +23,21 @@
 , ffmpegSupport ? true
 , gtk3Support ? true, gtk2, gtk3, wrapGAppsHook
 , waylandSupport ? true, libxkbcommon
+# LTO is disabled since it caused segfaults on wayland see https://github.com/NixOS/nixpkgs/issues/101429
+, ltoSupport ? false, overrideCC, buildPackages
 , gssSupport ? true, kerberos
+, pipewireSupport ? waylandSupport && webrtcSupport, pipewire
 
 ## privacy-related options
 
-, privacySupport ? isTorBrowserLike || isIceCatLike
+, privacySupport ? false
 
 # WARNING: NEVER set any of the options below to `true` by default.
 # Set to `!privacySupport` or `false`.
 
 # webrtcSupport breaks the aarch64 build on version >= 60, fixed in 63.
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1434589
-, webrtcSupport ? !privacySupport && (!stdenv.isAarch64 || !(
-    lib.versionAtLeast ffversion "60" && lib.versionOlder ffversion "63"
-  ))
+, webrtcSupport ? !privacySupport
 , geolocationSupport ? !privacySupport
 , googleAPISupport ? geolocationSupport
 , crashreporterSupport ? false
@@ -54,7 +55,7 @@
 # https://github.com/NixOS/nixpkgs/issues/31843#issuecomment-346372756 we
 # have permission to use the official firefox branding.
 #
-# Fur purposes of documentation the statement of @sylvestre:
+# For purposes of documentation the statement of @sylvestre:
 # > As the person who did part of the work described in the LWN article
 # > and release manager working for Mozilla, I can confirm the statement
 # > that I made in
@@ -72,6 +73,8 @@
 }:
 
 assert stdenv.cc.libc or null != null;
+assert pipewireSupport -> !waylandSupport || !webrtcSupport -> throw "pipewireSupport requires both wayland and webrtc support.";
+assert ltoSupport -> stdenv.isDarwin -> throw "LTO is broken on Darwin (see PR#19312).";
 
 let
   flag = tf: x: [(if tf then "--enable-${x}" else "--disable-${x}")];
@@ -79,7 +82,7 @@ let
   default-toolkit = if stdenv.isDarwin then "cairo-cocoa"
                     else "cairo-gtk${if gtk3Support then "3${lib.optionalString waylandSupport "-wayland"}" else "2"}";
 
-  binaryName = if isIceCatLike then "icecat" else "firefox";
+  binaryName = "firefox";
   binaryNameCapitalized = lib.toUpper (lib.substring 0 1 binaryName) + lib.substring 1 (-1) binaryName;
 
   browserName = if stdenv.isDarwin then binaryNameCapitalized else binaryName;
@@ -88,39 +91,67 @@ let
             then "/Applications/${binaryNameCapitalized}.app/Contents/MacOS"
             else "/bin";
 
-  browserVersion = if isIceCatLike then icversion
-                   else if isTorBrowserLike then tbversion
-                   else ffversion;
+  # Darwin's stdenv provides the default llvmPackages version, match that since
+  # clang LTO on Darwin is broken so the stdenv is not being changed.
+  llvmPackages = if stdenv.isDarwin
+                 then buildPackages.llvmPackages
+                 else buildPackages.llvmPackages_10;
 
-  browserPatches = [
-    ./env_var_for_system_dir.patch
-  ]
-  ++ lib.optional (lib.versionAtLeast ffversion "63" && lib.versionOlder ffversion "69")
-    (fetchpatch { # https://bugzilla.mozilla.org/show_bug.cgi?id=1500436#c29
-      name = "write_error-parallel_make.diff";
-      url = "https://hg.mozilla.org/mozilla-central/raw-diff/562655fe/python/mozbuild/mozbuild/action/node.py";
-      sha256 = "11d7rgzinb4mwl7yzhidjkajynmxgmffr4l9isgskfapyax9p88y";
-    })
-  ++ lib.optionals (stdenv.isAarch64 && lib.versionAtLeast ffversion "66" && lib.versionOlder ffversion "67") [
-    (fetchpatch {
-      url = "https://raw.githubusercontent.com/archlinuxarm/PKGBUILDs/09c7fa0dc1d87922e3b464c0fa084df1227fca79/extra/firefox/arm.patch";
-      sha256 = "1vbpih23imhv5r3g21m3m541z08n9n9j1nvmqax76bmyhn7mxp32";
-    })
-    (fetchpatch {
-      url = "https://raw.githubusercontent.com/archlinuxarm/PKGBUILDs/09c7fa0dc1d87922e3b464c0fa084df1227fca79/extra/firefox/build-arm-libopus.patch";
-      sha256 = "1zg56v3lc346fkzcjjx21vjip2s9hb2xw4pvza1dsfdnhsnzppfp";
-    })
-  ] ++ patches;
+  # When LTO for Darwin is fixed, the following will need updating as lld
+  # doesn't work on it. For now it is fine since ltoSupport implies no Darwin.
+  buildStdenv = if ltoSupport
+                then overrideCC stdenv llvmPackages.lldClang
+                else stdenv;
 
+  # 78 ESR won't build with rustc 1.47
+  inherit (if lib.versionAtLeast ffversion "82" then rustPackages else rustPackages_1_45)
+    rustc cargo;
+
+  nss_pkg = if lib.versionOlder ffversion "83" then nss_3_53 else nss;
 in
 
-stdenv.mkDerivation rec {
-  name = "${pname}-unwrapped-${version}";
-  version = browserVersion;
+buildStdenv.mkDerivation ({
+  name = "${pname}-unwrapped-${ffversion}";
+  version = ffversion;
 
   inherit src unpackPhase meta;
 
-  patches = browserPatches;
+  patches = [
+    ./env_var_for_system_dir.patch
+    ./no-buildconfig-ffx76.patch
+  ] ++
+
+  # there are two flavors of pipewire support
+  # The patches for the ESR release and the patches for the current stable
+  # release.
+  # Until firefox upstream stabilizes pipewire support we will have to continue
+  # tracking multiple versions here.
+  lib.optional (pipewireSupport && lib.versionOlder ffversion "83")
+    (fetchpatch {
+      # https://src.fedoraproject.org/rpms/firefox/blob/master/f/firefox-pipewire-0-3.patch
+      url = "https://src.fedoraproject.org/rpms/firefox/raw/e99b683a352cf5b2c9ff198756859bae408b5d9d/f/firefox-pipewire-0-3.patch";
+      sha256 = "0qc62di5823r7ly2lxkclzj9rhg2z7ms81igz44nv0fzv3dszdab";
+    })
+    ++
+    # This picks pipewire patches from fedora that are part of https://bugzilla.mozilla.org/show_bug.cgi?id=1672944
+    lib.optionals (pipewireSupport && lib.versionAtLeast ffversion "83") (let
+      fedora_revision = "d6756537dd8cf4d9816dc63ada66ea026e0fd128";
+      mkPWPatch = spec: fetchpatch {
+        inherit (spec) name sha256;
+        url = "https://src.fedoraproject.org/rpms/firefox/raw/${fedora_revision}/f/${spec.name}";
+      };
+    in map mkPWPatch [
+        { name = "pw1.patch"; sha256 = "1a7zvngn3k7dg886zmi38kmrsdzh2rrr46aw59bhr1gfmq8wlwn0"; }
+        { name = "pw2.patch"; sha256 = "17irg3yb2mchcy0z0nr4k65mwvkps467cvvczr10fnm06lhkhw1l"; }
+        { name = "pw3.patch"; sha256 = "12p6ql5ff2lfzlni6xkpz63h2xr6n2a9zf8hhjl99fj56rif6706"; }
+        { name = "pw4.patch"; sha256 = "0rvysc92rdm98s47w5lvbnrklrf7d299k3918qnldniyb4b9p4mg"; }
+        { name = "pw5.patch"; sha256 = "0kk2yxq4qkfwc4px6m08jrn18a7a7dhrngfiaw84r9ga6sgn0z00"; }
+        { name = "pw6.patch"; sha256 = "12lhx9wjpw0ahbfmw07wsx76bb223mr453q9cg8cq951vyskch3s"; }
+        { name = "pw7.patch"; sha256 = "0afw7cfd48vn62zb9y5kd2l26fg44s3aq1kyg3gm4q3rj34xidf6"; }
+    ])
+
+  ++ patches;
+
 
   # Ignore trivial whitespace changes in patches, this fixes compatibility of
   # ./env_var_for_system_dir.patch with Firefox >=65 without having to track
@@ -128,53 +159,81 @@ stdenv.mkDerivation rec {
   patchFlags = [ "-p1" "-l" ];
 
   buildInputs = [
-    gtk2 perl zip libIDL libjpeg zlib bzip2
+    gtk2 perl zip libjpeg zlib bzip2
     dbus dbus-glib pango freetype fontconfig xorg.libXi xorg.libXcursor
     xorg.libX11 xorg.libXrender xorg.libXft xorg.libXt file
     libnotify xorg.pixman yasm libGLU libGL
-    xorg.libXScrnSaver xorg.xorgproto
-    xorg.libXext sqlite unzip makeWrapper
-    libevent libstartup_notification libvpx /* cairo */
-    icu libpng jemalloc glib
+    xorg.xorgproto
+    xorg.libXext unzip makeWrapper
+    libevent libstartup_notification /* cairo */
+    libpng jemalloc glib
+    nasm icu67 libvpx_1_8
+    # >= 66 requires nasm for the AV1 lib dav1d
+    # yasm can potentially be removed in future versions
+    # https://bugzilla.mozilla.org/show_bug.cgi?id=1501796
+    # https://groups.google.com/forum/#!msg/mozilla.dev.platform/o-8levmLU80/SM_zQvfzCQAJ
+    nspr nss_pkg
   ]
-  ++ lib.optionals (!isTorBrowserLike) [ nspr nss ]
-  ++ lib.optional (lib.versionOlder ffversion "53") libXdamage
-  ++ lib.optional (lib.versionOlder ffversion "61") hunspell
-
-  # >= 66 requires nasm for the AV1 lib dav1d
-  # yasm can potentially be removed in future versions
-  # https://bugzilla.mozilla.org/show_bug.cgi?id=1501796
-  # https://groups.google.com/forum/#!msg/mozilla.dev.platform/o-8levmLU80/SM_zQvfzCQAJ
-  ++ lib.optional (lib.versionAtLeast ffversion "66") nasm
   ++ lib.optional  alsaSupport alsaLib
   ++ lib.optional  pulseaudioSupport libpulseaudio # only headers are needed
   ++ lib.optional  gtk3Support gtk3
   ++ lib.optional  gssSupport kerberos
-  ++ lib.optional  waylandSupport libxkbcommon
-  ++ lib.optionals stdenv.isDarwin [ CoreMedia ExceptionHandling Kerberos
-                                     AVFoundation MediaToolbox CoreLocation
-                                     Foundation libobjc AddressBook cups ];
+  ++ lib.optional  ltoSupport llvmPackages.libunwind
+  ++ lib.optionals waylandSupport [ libxkbcommon ]
+  ++ lib.optionals pipewireSupport [ pipewire ]
+  ++ lib.optionals (lib.versionAtLeast ffversion "82") [ gnum4 ]
+  ++ lib.optionals buildStdenv.isDarwin [ CoreMedia ExceptionHandling Kerberos
+                                          AVFoundation MediaToolbox CoreLocation
+                                          Foundation libobjc AddressBook cups ];
 
-  NIX_CFLAGS_COMPILE = [
+  NIX_LDFLAGS = lib.optionalString ltoSupport ''
+    -rpath ${placeholder "out"}/lib/${binaryName}
+    -rpath ${llvmPackages.libunwind.out}/lib
+  '';
+
+  NIX_CFLAGS_COMPILE = toString [
     "-I${glib.dev}/include/gio-unix-2.0"
-  ]
-  ++ lib.optionals (!isTorBrowserLike) [
-    "-I${nss.dev}/include/nss"
+    "-I${nss_pkg.dev}/include/nss"
   ];
 
-  postPatch = lib.optionalString (lib.versionAtLeast ffversion "63.0" && !isTorBrowserLike) ''
-    substituteInPlace third_party/prio/prio/rand.c --replace 'nspr/prinit.h' 'prinit.h'
-  '' + lib.optionalString (lib.versionAtLeast ffversion "68") ''
+  MACH_USE_SYSTEM_PYTHON = "1";
+
+  postPatch = ''
     rm -rf obj-x86_64-pc-linux-gnu
+  '' + lib.optionalString (pipewireSupport && lib.versionOlder ffversion "83") ''
+    # substitute the /usr/include/ lines for the libraries that pipewire provides.
+    # The patch we pick from fedora only contains the generated moz.build files
+    # which hardcode the dependency paths instead of running pkg_config.
+    substituteInPlace \
+      media/webrtc/trunk/webrtc/modules/desktop_capture/desktop_capture_generic_gn/moz.build \
+      --replace /usr/include ${pipewire.dev}/include
+  '' + lib.optionalString (lib.versionAtLeast ffversion "80") ''
+    substituteInPlace dom/system/IOUtils.h \
+      --replace '#include "nspr/prio.h"'          '#include "prio.h"'
+
+    substituteInPlace dom/system/IOUtils.cpp \
+      --replace '#include "nspr/prio.h"'          '#include "prio.h"' \
+      --replace '#include "nspr/private/pprio.h"' '#include "private/pprio.h"' \
+      --replace '#include "nspr/prtypes.h"'       '#include "prtypes.h"'
   '';
 
   nativeBuildInputs =
-    [ autoconf213 which gnused pkgconfig perl python2 cargo rustc ]
+    [
+      autoconf213
+      cargo
+      gnused
+      llvmPackages.llvm # llvm-objdump
+      nodejs
+      perl
+      pkgconfig
+      python2
+      python3
+      rust-cbindgen
+      rustc
+      which
+    ]
     ++ lib.optional gtk3Support wrapGAppsHook
-    ++ lib.optionals stdenv.isDarwin [ xcbuild rsync ]
-    ++ lib.optional  (lib.versionAtLeast ffversion "61.0") [ python3 ]
-    ++ lib.optionals (lib.versionAtLeast ffversion "63.0") [ rust-cbindgen nodejs ]
-    ++ lib.optionals (lib.versionAtLeast ffversion "67.0") [ llvmPackages.llvm ] # llvm-objdump is required in version >=67.0
+    ++ lib.optionals buildStdenv.isDarwin [ xcbuild rsync ]
     ++ extraNativeBuildInputs;
 
   preConfigure = ''
@@ -182,14 +241,8 @@ stdenv.mkDerivation rec {
     rm -f configure
     rm -f js/src/configure
     rm -f .mozconfig*
-  '' + (if lib.versionAtLeast ffversion "58"
-  # this will run autoconf213
-  then ''
+    # this will run autoconf213
     configureScript="$(realpath ./mach) configure"
-  '' else ''
-    make -f client.mk configure-files
-    configureScript="$(realpath ./configure)"
-  '') + lib.optionalString (lib.versionAtLeast ffversion "53") ''
     export MOZCONFIG=$(pwd)/mozconfig
 
     # Set C flags for Rust's bindgen program. Unlike ordinary C
@@ -198,31 +251,25 @@ stdenv.mkDerivation rec {
     # included we need to look in a few places.
     # TODO: generalize this process for other use-cases.
 
-    BINDGEN_CFLAGS="$(< ${stdenv.cc}/nix-support/libc-cflags) \
-      $(< ${stdenv.cc}/nix-support/cc-cflags) \
-      ${stdenv.cc.default_cxx_stdlib_compile} \
-      ${lib.optionalString stdenv.cc.isClang "-idirafter ${stdenv.cc.cc}/lib/clang/${lib.getVersion stdenv.cc.cc}/include"} \
-      ${lib.optionalString stdenv.cc.isGNU "-isystem ${stdenv.cc.cc}/include/c++/${lib.getVersion stdenv.cc.cc} -isystem ${stdenv.cc.cc}/include/c++/${lib.getVersion stdenv.cc.cc}/$(cc -dumpmachine)"} \
+    BINDGEN_CFLAGS="$(< ${buildStdenv.cc}/nix-support/libc-crt1-cflags) \
+      $(< ${buildStdenv.cc}/nix-support/libc-cflags) \
+      $(< ${buildStdenv.cc}/nix-support/cc-cflags) \
+      $(< ${buildStdenv.cc}/nix-support/libcxx-cxxflags) \
+      ${lib.optionalString buildStdenv.cc.isClang "-idirafter ${buildStdenv.cc.cc}/lib/clang/${lib.getVersion buildStdenv.cc.cc}/include"} \
+      ${lib.optionalString buildStdenv.cc.isGNU "-isystem ${buildStdenv.cc.cc}/include/c++/${lib.getVersion buildStdenv.cc.cc} -isystem ${buildStdenv.cc.cc}/include/c++/${lib.getVersion buildStdenv.cc.cc}/${buildStdenv.hostPlatform.config}"} \
       $NIX_CFLAGS_COMPILE"
 
     echo "ac_add_options BINDGEN_CFLAGS='$BINDGEN_CFLAGS'" >> $MOZCONFIG
-  '' + lib.optionalString googleAPISupport ''
+  '' + (lib.optionalString googleAPISupport ''
     # Google API key used by Chromium and Firefox.
     # Note: These are for NixOS/nixpkgs use ONLY. For your own distribution,
     # please get your own set of keys.
     echo "AIzaSyDGi15Zwl11UNe6Y-5XW_upsfyw31qwZPI" > $TMPDIR/ga
     # 60.5+ & 66+ did split the google API key arguments: https://bugzilla.mozilla.org/show_bug.cgi?id=1531176
-    ${if (lib.versionAtLeast ffversion "60.6" && lib.versionOlder ffversion "61") || (lib.versionAtLeast ffversion "66") then ''
-      configureFlagsArray+=("--with-google-location-service-api-keyfile=$TMPDIR/ga")
-      configureFlagsArray+=("--with-google-safebrowsing-api-keyfile=$TMPDIR/ga")
-    '' else ''
-      configureFlagsArray+=("--with-google-api-keyfile=$TMPDIR/ga")
-    ''}
-  '' + lib.optionalString (lib.versionOlder ffversion "58") ''
-    cd obj-*
-  ''
-  # AS=as in the environment causes build failure https://bugzilla.mozilla.org/show_bug.cgi?id=1497286
-  + lib.optionalString (lib.versionAtLeast ffversion "64") ''
+    configureFlagsArray+=("--with-google-location-service-api-keyfile=$TMPDIR/ga")
+    configureFlagsArray+=("--with-google-safebrowsing-api-keyfile=$TMPDIR/ga")
+  '') + ''
+    # AS=as in the environment causes build failure https://bugzilla.mozilla.org/show_bug.cgi?id=1497286
     unset AS
   '';
 
@@ -230,49 +277,33 @@ stdenv.mkDerivation rec {
     "--enable-application=browser"
     "--with-system-jpeg"
     "--with-system-zlib"
-    "--with-system-bz2"
     "--with-system-libevent"
     "--with-system-libvpx"
     "--with-system-png" # needs APNG support
     "--with-system-icu"
     "--enable-system-ffi"
     "--enable-system-pixman"
-    "--enable-system-sqlite"
     #"--enable-system-cairo"
-    "--enable-startup-notification"
-    #"--enable-content-sandbox" # TODO: probably enable after 54
     "--disable-tests"
     "--disable-necko-wifi" # maybe we want to enable this at some point
     "--disable-updater"
     "--enable-jemalloc"
-    "--disable-gconf"
     "--enable-default-toolkit=${default-toolkit}"
-  ]
-  ++ lib.optional (lib.versionOlder ffversion "64") "--disable-maintenance-service"
-  ++ lib.optional (stdenv.isDarwin && lib.versionAtLeast ffversion "61") "--disable-xcode-checks"
-  ++ lib.optional (lib.versionOlder ffversion "61") "--enable-system-hunspell"
-  ++ lib.optionals (lib.versionAtLeast ffversion "56") [
     "--with-libclang-path=${llvmPackages.libclang}/lib"
-    "--with-clang-path=${llvmPackages.clang}/bin/clang"
-  ]
-  ++ lib.optionals (lib.versionAtLeast ffversion "57" && lib.versionOlder ffversion "69") [
-    "--enable-webrender=build"
-  ]
-
-  # TorBrowser patches these
-  ++ lib.optionals (!isTorBrowserLike) [
     "--with-system-nspr"
     "--with-system-nss"
   ]
-
-  # and wants these
-  ++ lib.optionals isTorBrowserLike ([
-    "--with-tor-browser-version=${tbversion}"
-    "--with-distribution-id=org.torproject"
-    "--enable-signmar"
-    "--enable-verify-mar"
-    "--enable-bundled-fonts"
-  ])
+  ++ lib.optional (buildStdenv.isDarwin) "--disable-xcode-checks"
+  ++ lib.optional (!ltoSupport) "--with-clang-path=${llvmPackages.clang}/bin/clang"
+  # LTO is done using clang and lld on Linux.
+  # Darwin needs to use the default linker as lld is not supported (yet?):
+  #   https://bugzilla.mozilla.org/show_bug.cgi?id=1538724
+  # elf-hack is broken when using clang+lld:
+  #   https://bugzilla.mozilla.org/show_bug.cgi?id=1482204
+  ++ lib.optionals ltoSupport [
+    "--enable-lto"
+    "--disable-elf-hack"
+  ] ++ lib.optional (ltoSupport && !buildStdenv.isDarwin) "--enable-linker=lld"
 
   ++ flag alsaSupport "alsa"
   ++ flag pulseaudioSupport "pulseaudio"
@@ -282,11 +313,6 @@ stdenv.mkDerivation rec {
   ++ flag crashreporterSupport "crashreporter"
   ++ lib.optional drmSupport "--enable-eme=widevine"
 
-  ++ lib.optionals (lib.versionOlder ffversion "60") ([]
-    ++ flag geolocationSupport "mozril-geoloc"
-    ++ flag safeBrowsingSupport "safe-browsing"
-  )
-
   ++ (if debugBuild then [ "--enable-debug" "--enable-profiling" ]
                     else [ "--disable-debug" "--enable-release"
                            "--enable-optimize"
@@ -294,18 +320,8 @@ stdenv.mkDerivation rec {
   ++ lib.optional enableOfficialBranding "--enable-official-branding"
   ++ extraConfigureFlags;
 
-  # Before 58 we have to run `make -f client.mk configure-files` at
-  # the top level, and then run `./configure` in the obj-* dir (see
-  # above), but in 58 we have to instead run `./mach configure` at the
-  # top level and then run `make` in obj-*. (We can also run the
-  # `make` at the top level in 58, but then we would have to `cd` to
-  # `make install` anyway. This is ugly, but simple.)
-  postConfigure = lib.optionalString (lib.versionAtLeast ffversion "58") ''
+  postConfigure = ''
     cd obj-*
-  '';
-
-  preBuild = lib.optionalString isTorBrowserLike ''
-    buildFlagsArray=("MOZ_APP_DISPLAYNAME=Tor Browser")
   '';
 
   makeFlags = lib.optionals enableOfficialBranding [
@@ -314,18 +330,15 @@ stdenv.mkDerivation rec {
   ]
   ++ extraMakeFlags;
 
-  RUSTFLAGS = if (lib.versionAtLeast ffversion "67"/*somewhere betwween ESRs*/)
-    then null else "--cap-lints warn";
-
   enableParallelBuilding = true;
   doCheck = false; # "--disable-tests" above
 
-  installPhase = if stdenv.isDarwin then ''
+  installPhase = if buildStdenv.isDarwin then ''
     mkdir -p $out/Applications
     cp -LR dist/${binaryNameCapitalized}.app $out/Applications
   '' else null;
 
-  postInstall = lib.optionalString stdenv.isLinux ''
+  postInstall = lib.optionalString buildStdenv.isLinux ''
     # Remove SDK cruft. FIXME: move to a separate output?
     rm -rf $out/share/idl $out/include $out/lib/${binaryName}-devel-*
 
@@ -333,11 +346,12 @@ stdenv.mkDerivation rec {
     gappsWrapperArgs+=(--argv0 "$out/bin/.${binaryName}-wrapped")
   '';
 
-  postFixup = lib.optionalString stdenv.isLinux ''
+  postFixup = lib.optionalString buildStdenv.isLinux ''
     # Fix notifications. LibXUL uses dlopen for this, unfortunately; see #18712.
     patchelf --set-rpath "${lib.getLib libnotify
       }/lib:$(patchelf --print-rpath "$out"/lib/${binaryName}*/libxul.so)" \
         "$out"/lib/${binaryName}*/libxul.so
+    patchelf --add-needed ${xorg.libXScrnSaver.out}/lib/libXss.so $out/lib/${binaryName}/${binaryName}
   '';
 
   doInstallCheck = true;
@@ -347,11 +361,11 @@ stdenv.mkDerivation rec {
   '';
 
   passthru = {
-    inherit version updateScript;
+    inherit updateScript;
+    version = ffversion;
     isFirefox3Like = true;
-    inherit isIceCatLike;
-    inherit isTorBrowserLike;
     gtk = gtk2;
+    inherit alsaSupport;
     inherit nspr;
     inherit ffmpegSupport;
     inherit gssSupport;
@@ -359,4 +373,20 @@ stdenv.mkDerivation rec {
     inherit browserName;
   } // lib.optionalAttrs gtk3Support { inherit gtk3; };
 
-}
+  hardeningDisable = [ "format" ]; # -Werror=format-security
+
+  # the build system verifies checksums of the bundled rust sources
+  # ./third_party/rust is be patched by our libtool fixup code in stdenv
+  # unfortunately we can't just set this to `false` when we do not want it.
+  # See https://github.com/NixOS/nixpkgs/issues/77289 for more details
+  # Ideally we would figure out how to tell the build system to not
+  # care about changed hashes as we are already doing that when we
+  # fetch the sources. Any further modifications of the source tree
+  # is on purpose by some of our tool (or by accident and a bug?).
+  dontFixLibtool = true;
+
+  # on aarch64 this is also required
+  dontUpdateAutotoolsGnuConfigScripts = true;
+
+  requiredSystemFeatures = [ "big-parallel" ];
+})

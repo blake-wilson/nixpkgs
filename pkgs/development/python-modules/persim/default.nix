@@ -11,11 +11,11 @@
 
 buildPythonPackage rec {
   pname = "persim";
-  version = "0.1.1";
+  version = "0.1.3";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "932bb0489d4dc158e4f007ec609c61e4700003d882d8e7bdac218b70d14ce9cf";
+    sha256 = "be4ea4bfc2a0c6fcfc28ebd52e23a351ee00b0ef0ddaf527526bd0f919145348";
   };
 
   propagatedBuildInputs = [
@@ -43,7 +43,7 @@ buildPythonPackage rec {
 
   meta = with lib; {
     description = "Distances and representations of persistence diagrams";
-    homepage = https://persim.scikit-tda.org;
+    homepage = "https://persim.scikit-tda.org";
     license = licenses.mit;
     maintainers = [ maintainers.costrouc ];
   };

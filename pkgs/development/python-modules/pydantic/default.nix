@@ -1,22 +1,35 @@
 { lib
 , buildPythonPackage
-, fetchPypi
+, fetchFromGitHub
+, fetchpatch
 , ujson
 , email_validator
 , typing-extensions
 , python
 , isPy3k
+, pytest
+, pytestcov
 }:
 
 buildPythonPackage rec {
   pname = "pydantic";
-  version = "1.0";
+  version = "1.5.1";
   disabled = !isPy3k;
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "bf474cebe007701806f5f8b076fb8508116606e5c721734bb855bfec4185263c";
+  src = fetchFromGitHub {
+    owner = "samuelcolvin";
+    repo = pname;
+    rev = "v${version}";
+    sha256 = "0fwrx7p6d5vskg9ibganahiz9y9299idvdmzhjw62jy84gn1vrb4";
   };
+
+  # fix tests, remove on next version bump
+  patches = [
+    (fetchpatch {
+      url = "https://github.com/samuelcolvin/pydantic/commit/a5b0e741e585040a0ab8b0be94dd9dc2dd3afcc7.patch";
+      sha256 = "0v91ac3dw23rm73370s2ns84vi0xqbfzpvj84zb7xdiicx8fhmf1";
+    })
+  ];
 
   propagatedBuildInputs = [
     ujson
@@ -24,22 +37,13 @@ buildPythonPackage rec {
     typing-extensions
   ];
 
+  checkInputs = [
+    pytest
+    pytestcov
+  ];
+
   checkPhase = ''
-    ${python.interpreter} -c """
-from datetime import datetime
-from typing import List
-from pydantic import BaseModel
-
-class User(BaseModel):
-    id: int
-    name = 'John Doe'
-    signup_ts: datetime = None
-    friends: List[int] = []
-
-external_data = {'id': '123', 'signup_ts': '2017-06-01 12:22', 'friends': [1, '2', b'3']}
-user = User(**external_data)
-assert user.id is "123"
-"""
+    pytest
   '';
 
   meta = with lib; {

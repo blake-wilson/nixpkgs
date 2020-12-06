@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, jre, makeWrapper, bash, coreutils, gnugrep, gnused, ps,
+{ stdenv, fetchurl, jre8, makeWrapper, bash, coreutils, gnugrep, gnused, ps,
   majorVersion ? "1.0" }:
 
 let
@@ -44,11 +44,23 @@ let
       sha256 = "1svdnhdzq9a6jsig513i0ahaysfgar5i385bq9fz7laga6a4z3qv";
     };
     "2.3" = {
-      kafkaVersion = "2.3.0";
+      kafkaVersion = "2.3.1";
       scalaVersion = "2.12";
-      sha256 = "1rz3xqv26h0zv5pmk65znzn08gycmrfj6vvbmrvl9i7hm4hm2vyq";
+      sha256 = "0bldfrvd351agm237icnvn36va67crpnzmbh6dlq84ip910xsgas";
+    };
+    "2.4" = {
+      kafkaVersion = "2.4.1";
+      scalaVersion = "2.12";
+      sha256 = "0ahsprmpjz026mhbr79187wfdrxcg352iipyfqfrx68q878wnxr1";
+    };
+    "2.5" = {
+      kafkaVersion = "2.5.0";
+      scalaVersion = "2.13";
+      sha256 = "0w3g7ii8x63m2blv2a8c491d0diczpliaqm9f7w5yn98hikh0aqi";
     };
   };
+
+  jre = jre8; # TODO: remove override https://github.com/NixOS/nixpkgs/pull/89731
 in
 
 with versionMap.${majorVersion};
@@ -89,7 +101,7 @@ stdenv.mkDerivation rec {
   '';
 
   meta = with stdenv.lib; {
-    homepage = http://kafka.apache.org;
+    homepage = "http://kafka.apache.org";
     description = "A high-throughput distributed messaging system";
     license = licenses.asl20;
     maintainers = [ maintainers.ragge ];

@@ -6,11 +6,11 @@ stdenv.mkDerivation rec {
   pname = "libcap-ng";
   # When updating make sure to test that the version with
   # all of the python bindings still works
-  version = "0.7.9";
+  version = "0.7.11";
 
   src = fetchurl {
     url = "${meta.homepage}/${pname}-${version}.tar.gz";
-    sha256 = "0a0k484kwv0zilry2mbl9k56cnpdhsjxdxin17jas6kkyfy345aa";
+    sha256 = "1s8akhnnazk0b5c6z5i3x54rjb26p8pz2wdl1m21ml3231qmr0c5";
   };
 
   nativeBuildInputs = [ swig ];
@@ -32,7 +32,7 @@ stdenv.mkDerivation rec {
 
   meta = let inherit (stdenv.lib) platforms licenses; in {
     description = "Library for working with POSIX capabilities";
-    homepage = https://people.redhat.com/sgrubb/libcap-ng/;
+    homepage = "https://people.redhat.com/sgrubb/libcap-ng/";
     platforms = platforms.linux;
     license = licenses.lgpl21;
   };

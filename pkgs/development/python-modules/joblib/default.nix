@@ -1,4 +1,5 @@
 { lib
+, pythonOlder
 , buildPythonPackage
 , fetchPypi
 , stdenv
@@ -12,11 +13,12 @@
 
 buildPythonPackage rec {
   pname = "joblib";
-  version = "0.14.0";
+  version = "0.16.0";
+  disabled = pythonOlder "3.6";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "1zwkl6hgi8wbygcc6ql6yk1if665hwk43sa9shglb2afrfm5gk3g";
+    sha256 = "8f52bf24c64b608bf0b2563e0e47d6fcf516abc8cfafe10cfd98ad66d94f92d6";
   };
 
   checkInputs = [ sphinx numpydoc pytest ];
@@ -30,7 +32,7 @@ buildPythonPackage rec {
 
   meta = {
     description = "Lightweight pipelining: using Python functions as pipeline jobs";
-    homepage = https://pythonhosted.org/joblib/;
+    homepage = "https://joblib.readthedocs.io/";
     license = lib.licenses.bsd3;
     maintainers = with lib.maintainers; [ costrouc ];
   };

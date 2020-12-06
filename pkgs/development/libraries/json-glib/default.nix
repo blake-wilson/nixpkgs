@@ -14,8 +14,8 @@ in stdenv.mkDerivation rec {
   };
 
   propagatedBuildInputs = [ glib ];
-  nativeBuildInputs = [ meson ninja pkgconfig gettext gobject-introspection ];
-  buildInputs = stdenv.lib.optional stdenv.isDarwin fixDarwinDylibNames;
+  nativeBuildInputs = [ meson ninja pkgconfig gettext gobject-introspection glib ]
+    ++ stdenv.lib.optional stdenv.hostPlatform.isDarwin fixDarwinDylibNames;
 
   outputs = [ "out" "dev" ];
 
@@ -29,7 +29,7 @@ in stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "A library providing (de)serialization support for the JavaScript Object Notation (JSON) format";
-    homepage = https://wiki.gnome.org/Projects/JsonGlib;
+    homepage = "https://wiki.gnome.org/Projects/JsonGlib";
     license = licenses.lgpl2;
     maintainers = with maintainers; [ lethalman ];
     platforms = with platforms; unix;

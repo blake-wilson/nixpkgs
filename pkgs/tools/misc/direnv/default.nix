@@ -1,31 +1,44 @@
-{ stdenv, fetchFromGitHub, buildGoPackage, bash }:
+{ stdenv, fetchFromGitHub, buildGoModule, bash, fish, zsh }:
 
-buildGoPackage rec {
+buildGoModule rec {
   pname = "direnv";
-  version = "2.20.1";
-  goPackagePath = "github.com/direnv/direnv";
+  version = "2.25.0";
+
+  vendorSha256 = null;
 
   src = fetchFromGitHub {
     owner = "direnv";
     repo = "direnv";
     rev = "v${version}";
-    sha256 = "0v8mqxb5g8z9kdnvbwfg39hlb9l3wpb8qwslwgln42k4bs8kg9hs";
+    sha256 = "00bvznswmz08s2jqpz5xxmkqggd06h6g8cwk242aaih6qajxfpsn";
   };
 
-  postConfigure = ''
-    cd $NIX_BUILD_TOP/go/src/$goPackagePath
+  # we have no bash at the moment for windows
+  BASH_PATH =
+    stdenv.lib.optionalString (!stdenv.hostPlatform.isWindows)
+    "${bash}/bin/bash";
+
+  # fix hardcoded GOFLAGS in makefile. remove once https://github.com/direnv/direnv/issues/718 is closed.
+  postPatch = ''
+    substituteInPlace GNUmakefile --replace "export GOFLAGS=-mod=vendor" ""
   '';
 
-  # we have no bash at the moment for windows
-  makeFlags = stdenv.lib.optional (!stdenv.hostPlatform.isWindows) [
-    "BASH_PATH=${bash}/bin/bash"
-  ];
+  # replace the build phase to use the GNUMakefile instead
+  buildPhase = ''
+    make BASH_PATH=$BASH_PATH
+  '';
 
   installPhase = ''
-    mkdir -p $out
-    make install DESTDIR=$bin
-    mkdir -p $bin/share/fish/vendor_conf.d
-    echo "eval ($bin/bin/direnv hook fish)" > $bin/share/fish/vendor_conf.d/direnv.fish
+    make install DESTDIR=$out
+    mkdir -p $out/share/fish/vendor_conf.d
+    echo "eval ($out/bin/direnv hook fish)" > $out/share/fish/vendor_conf.d/direnv.fish
+  '';
+
+  checkInputs = [ fish zsh ];
+
+  checkPhase = ''
+    export HOME=$(mktemp -d)
+    make test-go test-bash test-fish test-zsh
   '';
 
   meta = with stdenv.lib; {
@@ -41,7 +54,7 @@ buildGoPackage rec {
       In short, this little tool allows you to have project-specific
       environment variables.
     '';
-    homepage = https://direnv.net;
+    homepage = "https://direnv.net";
     license = licenses.mit;
     maintainers = with maintainers; [ zimbatm ];
   };

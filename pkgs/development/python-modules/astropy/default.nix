@@ -2,6 +2,8 @@
 , fetchPypi
 , buildPythonPackage
 , isPy3k
+, cython
+, jinja2
 , numpy
 , pytest
 , pytest-astropy
@@ -10,16 +12,16 @@
 
 buildPythonPackage rec {
   pname = "astropy";
-  version = "3.2.3";
+  version = "4.0.3";
 
   disabled = !isPy3k; # according to setup.py
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "47f00816c2978fdd10f448c8f0337d6dca7b8cbeaab4bf272b5fd37cb4b890d3";
+    sha256 = "cf69d1a3f140ca8fe1664202072201395495a73c334a69fc965fab6a6e1d281a";
   };
 
-  nativeBuildInputs = [ astropy-helpers ];
+  nativeBuildInputs = [ astropy-helpers cython jinja2 ];
 
   propagatedBuildInputs = [ numpy pytest ]; # yes it really has pytest in install_requires
 
@@ -44,7 +46,7 @@ buildPythonPackage rec {
 
   meta = {
     description = "Astronomy/Astrophysics library for Python";
-    homepage = https://www.astropy.org;
+    homepage = "https://www.astropy.org";
     license = lib.licenses.bsd3;
     platforms = lib.platforms.all;
     maintainers = with lib.maintainers; [ kentjames ];

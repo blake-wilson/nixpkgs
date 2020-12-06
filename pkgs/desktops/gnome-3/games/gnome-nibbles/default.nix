@@ -5,11 +5,11 @@
 
 stdenv.mkDerivation rec {
   pname = "gnome-nibbles";
-  version = "3.34.1";
+  version = "3.38.2";
 
   src = fetchurl {
     url = "mirror://gnome/sources/gnome-nibbles/${stdenv.lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
-    sha256 = "0nfy1wvxsyrpdinfn5v86gvq3ma487njz607biwwhji9z050gw3p";
+    sha256 = "1naknfbciydbym79a0jq039xf0033z8gyln48c0qsbcfr2qn8yj5";
   };
 
   nativeBuildInputs = [
@@ -31,9 +31,9 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "Guide a worm around a maze";
-    homepage = https://wiki.gnome.org/Apps/Nibbles;
+    homepage = "https://wiki.gnome.org/Apps/Nibbles";
     license = licenses.gpl2;
-    maintainers = gnome3.maintainers;
+    maintainers = teams.gnome.members;
     platforms = platforms.linux;
   };
 }

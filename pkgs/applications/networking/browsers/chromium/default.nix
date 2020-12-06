@@ -1,43 +1,49 @@
-{ newScope, config, stdenv, llvmPackages, gcc8Stdenv, llvmPackages_8
-, makeWrapper, ed
-, glib, gtk3, gnome3, gsettings-desktop-schemas
+{ newScope, config, stdenv, fetchurl, makeWrapper
+, llvmPackages_11, ed, gnugrep, coreutils, xdg_utils
+, glib, gtk3, gnome3, gsettings-desktop-schemas, gn, fetchgit
 , libva ? null
-, gcc, nspr, nss, patchelfUnstable, runCommand
+, pipewire_0_2
+, gcc, nspr, nss, runCommand
 , lib
 
 # package customization
+# Note: enable* flags should not require full rebuilds (i.e. only affect the wrapper)
 , channel ? "stable"
-, enableNaCl ? false
 , gnomeSupport ? false, gnome ? null
 , gnomeKeyringSupport ? false
 , proprietaryCodecs ? true
 , enablePepperFlash ? false
 , enableWideVine ? false
-, useVaapi ? false # test video on radeon, before enabling this
+, enableVaapi ? false # Disabled by default due to unofficial support
+, useOzone ? true
 , cupsSupport ? true
 , pulseSupport ? config.pulseaudio or stdenv.isLinux
 , commandLineArgs ? ""
 }:
 
 let
-  stdenv_ = if stdenv.isAarch64 then gcc8Stdenv else llvmPackages_8.stdenv;
-  llvmPackages_ = if stdenv.isAarch64 then llvmPackages else llvmPackages_8;
-in let
-  stdenv = stdenv_;
-  llvmPackages = llvmPackages_;
+  llvmPackages = llvmPackages_11;
+  stdenv = llvmPackages.stdenv;
 
   callPackage = newScope chromium;
 
-  chromium = {
+  chromium = rec {
     inherit stdenv llvmPackages;
 
-    upstream-info = (callPackage ./update.nix {}).getChannel channel;
+    upstream-info = (lib.importJSON ./upstream-info.json).${channel};
 
-    mkChromiumDerivation = callPackage ./common.nix {
-      inherit enableNaCl gnomeSupport gnome
-              gnomeKeyringSupport proprietaryCodecs cupsSupport pulseSupport
-              useVaapi;
-    };
+    mkChromiumDerivation = callPackage ./common.nix ({
+      inherit channel gnome gnomeSupport gnomeKeyringSupport proprietaryCodecs
+              cupsSupport pulseSupport useOzone;
+      gnChromium = gn.overrideAttrs (oldAttrs: {
+        inherit (upstream-info.deps.gn) version;
+        src = fetchgit {
+          inherit (upstream-info.deps.gn) url rev sha256;
+        };
+      });
+      # TODO: Cleanup useOzone and useVaapi in common.nix:
+      useVaapi = !stdenv.isAarch64; # TODO: Might be best to not set use_vaapi anymore (default is fine)
+    });
 
     browser = callPackage ./browser.nix { inherit channel enableWideVine; };
 
@@ -46,33 +52,46 @@ in let
     };
   };
 
+  pkgSuffix = if channel == "dev" then "unstable" else channel;
+  pkgName = "google-chrome-${pkgSuffix}";
+  chromeSrc = fetchurl {
+    urls = map (repo: "${repo}/${pkgName}/${pkgName}_${version}-1_amd64.deb") [
+      "https://dl.google.com/linux/chrome/deb/pool/main/g"
+      "http://95.31.35.30/chrome/pool/main/g"
+      "http://mirror.pcbeta.com/google/chrome/deb/pool/main/g"
+      "http://repo.fdzh.org/chrome/deb/pool/main/g"
+    ];
+    sha256 = chromium.upstream-info.sha256bin64;
+  };
+
   mkrpath = p: "${lib.makeSearchPathOutput "lib" "lib64" p}:${lib.makeLibraryPath p}";
-  widevine = let upstream-info = chromium.upstream-info; in stdenv.mkDerivation {
-    name = "chromium-binary-plugin-widevine";
+  widevineCdm = stdenv.mkDerivation {
+    name = "chrome-widevine-cdm";
 
-    # The .deb file for Google Chrome
-    src = upstream-info.binary;
-
-    nativeBuildInputs = [ patchelfUnstable ];
+    src = chromeSrc;
 
     phases = [ "unpackPhase" "patchPhase" "installPhase" "checkPhase" ];
 
     unpackCmd = let
-      soPath =
-        if upstream-info.channel == "stable" then
-          "./opt/google/chrome/WidevineCdm/_platform_specific/linux_x64/libwidevinecdm.so"
-        else if upstream-info.channel == "beta" then
-          "./opt/google/chrome-beta/WidevineCdm/_platform_specific/linux_x64/libwidevinecdm.so"
-        else if upstream-info.channel == "dev" then
-          "./opt/google/chrome-unstable/WidevineCdm/_platform_specific/linux_x64/libwidevinecdm.so"
+      widevineCdmPath =
+        if channel == "stable" then
+          "./opt/google/chrome/WidevineCdm"
+        else if channel == "beta" then
+          "./opt/google/chrome-beta/WidevineCdm"
+        else if channel == "dev" then
+          "./opt/google/chrome-unstable/WidevineCdm"
         else
           throw "Unknown chromium channel.";
     in ''
-      mkdir -p plugins
-      # Extract just libwidevinecdm.so from upstream's .deb file
-      ar p "$src" data.tar.xz | tar xJ -C plugins ${soPath}
-      mv plugins/${soPath} plugins/
-      rm -rf plugins/opt
+      # Extract just WidevineCdm from upstream's .deb file
+      ar p "$src" data.tar.xz | tar xJ "${widevineCdmPath}"
+
+      # Move things around so that we don't have to reference a particular
+      # chrome-* directory later.
+      mv "${widevineCdmPath}" ./
+
+      # unpackCmd wants a single output directory; let it take WidevineCdm/
+      rm -rf opt
     '';
 
     doCheck = true;
@@ -83,12 +102,12 @@ in let
     PATCH_RPATH = mkrpath [ gcc.cc glib nspr nss ];
 
     patchPhase = ''
-      patchelf --set-rpath "$PATCH_RPATH" libwidevinecdm.so
+      patchelf --set-rpath "$PATCH_RPATH" _platform_specific/linux_x64/libwidevinecdm.so
     '';
 
     installPhase = ''
-      install -vD libwidevinecdm.so \
-        "$out/lib/libwidevinecdm.so"
+      mkdir -p $out/WidevineCdm
+      cp -a * $out/WidevineCdm/
     '';
 
     meta = {
@@ -105,17 +124,17 @@ in let
 
   # We want users to be able to enableWideVine without rebuilding all of
   # chromium, so we have a separate derivation here that copies chromium
-  # and adds the unfree libwidevinecdm.so.
+  # and adds the unfree WidevineCdm.
   chromiumWV = let browser = chromium.browser; in if enableWideVine then
     runCommand (browser.name + "-wv") { version = browser.version; }
       ''
         mkdir -p $out
         cp -a ${browser}/* $out/
         chmod u+w $out/libexec/chromium
-        mkdir -p $out/libexec/chromium/WidevineCdm/_platform_specific/linux_x64
-        cp ${widevine}/lib/libwidevinecdm.so $out/libexec/chromium/WidevineCdm/_platform_specific/linux_x64/
+        cp -a ${widevineCdm}/WidevineCdm $out/libexec/chromium/
       ''
     else browser;
+
 in stdenv.mkDerivation {
   name = "chromium${suffix}-${version}";
   inherit version;
@@ -135,15 +154,14 @@ in stdenv.mkDerivation {
   buildCommand = let
     browserBinary = "${chromiumWV}/libexec/chromium/chromium";
     getWrapperFlags = plugin: "$(< \"${plugin}/nix-support/wrapper-flags\")";
-    libPath = stdenv.lib.makeLibraryPath ([]
-      ++ stdenv.lib.optional useVaapi libva
-    );
+    libPath = stdenv.lib.makeLibraryPath [ libva pipewire_0_2 ];
 
   in with stdenv.lib; ''
     mkdir -p "$out/bin"
 
     eval makeWrapper "${browserBinary}" "$out/bin/chromium" \
       --add-flags ${escapeShellArg (escapeShellArg commandLineArgs)} \
+      ${lib.optionalString enableVaapi "--add-flags --enable-accelerated-video-decode"} \
       ${concatMapStringsSep " " getWrapperFlags chromium.plugins.enabled}
 
     ed -v -s "$out/bin/chromium" << EOF
@@ -163,9 +181,12 @@ in stdenv.mkDerivation {
   '' + ''
 
     # libredirect causes chromium to deadlock on startup
-    export LD_PRELOAD="\$(echo -n "\$LD_PRELOAD" | tr ':' '\n' | grep -v /lib/libredirect\\\\.so$ | tr '\n' ':')"
+    export LD_PRELOAD="\$(echo -n "\$LD_PRELOAD" | ${coreutils}/bin/tr ':' '\n' | ${gnugrep}/bin/grep -v /lib/libredirect\\\\.so$ | ${coreutils}/bin/tr '\n' ':')"
 
     export XDG_DATA_DIRS=$XDG_ICON_DIRS:$GSETTINGS_SCHEMAS_PATH\''${XDG_DATA_DIRS:+:}\$XDG_DATA_DIRS
+
+    # Mainly for xdg-open but also other xdg-* tools:
+    export PATH="${xdg_utils}/bin\''${PATH:+:}\$PATH"
 
     .
     w
@@ -186,6 +207,7 @@ in stdenv.mkDerivation {
   passthru = {
     inherit (chromium) upstream-info browser;
     mkDerivation = chromium.mkChromiumDerivation;
-    inherit sandboxExecutableName;
+    inherit chromeSrc sandboxExecutableName;
+    updateScript = ./update.py;
   };
 }

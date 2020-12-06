@@ -9,6 +9,7 @@
 , icu
 , wrapGAppsHook
 , gnome3
+, libportal
 , libxml2
 , libxslt
 , itstool
@@ -30,15 +31,16 @@
 , json-glib
 , libdazzle
 , libhandy
+, buildPackages
 }:
 
 stdenv.mkDerivation rec {
   pname = "epiphany";
-  version = "3.34.2";
+  version = "3.38.2";
 
   src = fetchurl {
-    url = "mirror://gnome/sources/epiphany/${stdenv.lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
-    sha256 = "18d48vcp2nxs63bddkdplslgbnlfq79pm2ivl8hk38kkggy3dahf";
+    url = "mirror://gnome/sources/${pname}/${stdenv.lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
+    sha256 = "0v8iymg72m83ikxxyhapvz5v8zh8hlr1pw7n215cy3p8q6yg41cb";
   };
 
   # Tests need an X display
@@ -56,6 +58,8 @@ stdenv.mkDerivation rec {
     pkgconfig
     python3
     wrapGAppsHook
+    buildPackages.glib
+    buildPackages.gtk3
   ];
 
   buildInputs = [
@@ -77,6 +81,7 @@ stdenv.mkDerivation rec {
     json-glib
     libdazzle
     libhandy
+    libportal
     libnotify
     libsecret
     libsoup
@@ -99,9 +104,9 @@ stdenv.mkDerivation rec {
   };
 
   meta = with stdenv.lib; {
-    homepage = https://wiki.gnome.org/Apps/Epiphany;
+    homepage = "https://wiki.gnome.org/Apps/Epiphany";
     description = "WebKit based web browser for GNOME";
-    maintainers = gnome3.maintainers;
+    maintainers = teams.gnome.members;
     license = licenses.gpl2;
     platforms = platforms.linux;
   };

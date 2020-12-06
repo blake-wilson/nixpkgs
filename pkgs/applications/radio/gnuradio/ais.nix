@@ -1,5 +1,5 @@
 { stdenv, fetchFromGitHub, cmake, pkgconfig, boost, gnuradio
-, makeWrapper, cppunit, gr-osmosdr
+, makeWrapper, cppunit, gr-osmosdr, log4cpp
 , pythonSupport ? true, python, swig
 }:
 
@@ -19,7 +19,7 @@ stdenv.mkDerivation {
 
   nativeBuildInputs = [ pkgconfig ];
   buildInputs = [
-    cmake boost gnuradio makeWrapper cppunit gr-osmosdr
+    cmake boost gnuradio makeWrapper cppunit gr-osmosdr log4cpp
   ] ++ stdenv.lib.optionals pythonSupport [ python swig ];
 
   postInstall = ''
@@ -32,7 +32,7 @@ stdenv.mkDerivation {
 
   meta = with stdenv.lib; {
     description = "Gnuradio block for ais";
-    homepage = https://github.com/bistromath/gr-ais;
+    homepage = "https://github.com/bistromath/gr-ais";
     license = licenses.gpl3Plus;
     platforms = platforms.linux ++ platforms.darwin;
     maintainers = with maintainers; [ mog ];

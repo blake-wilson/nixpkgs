@@ -1,15 +1,15 @@
 { stdenv, fetchFromGitHub, makeWrapper, lib
-, dnsutils, coreutils, openssl, nettools, utillinux, procps }:
+, dnsutils, coreutils, openssl, nettools, util-linux, procps }:
 
 stdenv.mkDerivation rec {
   pname = "testssl.sh";
-  version = "3.0rc5";
+  version = "3.0.2";
 
   src = fetchFromGitHub {
     owner = "drwetter";
     repo = pname;
     rev = version;
-    sha256 = "14b9n0h4f2dsa292wi9gnan5ncgqblis6wyh5978lhjzi1d7gyds";
+    sha256 = "0vfpj3g3il3imbydx3j8gx1pgzrxi0czcl9jmi749vnkf5mkmh8w";
   };
 
   nativeBuildInputs = [ makeWrapper ];
@@ -19,7 +19,7 @@ stdenv.mkDerivation rec {
     nettools  # for hostname
     openssl   # for openssl
     procps    # for ps
-    utillinux # for hexdump
+    util-linux # for hexdump
   ];
 
   postPatch = ''
@@ -42,7 +42,7 @@ stdenv.mkDerivation rec {
       CLI tool which checks a server's service on any port for the support of
       TLS/SSL ciphers, protocols as well as recent cryptographic flaws and more.
     '';
-    homepage = https://testssl.sh/;
+    homepage = "https://testssl.sh/";
     license = licenses.gpl2;
     maintainers = with maintainers; [ etu ];
   };

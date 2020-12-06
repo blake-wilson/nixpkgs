@@ -1,26 +1,29 @@
-{ stdenv, fetchurl, perl, flex, bison }:
+{ stdenv, fetchurl
+, perl, flex, bison
+}:
 
 stdenv.mkDerivation rec {
   pname = "verilator";
-  version = "4.020";
+  version = "4.100";
 
   src = fetchurl {
     url    = "https://www.veripool.org/ftp/${pname}-${version}.tgz";
-    sha256 = "06n3vds762vza4byrav0j3kp3aivvadndkgw7nirvasclp19zmxb";
+    sha256 = "0vg1gk1hqlnz74gfpf57588758myxvhqzi37yl4vqjcq40r83nr2";
   };
 
   enableParallelBuilding = true;
-  buildInputs = [ perl flex bison ];
+  buildInputs = [ perl ];
+  nativeBuildInputs = [ flex bison ];
 
-  postInstall = ''
-    sed -i -e '3a\#!/usr/bin/env perl' -e '1,3d' $out/bin/{verilator,verilator_coverage,verilator_profcfunc}
-  '';
+  # these tests need some interpreter paths patched early on...
+  doCheck = false;
+  checkTarget = "test";
 
-  meta = {
+  meta = with stdenv.lib; {
     description = "Fast and robust (System)Verilog simulator/compiler";
     homepage    = "https://www.veripool.org/wiki/verilator";
-    license     = stdenv.lib.licenses.lgpl3;
-    platforms   = stdenv.lib.platforms.unix;
-    maintainers = with stdenv.lib.maintainers; [ thoughtpolice ];
+    license     = licenses.lgpl3;
+    platforms   = platforms.unix;
+    maintainers = with maintainers; [ thoughtpolice ];
   };
 }

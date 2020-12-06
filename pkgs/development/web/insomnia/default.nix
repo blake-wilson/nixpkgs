@@ -1,5 +1,5 @@
 { stdenv, makeWrapper, fetchurl, dpkg, alsaLib, atk, cairo, cups, dbus, expat
-, fontconfig, freetype, gdk-pixbuf, glib, gnome2, nspr, nss, gtk3, gtk2
+, fontconfig, freetype, gdk-pixbuf, glib, gnome2, pango, nspr, nss, gtk3, gtk2
 , at-spi2-atk, gsettings-desktop-schemas, gobject-introspection, wrapGAppsHook
 , libX11, libXScrnSaver, libXcomposite, libXcursor, libXdamage, libXext
 , libXfixes, libXi, libXrandr, libXrender, libXtst, libxcb, nghttp2
@@ -16,12 +16,12 @@ let
   ];
 in stdenv.mkDerivation rec {
   pname = "insomnia";
-  version = "7.0.3";
+  version = "2020.5.1";
 
   src = fetchurl {
     url =
-      "https://github.com/getinsomnia/insomnia/releases/download/v${version}/insomnia_${version}_amd64.deb";
-    sha256 = "14mkvza7q6l2hn763pjy6zavcg1fmzanys3930w32g07vq3xi97l";
+      "https://github.com/Kong/insomnia/releases/download/core%40${version}/Insomnia.Core-${version}.deb";
+    sha256 = "18wbyf5qq2x0dzaf6bprs4nhv0ckrgq679l3w61p1yf4y3j7xwn4";
   };
 
   nativeBuildInputs =
@@ -40,7 +40,7 @@ in stdenv.mkDerivation rec {
     gdk-pixbuf
     glib
     gnome2.GConf
-    gnome2.pango
+    pango
     gtk2
     gtk3
     gsettings-desktop-schemas

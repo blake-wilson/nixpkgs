@@ -2,13 +2,13 @@
 
 stdenv.mkDerivation rec {
   pname = "tippecanoe";
-  version = "1.34.3";
+  version = "1.36.0";
 
   src = fetchFromGitHub {
     owner = "mapbox";
     repo = pname;
     rev = version;
-    sha256 = "08pkxzwp4w5phrk9b0vszxnx8yymp50v0bcw96pz8qwk48z4xm0i";
+    sha256 = "0lbmhly4ivnqc6qk1k3sdqvsg6x3nfd8gnjx846bhqj4wag3f88m";
   };
 
   buildInputs = [ sqlite zlib ];
@@ -21,9 +21,10 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "Build vector tilesets from large collections of GeoJSON features";
-    homepage = https://github.com/mapbox/tippecanoe;
+    homepage = "https://github.com/mapbox/tippecanoe";
     license = licenses.bsd2;
     maintainers = with maintainers; [ sikmir ];
-    platforms = platforms.linux ++ platforms.darwin;
+    platforms = with platforms; linux ++ darwin;
+    broken = stdenv.hostPlatform.isAarch64;
   };
 }

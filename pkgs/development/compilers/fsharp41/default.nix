@@ -41,6 +41,7 @@ stdenv.mkDerivation rec {
     ./fsharp-IsPathRooted-type-inference.patch
     ./fsharp-string-switchName.patch
     ./fsharp-path-overloads.patch
+    ./fsharp-GetFileNameWithoutExtension-type-inference.patch
   ];
 
   configurePhase = ''
@@ -117,7 +118,7 @@ EOF
 
   meta = {
     description = "A functional CLI language";
-    homepage = https://fsharp.org/;
+    homepage = "https://fsharp.org/";
     license = stdenv.lib.licenses.asl20;
     maintainers = with stdenv.lib.maintainers; [ thoughtpolice raskin ];
     platforms = with stdenv.lib.platforms; unix;

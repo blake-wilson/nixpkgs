@@ -9,12 +9,12 @@ in
 
 mkDerivation rec {
   pname = "supercollider";
-  version = "3.10.3";
+  version = "3.11.2";
 
 
   src = fetchurl {
     url = "https://github.com/supercollider/supercollider/releases/download/Version-${version}/SuperCollider-${version}-Source.tar.bz2";
-    sha256 = "1wvsrr4qcqmpxpn57wwrnwbnf3pflr3n4wkj9j6b9cdisp34kv5d";
+    sha256 = "wiwyxrxIJnHU+49RZy33Etl6amJ3I1xNojEpEDA6BQY=";
   };
 
   hardeningDisable = [ "stackprotector" ];

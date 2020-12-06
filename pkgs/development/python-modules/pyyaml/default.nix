@@ -2,11 +2,11 @@
 
 buildPythonPackage rec {
   pname = "PyYAML";
-  version = "5.1.2";
+  version = "5.3.1";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "01adf0b6c6f61bd11af6e10ca52b7d4057dd0be0343eb9283c878cf3af56aee4";
+    sha256 = "0pb4zvkfxfijkpgd1b86xjsqql97ssf1knbd1v53wkg1qm9cgsmq";
   };
 
   # force regeneration using Cython
@@ -20,7 +20,7 @@ buildPythonPackage rec {
 
   meta = with lib; {
     description = "The next generation YAML parser and emitter for Python";
-    homepage = https://github.com/yaml/pyyaml;
+    homepage = "https://github.com/yaml/pyyaml";
     license = licenses.mit;
     maintainers = with maintainers; [ dotlambda ];
   };

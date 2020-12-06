@@ -13,11 +13,11 @@ let
   in
   mkDerivation rec {
     pname = "eagle";
-    version = "9.5.0";
+    version = "9.6.2";
 
     src = fetchurl {
       url = "https://eagle-updates.circuits.io/downloads/${builtins.replaceStrings ["."] ["_"] version}/Autodesk_EAGLE_${version}_English_Linux_64bit.tar.gz";
-      sha256 = "0wakaja98mkdgcxp18d7499i0254ns1xhnx4bag2lqi7j8qn8rqy";
+      sha256 = "18syygnskl286kn8aqfzzdsyzq59d2w19y1h1ynyxsnrvkyv71h0";
     };
 
     desktopItem = makeDesktopItem {
@@ -27,7 +27,7 @@ let
       comment = "Schematic capture and PCB layout";
       desktopName = "Eagle";
       genericName = "Schematic editor";
-      categories = "Application;Development;";
+      categories = "Development;";
     };
 
     buildInputs =
@@ -72,7 +72,7 @@ let
 
     meta = with stdenv.lib; {
       description = "Schematic editor and PCB layout tool from Autodesk (formerly CadSoft)";
-      homepage = https://www.autodesk.com/products/eagle/overview;
+      homepage = "https://www.autodesk.com/products/eagle/overview";
       license = licenses.unfree;
       platforms = [ "x86_64-linux" ];
       maintainers = [ maintainers.rittelle ];

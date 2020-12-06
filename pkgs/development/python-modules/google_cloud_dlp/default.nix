@@ -9,11 +9,11 @@
 
 buildPythonPackage rec {
   pname = "google-cloud-dlp";
-  version = "0.12.1";
+  version = "1.0.0";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "acf2b1f8388b0baf3286bd2a67e3adad70a28d0fa768fd2196a96710637c4b72";
+    sha256 = "2ccf04209f96b4759d8ed76da2c916a456386836caacd47ce01b6344f5b8f212";
   };
 
   checkInputs = [ pytest mock ];
@@ -25,7 +25,7 @@ buildPythonPackage rec {
 
   meta = with stdenv.lib; {
     description = "Cloud Data Loss Prevention (DLP) API API client library";
-    homepage = https://github.com/GoogleCloudPlatform/google-cloud-python;
+    homepage = "https://github.com/GoogleCloudPlatform/google-cloud-python";
     license = licenses.asl20;
     maintainers = [ maintainers.costrouc ];
   };

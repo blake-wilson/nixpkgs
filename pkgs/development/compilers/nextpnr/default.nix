@@ -14,14 +14,14 @@ let
 in
 with stdenv; mkDerivation rec {
   pname = "nextpnr";
-  version = "2019.10.13";
+  version = "2020.12.01";
 
   srcs = [
     (fetchFromGitHub {
       owner  = "YosysHQ";
       repo   = "nextpnr";
-      rev    = "c365dd1cabc3a4308ab9110534918623622c246b";
-      sha256 = "1344pyq9xb5y1vxsnfgr488drfjsa6ls1jck0z9hwam6vg55s10r";
+      rev    = "868902fbdf0b476bdccf4d25cbb80ba602d2cc11";
+      sha256 = "1kb5lhixb7f4q800gjyw9xm9ff1yaq3pgna17f5f0bw6b4ds56zc";
       name   = "nextpnr";
     })
     (fetchFromGitHub {
@@ -45,11 +45,12 @@ with stdenv; mkDerivation rec {
 
   enableParallelBuilding = true;
   cmakeFlags =
-    [ "-DARCH=generic;ice40;ecp5"
+    [ "-DCURRENT_GIT_VERSION=${lib.substring 0 7 (lib.elemAt srcs 0).rev}"
+      "-DARCH=generic;ice40;ecp5"
       "-DBUILD_TESTS=ON"
       "-DICEBOX_ROOT=${icestorm}/share/icebox"
-      "-DTRELLIS_ROOT=${trellis}/share/trellis"
-      "-DPYTRELLIS_LIBDIR=${trellis}/lib/trellis"
+      "-DTRELLIS_INSTALL_PREFIX=${trellis}"
+      "-DTRELLIS_LIBDIR=${trellis}/lib/trellis"
       "-DUSE_OPENMP=ON"
       # warning: high RAM usage
       "-DSERIALIZE_CHIPDB=OFF"
@@ -58,12 +59,7 @@ with stdenv; mkDerivation rec {
     ++ (lib.optional (enableGui && stdenv.isDarwin)
         "-DOPENGL_INCLUDE_DIR=${OpenGL}/Library/Frameworks");
 
-  # Fix the version number. This is a bit stupid (and fragile) in practice
-  # but works ok. We should probably make this overrideable upstream.
   patchPhase = with builtins; ''
-    substituteInPlace ./CMakeLists.txt \
-      --replace 'git log -1 --format=%h' 'echo ${substring 0 11 (elemAt srcs 0).rev}'
-
     # use PyPy for icestorm if enabled
     substituteInPlace ./ice40/family.cmake \
       --replace ''\'''${PYTHON_EXECUTABLE}' '${icestorm.pythonInterp}'
@@ -83,7 +79,7 @@ with stdenv; mkDerivation rec {
 
   meta = with lib; {
     description = "Place and route tool for FPGAs";
-    homepage    = https://github.com/yosyshq/nextpnr;
+    homepage    = "https://github.com/yosyshq/nextpnr";
     license     = licenses.isc;
     platforms   = platforms.all;
     maintainers = with maintainers; [ thoughtpolice emily ];

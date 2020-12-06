@@ -2,27 +2,29 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "cargo-udeps";
-  version = "0.1.5";
+  version = "0.1.16";
 
   src = fetchFromGitHub {
     owner = "est31";
     repo = pname;
     rev = "v${version}";
-    sha256 = "0lrfnrxqmpp06fargb5s5fc9y4w4h0ahbd7rgibqqx1la23l9r5q";
+    sha256 = "1h89xq91gbnbagfmvig5lkxyl08qwgdaf9vr55p599pmv190xq8s";
   };
 
-  cargoSha256 = "18rwzcsrlwds3nx90y03dkqm1hl4dpvclm32i9zy9bhpm9hkypwr";
+  cargoSha256 = "17931z5nbigfzvvhr6k64s2j9p1sp9nvmy5fyf92j3ci02dplm5c";
 
   nativeBuildInputs = [ pkgconfig ];
 
   buildInputs = [ openssl ]
     ++ stdenv.lib.optionals stdenv.isDarwin [ CoreServices Security libiconv ];
 
+  # Requires network access
+  doCheck = false;
+
   meta = with stdenv.lib; {
     description = "Find unused dependencies in Cargo.toml";
     homepage = "https://github.com/est31/cargo-udeps";
     license = licenses.mit;
     maintainers = with maintainers; [ b4dm4n ];
-    platforms = platforms.all;
   };
 }

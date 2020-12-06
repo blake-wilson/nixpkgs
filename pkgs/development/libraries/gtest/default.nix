@@ -1,5 +1,4 @@
-{ stdenv, cmake, ninja, fetchFromGitHub
-, static ? false }:
+{ stdenv, cmake, ninja, fetchFromGitHub, fetchpatch }:
 
 stdenv.mkDerivation rec {
   pname = "gtest";
@@ -16,15 +15,20 @@ stdenv.mkDerivation rec {
 
   patches = [
     ./fix-cmake-config-includedir.patch
+    (fetchpatch {
+      name = "fix-pkgconfig-paths.patch";
+      url = "https://github.com/google/googletest/commit/5126ff48d9ac54828d1947d1423a5ef2a8efee3b.patch";
+      sha256 = "sha256-TBvECU/9nuvwjsCjWJP2b6DNy+FYnHIFZeuVW7g++JE=";
+    })
   ];
 
   nativeBuildInputs = [ cmake ninja ];
 
-  cmakeFlags = stdenv.lib.optional (!static) "-DBUILD_SHARED_LIBS=ON";
+  cmakeFlags = [ "-DBUILD_SHARED_LIBS=ON" ];
 
   meta = with stdenv.lib; {
     description = "Google's framework for writing C++ tests";
-    homepage = https://github.com/google/googletest;
+    homepage = "https://github.com/google/googletest";
     license = licenses.bsd3;
     platforms = platforms.all;
     maintainers = with maintainers; [ zoomulator ivan-tkatchev ];

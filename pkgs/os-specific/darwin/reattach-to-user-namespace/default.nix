@@ -1,15 +1,17 @@
-{ stdenv, fetchurl }:
+{ stdenv, fetchFromGitHub }:
 
 stdenv.mkDerivation rec {
   pname = "reattach-to-user-namespace";
-  version = "2.7";
+  version = "2.9";
 
-  src = fetchurl {
-    url = "https://github.com/ChrisJohnsen/tmux-MacOSX-pasteboard/archive/v${version}.tar.gz";
-    sha256 = "00mjyj8yicrpnlm46rlbkvxgl5381l8xawh7rmjk10p3zrm56jbv";
+  src = fetchFromGitHub {
+    owner = "ChrisJohnsen";
+    repo = "tmux-MacOSX-pasteboard";
+    rev = "v${version}";
+    sha256 = "1qgimh58hcx5f646gj2kpd36ayvrdkw616ad8cb3lcm11kg0ag79";
   };
 
-  buildFlags = "ARCHES=x86_64";
+  buildFlags = [ "ARCHES=x86_64" ];
 
   installPhase = ''
     mkdir -p $out/bin

@@ -28,19 +28,21 @@
 , polkit
 , webkitgtk
 , systemd
-, networkmanagerapplet
+, libnma
 , tzdata
 , yelp
 , libgnomekbd
+, gsettings-desktop-schemas
+, gnome-tour
 }:
 
 stdenv.mkDerivation rec {
   pname = "gnome-initial-setup";
-  version = "3.34.1";
+  version = "3.38.2";
 
   src = fetchurl {
     url = "mirror://gnome/sources/${pname}/${stdenv.lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
-    sha256 = "18dzx9z9bcfqfn1jivzm9m5lkcij1c9y8x77zlpxj733dgpi07z7";
+    hash = "sha256-qliJJ0+LC23moFErR3Qrgqw0ANrsgt1O/+LuonRko7g=";
   };
 
   nativeBuildInputs = [
@@ -62,10 +64,12 @@ stdenv.mkDerivation rec {
     gnome-desktop
     gnome-getting-started-docs
     gnome-online-accounts
+    gsettings-desktop-schemas
     gtk3
     json-glib
     krb5
     libgweather
+    libnma
     libpwquality
     librest
     libsecret
@@ -73,22 +77,20 @@ stdenv.mkDerivation rec {
     pango
     polkit
     webkitgtk
-    networkmanagerapplet
   ];
 
   patches = [
     (substituteAll {
-      src = ./fix-paths.patch;
+      src = ./0001-fix-paths.patch;
       inherit tzdata libgnomekbd;
-      yelp = "${yelp}/bin/yelp"; # gnome-welcome-tour
+      gnome_tour = "${gnome-tour}/bin/gnome-tour";
     })
   ];
 
   mesonFlags = [
-    "-Dregion-page=true"
     "-Dcheese=disabled"
-    "-Dsoftware-sources=disabled"
     "-Dibus=disabled"
+    "-Dparental_controls=disabled"
     "-Dvendor-conf-file=${./vendor.conf}"
   ];
 
@@ -104,6 +106,6 @@ stdenv.mkDerivation rec {
     homepage = "https://gitlab.gnome.org/GNOME/gnome-initial-setup";
     license = licenses.gpl2Plus;
     platforms = platforms.linux;
-    maintainers = gnome3.maintainers;
+    maintainers = teams.gnome.members;
   };
 }

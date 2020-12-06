@@ -1,12 +1,12 @@
-{ stdenv, fetchurl, jre, makeWrapper }:
+{ stdenv, fetchurl, jre, makeWrapper, nixosTests }:
 
 stdenv.mkDerivation rec {
   pname = "solr";
-  version = "7.7.2";
+  version = "8.6.1";
 
   src = fetchurl {
-    url = "mirror://apache/lucene/solr/${version}/solr-${version}.tgz";
-    sha256 = "1pr02d4sw5arig1brjb6j7ir644n8s737qsx6ll46di5iw1y93pb";
+    url = "mirror://apache/lucene/${pname}/${version}/${pname}-${version}.tgz";
+    sha256 = "0ds6zjsnwgpcmivzi7d6yqdmyn2mhf3k8g7xp26yfpm7f12gpq4g";
   };
 
   nativeBuildInputs = [ makeWrapper ];
@@ -24,12 +24,16 @@ stdenv.mkDerivation rec {
     wrapProgram $out/bin/post --set JAVA_HOME "${jre}"
   '';
 
+  passthru.tests = {
+    inherit (nixosTests) solr;
+  };
+
   meta = with stdenv.lib; {
     homepage = "https://lucene.apache.org/solr/";
     description = "Open source enterprise search platform from the Apache Lucene project";
     license = licenses.asl20;
     platforms = platforms.all;
-    maintainers = [ maintainers.domenkozar maintainers.aanderse ];
+    maintainers = with maintainers; [ domenkozar aanderse ];
   };
 
 }

@@ -2,6 +2,7 @@
 , js_of_ocaml-ppx, re }:
 
 if stdenv.lib.versionOlder ocaml.version "4.03"
+|| stdenv.lib.versionAtLeast ocaml.version "4.11"
 then throw "xtmpl not supported for ocaml ${ocaml.version}"
 else
 stdenv.mkDerivation rec {
@@ -16,6 +17,10 @@ stdenv.mkDerivation rec {
   };
 
   patches = [ ./jsoo.patch ];
+
+  postPatch = ''
+    substituteInPlace Makefile --replace js_of_ocaml.ppx js_of_ocaml-ppx
+  '';
 
   buildInputs = [ ocaml findlib ppx_tools js_of_ocaml js_of_ocaml-ppx ];
   propagatedBuildInputs = [ iri re ];

@@ -14,11 +14,13 @@ config:
 # Scripts
 , coreutils, gawk, gnused, gnugrep, diffutils, multipath-tools
 , iproute, inetutils, iptables, bridge-utils, openvswitch, nbd, drbd
-, lvm2, utillinux, procps, systemd
+, lvm2, util-linux, procps, systemd
 
 # Documentation
 # python2Packages.markdown
 , transfig, ghostscript, texinfo, pandoc
+
+, binutils-unwrapped
 
 , ...} @ args:
 
@@ -28,7 +30,7 @@ let
   #TODO: fix paths instead
   scriptEnvPath = concatMapStringsSep ":" (x: "${x}/bin") [
     which perl
-    coreutils gawk gnused gnugrep diffutils utillinux multipath-tools
+    coreutils gawk gnused gnugrep diffutils util-linux multipath-tools
     iproute inetutils iptables bridge-utils openvswitch nbd drbd
   ];
 
@@ -42,6 +44,17 @@ let
     }
     ( __do )
   '');
+
+  # We don't want to use the wrapped version, because this version of ld is
+  # only used for linking the Xen EFI binary, and the build process really
+  # needs control over the LDFLAGS used
+  efiBinutils = binutils-unwrapped.overrideAttrs (oldAttrs: {
+    name = "efi-binutils";
+    configureFlags = oldAttrs.configureFlags ++ [
+      "--enable-targets=x86_64-pep"
+    ];
+    doInstallCheck = false; # We get a spurious failure otherwise, due to host/target mis-match
+  });
 in
 
 stdenv.mkDerivation (rec {
@@ -119,10 +132,12 @@ stdenv.mkDerivation (rec {
     '')}
   '';
 
-  patches = [ ./0000-fix-ipxe-src.patch
-              ./0000-fix-install-python.patch
-            ] ++ optional (versionOlder version "4.8.5") ./acpica-utils-20180427.patch
-            ++ (config.patches or []);
+  patches = [
+    ./0000-fix-ipxe-src.patch
+    ./0000-fix-install-python.patch
+    ./0004-makefile-use-efi-ld.patch
+    ./0005-makefile-fix-efi-mountdir-use.patch
+  ] ++ (config.patches or []);
 
   postPatch = ''
     ### Hacks
@@ -146,8 +161,8 @@ stdenv.mkDerivation (rec {
       --replace /usr/sbin/lvs ${lvm2}/bin/lvs
 
     substituteInPlace tools/misc/xenpvnetboot \
-      --replace /usr/sbin/mount ${utillinux}/bin/mount \
-      --replace /usr/sbin/umount ${utillinux}/bin/umount
+      --replace /usr/sbin/mount ${util-linux}/bin/mount \
+      --replace /usr/sbin/umount ${util-linux}/bin/umount
 
     substituteInPlace tools/xenmon/xenmon.py \
       --replace /usr/bin/pkill ${procps}/bin/pkill
@@ -186,12 +201,15 @@ stdenv.mkDerivation (rec {
       --replace /bin/ls ls
   '';
 
+  EFI_LD = "${efiBinutils}/bin/ld";
+  EFI_VENDOR = "nixos";
+
   # TODO: Flask needs more testing before enabling it by default.
-  #makeFlags = "XSM_ENABLE=y FLASK_ENABLE=y PREFIX=$(out) CONFIG_DIR=/etc XEN_EXTFILES_URL=\\$(XEN_ROOT)/xen_ext_files ";
+  #makeFlags = [ "XSM_ENABLE=y" "FLASK_ENABLE=y" "PREFIX=$(out)" "CONFIG_DIR=/etc" "XEN_EXTFILES_URL=\\$(XEN_ROOT)/xen_ext_files" ];
   makeFlags = [ "PREFIX=$(out) CONFIG_DIR=/etc" "XEN_SCRIPT_DIR=/etc/xen/scripts" ]
            ++ (config.makeFlags or []);
 
-  buildFlags = "xen tools";
+  buildFlags = [ "xen" "tools" ];
 
   postBuild = ''
     make -C docs man-pages
@@ -226,7 +244,7 @@ stdenv.mkDerivation (rec {
 
   # TODO(@oxij): Stop referencing args here
   meta = {
-    homepage = http://www.xen.org/;
+    homepage = "http://www.xen.org/";
     description = "Xen hypervisor and related components"
                 + optionalString (args ? meta && args.meta ? description)
                                  " (${args.meta.description})";

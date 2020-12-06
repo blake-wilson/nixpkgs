@@ -19,13 +19,12 @@
 , libvisual
 , tremor # provides 'virbisidec'
 , libGL
-, gtk-doc
-, docbook_xsl
-, docbook_xml_dtd_43
 , enableX11 ? stdenv.isLinux
 , libXv
+, libXext
 , enableWayland ? stdenv.isLinux
 , wayland
+, wayland-protocols
 , enableAlsa ? stdenv.isLinux
 , alsaLib
 # Enabling Cocoa seems to currently not work, giving compile
@@ -36,17 +35,18 @@
 , enableGl ? (enableX11 || enableWayland || enableCocoa)
 , enableCdparanoia ? (!stdenv.isDarwin)
 , cdparanoia
+, glib
 }:
 
 stdenv.mkDerivation rec {
   pname = "gst-plugins-base";
-  version = "1.16.1";
+  version = "1.18.1";
 
   outputs = [ "out" "dev" ];
 
   src = fetchurl {
     url = "${meta.homepage}/src/${pname}/${pname}-${version}.tar.xz";
-    sha256 = "0aybbwnzm15074smdk2bamj3ssck3hjvmilvgh49f19xjf4w8g2w";
+    sha256 = "0hf66sh8d4x2ksfnvaq2rqrrfq0vi0pv6wbh9i5jixrhvvbm99hv";
   };
 
   patches = [
@@ -59,13 +59,13 @@ stdenv.mkDerivation rec {
     pkgconfig
     python3
     gettext
+    orc
+    glib
     gobject-introspection
 
     # docs
-    gtk-doc
-    docbook_xsl
-    docbook_xml_dtd_43
-  ];
+    # TODO add hotdoc here
+  ] ++ lib.optional enableWayland wayland;
 
   buildInputs = [
     orc
@@ -82,10 +82,16 @@ stdenv.mkDerivation rec {
   ] ++ lib.optionals stdenv.isDarwin [
     pango
     darwin.apple_sdk.frameworks.OpenGL
-  ] ++ lib.optional enableAlsa alsaLib
-    ++ lib.optionals enableX11 [ libXv pango ]
-    ++ lib.optional enableWayland wayland
-    ++ lib.optional enableCocoa darwin.apple_sdk.frameworks.Cocoa
+  ] ++ lib.optionals enableAlsa [
+    alsaLib
+  ] ++ lib.optionals enableX11 [
+    libXext
+    libXv
+    pango
+  ] ++ lib.optionals enableWayland [
+    wayland
+    wayland-protocols
+  ] ++ lib.optional enableCocoa darwin.apple_sdk.frameworks.Cocoa
     ++ lib.optional enableCdparanoia cdparanoia;
 
   propagatedBuildInputs = [
@@ -94,18 +100,10 @@ stdenv.mkDerivation rec {
 
   mesonFlags = [
     "-Dexamples=disabled" # requires many dependencies and probably not useful for our users
+    "-Ddoc=disabled" # `hotdoc` not packaged in nixpkgs as of writing
     "-Dgl-graphene=disabled" # not packaged in nixpkgs as of writing
-    "-Dgl_platform=[${lib.optionalString (enableX11 || enableWayland || enableCocoa) "auto"}]"
     # See https://github.com/GStreamer/gst-plugins-base/blob/d64a4b7a69c3462851ff4dcfa97cc6f94cd64aef/meson_options.txt#L15 for a list of choices
-    "-Dgl_winsys=[${lib.concatStringsSep "," (lib.optional enableX11 "x11" ++ lib.optional enableWayland "wayland" ++ lib.optional enableCocoa "cocoa")}]"
-    # We must currently disable gtk_doc API docs generation,
-    # because it is not compatible with some features being disabled.
-    # See for example
-    #     https://gitlab.freedesktop.org/gstreamer/gst-plugins-base/issues/564
-    # for it failing because some Wayland symbols are missing.
-    # This problem appeared between 1.15.1 and 1.16.0.
-    # In 1.18 they should switch to hotdoc, which should make this issue irrelevant.
-    "-Dgtk_doc=disabled"
+    "-Dgl_winsys=${lib.concatStringsSep "," (lib.optional enableX11 "x11" ++ lib.optional enableWayland "wayland" ++ lib.optional enableCocoa "cocoa")}"
   ]
   ++ lib.optional (!enableX11) "-Dx11=disabled"
   # TODO How to disable Wayland?
@@ -117,7 +115,9 @@ stdenv.mkDerivation rec {
   ];
 
   postPatch = ''
-    patchShebangs common/scangobj-merge.py
+    patchShebangs \
+      common/scangobj-merge.py \
+      scripts/extract-release-date-from-doap-file.py
   '';
 
   # This package has some `_("string literal")` string formats

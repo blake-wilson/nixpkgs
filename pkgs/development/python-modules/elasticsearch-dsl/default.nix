@@ -10,11 +10,11 @@
 
 buildPythonPackage rec {
   pname = "elasticsearch-dsl";
-  version = "7.1.0";
+  version = "7.3.0";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "3f860e0304d703f63b458fea3782f09a823ab07da7ee84ae4bff1aa63e22aedb";
+    sha256 = "0ed75f6ff037e36b2397a8e92cae0ddde79b83adc70a154b8946064cb62f7301";
   };
 
   propagatedBuildInputs = [ elasticsearch python-dateutil six ]
@@ -31,7 +31,7 @@ buildPythonPackage rec {
       writing and running queries against Elasticsearch. It is built on top of
       the official low-level client (elasticsearch-py).
     '';
-    homepage = https://github.com/elasticsearch/elasticsearch-dsl-py;
+    homepage = "https://github.com/elasticsearch/elasticsearch-dsl-py";
     license = licenses.asl20;
     maintainers = with maintainers; [ desiderius ];
   };

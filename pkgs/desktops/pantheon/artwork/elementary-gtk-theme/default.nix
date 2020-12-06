@@ -1,5 +1,6 @@
 { stdenv
 , fetchFromGitHub
+, nix-update-script
 , pantheon
 , meson
 , ninja
@@ -8,7 +9,7 @@
 
 stdenv.mkDerivation rec {
   pname = "elementary-gtk-theme";
-  version = "5.3.0";
+  version = "5.4.2";
 
   repoName = "stylesheet";
 
@@ -16,13 +17,12 @@ stdenv.mkDerivation rec {
     owner = "elementary";
     repo = repoName;
     rev = version;
-    sha256 = "0kxzgqgzbkwi0h4r7zc5yl57k8cm165d1ki1nzmb442wp42q438y";
+    sha256 = "sha256-eE0/LLdnpxOpBvdpioGKV/DOQ5lIuQt9dPnhGkQDGCs=";
   };
 
   passthru = {
-    updateScript = pantheon.updateScript {
-      inherit repoName;
-      attrPath = pname;
+    updateScript = nix-update-script {
+      attrPath = "pantheon.${pname}";
     };
   };
 
@@ -34,7 +34,7 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "GTK theme designed to be smooth, attractive, fast, and usable";
-    homepage = https://github.com/elementary/stylesheet;
+    homepage = "https://github.com/elementary/stylesheet";
     license = licenses.gpl3;
     platforms = platforms.linux;
     maintainers = pantheon.maintainers;

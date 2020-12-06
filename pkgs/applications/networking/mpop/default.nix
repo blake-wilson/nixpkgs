@@ -4,11 +4,11 @@ with stdenv.lib;
 
 stdenv.mkDerivation rec {
   pname = "mpop";
-  version = "1.4.6";
+  version = "1.4.11";
 
   src = fetchurl {
     url = "https://marlam.de/${pname}/releases/${pname}-${version}.tar.xz";
-    sha256 = "0q4ifzvl1gcndvqqqk7n9mc599r4s2knxjc7alflwb366fql58gv";
+    sha256 = "1gcxvhin5y0q47svqbf90r5aip0cgywm8sq6m84ygda7km8xylwv";
   };
 
   nativeBuildInputs = [ pkgconfig ];
@@ -19,7 +19,7 @@ stdenv.mkDerivation rec {
 
   meta = {
       description = "POP3 mail retrieval agent";
-      homepage = https://marlam.de/mpop;
+      homepage = "https://marlam.de/mpop";
       license = licenses.gpl3Plus;
       platforms = platforms.unix;
     };

@@ -1,14 +1,15 @@
-{ lib, fetchurl, python3Packages, qtbase, wrapQtAppsHook }:
+{ lib, fetchFromGitHub, python3Packages, qtbase, fetchpatch, wrapQtAppsHook
+, secp256k1 }:
 
 python3Packages.buildPythonApplication rec {
   pname = "electron-cash";
-  version = "4.0.10";
+  version = "4.2.0";
 
-  src = fetchurl {
-    url = "https://electroncash.org/downloads/${version}/win-linux/Electron-Cash-${version}.tar.gz";
-    # Verified using official SHA-1 and signature from
-    # https://github.com/fyookball/keys-n-hashes
-    sha256 = "48270e12956a2f4ef4d2b0cb60611e47f136b734a3741dab176542a32ae59ee5";
+  src = fetchFromGitHub {
+    owner = "Electron-Cash";
+    repo = "Electron-Cash";
+    rev = version;
+    sha256 = "0ixsx4224jilc5zis6wbsbxqxv10mm5sksrzq15xp30zz0bzb6md";
   };
 
   propagatedBuildInputs = with python3Packages; [
@@ -25,6 +26,7 @@ python3Packages.buildPythonApplication rec {
     requests
     tlslite-ng
     qdarkstyle
+    stem
 
     # plugins
     keepkey
@@ -36,19 +38,17 @@ python3Packages.buildPythonApplication rec {
 
   postPatch = ''
     substituteInPlace contrib/requirements/requirements.txt \
-      --replace "qdarkstyle<2.6" "qdarkstyle<3"
+      --replace "qdarkstyle==2.6.8" "qdarkstyle<3"
 
     substituteInPlace setup.py \
       --replace "(share_dir" "(\"share\""
   '';
 
-  checkInputs = with python3Packages; [
-    pytest
-  ];
+  checkInputs = with python3Packages; [ pytest ];
 
   checkPhase = ''
     unset HOME
-    pytest lib/tests
+    pytest electroncash/tests
   '';
 
   postInstall = ''
@@ -56,8 +56,16 @@ python3Packages.buildPythonApplication rec {
       --replace "Exec=electron-cash" "Exec=$out/bin/electron-cash"
   '';
 
-  postFixup = ''
-    wrapQtApp $out/bin/electron-cash
+  # If secp256k1 wasn't added to the library path, the following warning is given:
+  #
+  #   Electron Cash was unable to find the secp256k1 library on this system.
+  #   Elliptic curve cryptography operations will be performed in slow
+  #   Python-only mode.
+  preFixup = ''
+    makeWrapperArgs+=("''${qtWrapperArgs[@]}")
+    makeWrapperArgs+=(
+      "--prefix" "LD_LIBRARY_PATH" ":" "${secp256k1}/lib"
+    )
   '';
 
   doInstallCheck = true;
@@ -73,7 +81,7 @@ python3Packages.buildPythonApplication rec {
       and the ability to perform transactions without downloading a copy
       of the blockchain.
     '';
-    homepage = https://www.electroncash.org/;
+    homepage = "https://www.electroncash.org/";
     platforms = platforms.linux;
     maintainers = with maintainers; [ lassulus nyanloutre ];
     license = licenses.mit;

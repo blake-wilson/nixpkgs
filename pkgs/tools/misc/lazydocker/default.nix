@@ -2,13 +2,13 @@
 
 buildGoPackage rec {
   pname = "lazydocker";
-  version = "0.7.4";
+  version = "0.10";
 
   src = fetchFromGitHub {
     owner = "jesseduffield";
     repo = "lazydocker";
     rev = "v${version}";
-    sha256 = "03l6gs4p9p8g0ai6wqg9024rp0pd13m0b9y3sy1ww5afwxb82br6";
+    sha256 = "04j5bcsxm2yf74zkphnjrg8j3w0v6bsny8sg2k4gbisgshl1i3p8";
   };
 
   goPackagePath = "github.com/jesseduffield/lazydocker";
@@ -17,8 +17,8 @@ buildGoPackage rec {
 
   meta = with stdenv.lib; {
     description = "A simple terminal UI for both docker and docker-compose";
-    homepage = https://github.com/jesseduffield/lazydocker;
+    homepage = "https://github.com/jesseduffield/lazydocker";
     license = licenses.mit;
-    maintainers = with maintainers; [ das-g ];
+    maintainers = with maintainers; [ das-g Br1ght0ne ];
   };
 }

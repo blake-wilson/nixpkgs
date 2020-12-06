@@ -1,10 +1,12 @@
 { stdenv, fetchurl, wrapGAppsHook, makeDesktopItem
 , atk
 , cairo
+, coreutils
 , curl
 , cups
 , dbus-glib
 , dbus
+, dconf
 , fontconfig
 , freetype
 , gdk-pixbuf
@@ -34,17 +36,18 @@
 
 stdenv.mkDerivation rec {
   pname = "zotero";
-  version = "5.0.77";
+  version = "5.0.89";
 
   src = fetchurl {
     url = "https://download.zotero.org/client/release/${version}/Zotero-${version}_linux-x86_64.tar.bz2";
-    sha256 = "1dgxzprpb8f5wpmvlvkxix0xxckfgjsi3wfcy9mb221a17cv0029";
+    sha256 = "18p4qnnfx9f2frk7f2nk1d7jr4cjzg9z7lfzrk7vq11qgbjdpqbl";
   };
 
-  buildInputs= [ wrapGAppsHook gsettings-desktop-schemas gtk3 gnome3.adwaita-icon-theme gnome3.dconf ];
+  nativeBuildInputs = [ wrapGAppsHook ];
+  buildInputs= [ gsettings-desktop-schemas glib gtk3 gnome3.adwaita-icon-theme dconf ];
 
-  phases = [ "unpackPhase" "patchPhase" "installPhase" "fixupPhase" ];
-
+  dontConfigure = true;
+  dontBuild = true;
   dontStrip = true;
   dontPatchELF = true;
 
@@ -129,8 +132,14 @@ stdenv.mkDerivation rec {
          "$out/usr/lib/zotero-bin-${version}/{}" \;
   '';
 
+  preFixup = ''
+    gappsWrapperArgs+=(
+      --prefix PATH : ${stdenv.lib.makeBinPath [ coreutils ]}
+    )
+  '';
+
   meta = with stdenv.lib; {
-    homepage = https://www.zotero.org;
+    homepage = "https://www.zotero.org";
     description = "Collect, organize, cite, and share your research sources";
     license = licenses.agpl3;
     platforms = platforms.linux;

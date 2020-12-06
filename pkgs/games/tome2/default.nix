@@ -9,11 +9,12 @@ let
     name = pname;
     exec = "${pname}-x11";
     icon = pname;
-    terminal = "False";
+    terminal = "false";
     comment = description;
     type = "Application";
     categories = "Game;RolePlaying;";
     genericName = pname;
+    fileValidation = false;
   };
 
 in stdenv.mkDerivation {

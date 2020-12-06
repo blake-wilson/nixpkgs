@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, utillinux
+{ stdenv, fetchurl, util-linux
 , cdparanoia, cdrdao, dvdplusrwtools, flac, lame, mpg123, normalize
 , vorbis-tools, xorriso }:
 
@@ -12,7 +12,7 @@ stdenv.mkDerivation rec {
     name = "${pname}-${version}.tar.gz";
   };
 
-  nativeBuildInputs = [ utillinux ];
+  nativeBuildInputs = [ util-linux ];
 
   postPatch = ''
     for path in \
@@ -28,7 +28,7 @@ stdenv.mkDerivation rec {
       BB_OGGENC=${vorbis-tools}/bin/oggenc \
       BB_OGGDEC=${vorbis-tools}/bin/oggdec \
       BB_FLACCMD=${flac.bin}/bin/flac \
-      BB_EJECT=${utillinux}/bin/eject \
+      BB_EJECT=${util-linux}/bin/eject \
       BB_NORMCMD=${normalize}/bin/normalize \
     ; do
       echo $path
@@ -56,7 +56,7 @@ stdenv.mkDerivation rec {
       - manipulate ISO-files
       - and probably more...
     '';
-    homepage = http://bashburn.dose.se/;
+    homepage = "http://bashburn.dose.se/";
     license = licenses.gpl2Plus;
     platforms = platforms.linux;
   };

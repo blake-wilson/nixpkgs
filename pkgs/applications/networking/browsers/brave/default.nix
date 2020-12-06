@@ -18,6 +18,7 @@
 , gtk3
 , libpulseaudio
 , libuuid
+, libdrm
 , libX11
 , libXcomposite
 , libXcursor
@@ -25,10 +26,12 @@
 , libXext
 , libXfixes
 , libXi
+, libxkbcommon
 , libXrandr
 , libXrender
 , libXScrnSaver
 , libXtst
+, mesa
 , nspr
 , nss
 , pango
@@ -56,8 +59,10 @@ rpath = lib.makeLibraryPath [
   glib
   gnome2.GConf
   gtk3
+  libdrm
   libpulseaudio
   libX11
+  libxkbcommon
   libXScrnSaver
   libXcomposite
   libXcursor
@@ -65,10 +70,12 @@ rpath = lib.makeLibraryPath [
   libXext
   libXfixes
   libXi
+  libxkbcommon
   libXrandr
   libXrender
   libXtst
   libuuid
+  mesa
   nspr
   nss
   pango
@@ -82,11 +89,11 @@ in
 
 stdenv.mkDerivation rec {
   pname = "brave";
-  version = "1.0.0";
+  version = "1.17.73";
 
   src = fetchurl {
     url = "https://github.com/brave/brave-browser/releases/download/v${version}/brave-browser_${version}_amd64.deb";
-    sha256 = "0mfwwyc00v6kny1fh20kaad8b6sshaxrlf35z9qcdsbm4n19wg1l";
+    sha256 = "18bd6kgzfza5r0y2ggfy82pdpnfr2hzgjcfy9vxqq658z7q3jpqy";
   };
 
   dontConfigure = true;
@@ -151,7 +158,7 @@ stdenv.mkDerivation rec {
       contribute to your favorite creators automatically.
     '';
     license = licenses.mpl20;
-    maintainers = with maintainers; [ uskudnik rht ];
+    maintainers = with maintainers; [ uskudnik rht jefflabonte nasirhm ];
     platforms = [ "x86_64-linux" ];
   };
 }

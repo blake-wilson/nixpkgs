@@ -2,11 +2,11 @@
 
 stdenv.mkDerivation rec {
   pname = "gnome-getting-started-docs";
-  version = "3.34.1";
+  version = "3.38.0";
 
   src = fetchurl {
     url = "mirror://gnome/sources/gnome-getting-started-docs/${stdenv.lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
-    sha256 = "00in6yc02pdalyx8g0fncmch0l7nr819587ngjm83ara9qa8z6fa";
+    sha256 = "0ficf4i4njqrx3dn5rdkvpvcys5mwfma4zkgfmfkq964jxpwzqvw";
   };
 
   passthru = {
@@ -16,9 +16,9 @@ stdenv.mkDerivation rec {
   buildInputs = [ intltool itstool libxml2 ];
 
   meta = with stdenv.lib; {
-    homepage = https://live.gnome.org/DocumentationProject;
+    homepage = "https://live.gnome.org/DocumentationProject";
     description = "Help a new user get started in GNOME";
-    maintainers = gnome3.maintainers;
+    maintainers = teams.gnome.members;
     license = licenses.cc-by-sa-30;
     platforms = platforms.linux;
   };

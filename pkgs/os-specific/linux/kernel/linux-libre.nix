@@ -1,11 +1,8 @@
 { stdenv, lib, fetchsvn, linux
 , scripts ? fetchsvn {
     url = "https://www.fsfla.org/svn/fsfla/software/linux-libre/releases/branches/";
-
-    # Update this if linux_latest-libre fails to build.
-    # $ curl https://www.fsfla.org/svn/fsfla/software/linux-libre/releases/branches/ | grep -Eo 'Revision [0-9]+'
-    rev = "16794";
-    sha256 = "1lpaka4hs7yrpnrzfybd6radjylwvw2p4aly68pypykqs2srvm7j";
+    rev = "17768";
+    sha256 = "0j85bjxylvl88xzf3nji1xadz3ws1kfbyhbn47haipigncvccndj";
   }
 , ...
 }:
@@ -20,12 +17,14 @@ let
 in linux.override {
   argsOverride = {
     modDirVersion = "${linux.modDirVersion}-gnu";
+    isLibre = true;
 
     src = stdenv.mkDerivation {
       name = "${linux.name}-libre-src";
       src = linux.src;
       buildPhase = ''
-        ${scripts}/${majorMinor}/deblob-${majorMinor} \
+        # --force flag to skip empty files after deblobbing
+        ${scripts}/${majorMinor}/deblob-${majorMinor} --force \
             ${major} ${minor} ${patch}
       '';
       checkPhase = ''
@@ -35,6 +34,8 @@ in linux.override {
         cp -r . "$out"
       '';
     };
+
+    passthru.updateScript = ./update-libre.sh;
 
     maintainers = [ lib.maintainers.qyliss ];
   };

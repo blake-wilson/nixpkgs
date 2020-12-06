@@ -2,8 +2,8 @@
 , pkgconfig
 , cups, zlib, libjpeg, libusb1, python2Packages, sane-backends
 , dbus, file, ghostscript, usbutils
-, net_snmp, openssl, perl, nettools
-, bash, coreutils, utillinux
+, net-snmp, openssl, perl, nettools
+, bash, coreutils, util-linux
 , withQt5 ? true
 , withPlugin ? false
 , withStaticPPDInstall ? false
@@ -59,7 +59,7 @@ python2Packages.buildPythonApplication {
     dbus
     file
     ghostscript
-    net_snmp
+    net-snmp
     openssl
     perl
     zlib
@@ -199,6 +199,11 @@ python2Packages.buildPythonApplication {
     done
   '';
 
+  # There are some binaries there, which reference gcc-unwrapped otherwise.
+  stripDebugList = [
+    "share/hplip"
+  ];
+
   postFixup = ''
     substituteInPlace $out/etc/hp/hplip.conf --replace /usr $out
     # Patch udev rules:
@@ -207,14 +212,14 @@ python2Packages.buildPythonApplication {
     substituteInPlace $out/etc/udev/rules.d/56-hpmud.rules \
       --replace {,${bash}}/bin/sh \
       --replace /usr/bin/nohup "" \
-      --replace {,${utillinux}/bin/}logger \
+      --replace {,${util-linux}/bin/}logger \
       --replace {/usr,$out}/bin
   '';
 
   meta = with stdenv.lib; {
     description = "Print, scan and fax HP drivers for Linux";
-    homepage = https://developers.hp.com/hp-linux-imaging-and-printing;
-    downloadPage = https://sourceforge.net/projects/hplip/files/hplip/;
+    homepage = "https://developers.hp.com/hp-linux-imaging-and-printing";
+    downloadPage = "https://sourceforge.net/projects/hplip/files/hplip/";
     license = if withPlugin
       then licenses.unfree
       else with licenses; [ mit bsd2 gpl2Plus ];

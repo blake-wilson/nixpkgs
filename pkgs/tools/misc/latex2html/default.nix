@@ -4,13 +4,13 @@
 
 stdenv.mkDerivation rec {
   pname = "latex2html";
-  version = "2019.2";
+  version = "2020.2";
 
   src = fetchFromGitHub {
     owner = pname;
     repo = pname;
     rev = "v${version}";
-    sha256 = "1bcdhbaxf334wlxzkw5samj2y2q173709y0km3x8xs4bbh70ds6c";
+    sha256 = "1icyl6kl60wh7cavprgbd8q6lpjwr7wn24m34kpiif7ahknhcbcm";
   };
 
   buildInputs = [ ghostscript netpbm perl ];
@@ -42,7 +42,7 @@ stdenv.mkDerivation rec {
       commands.
     '';
 
-    homepage = https://www.ctan.org/pkg/latex2html;
+    homepage = "https://www.ctan.org/pkg/latex2html";
 
     license = licenses.gpl2;
     platforms = with platforms; linux ++ darwin;

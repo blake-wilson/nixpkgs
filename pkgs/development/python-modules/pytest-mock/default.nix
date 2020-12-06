@@ -10,11 +10,11 @@
 
 buildPythonPackage rec {
   pname = "pytest-mock";
-  version = "1.11.2";
+  version = "3.2.0";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "04fgqm06vkg3k1ngha65g1k5a80x1g7pr11s78j2d72rj4w2ql7a";
+    sha256 = "7122d55505d5ed5a6f3df940ad174b3f606ecae5e9bc379569cdcbd4cd9d2b83";
   };
 
   propagatedBuildInputs = lib.optional (!isPy3k) mock;
@@ -27,13 +27,14 @@ buildPythonPackage rec {
     pytest
   ];
 
+  # ignore test which only works with pytest5 output structure
   checkPhase = ''
-    pytest
+    pytest -k 'not detailed_introspection_async'
   '';
 
   meta = with lib; {
     description = "Thin-wrapper around the mock package for easier use with py.test.";
-    homepage    = https://github.com/pytest-dev/pytest-mock;
+    homepage    = "https://github.com/pytest-dev/pytest-mock";
     license     = licenses.mit;
     maintainers = with maintainers; [ nand0p ];
   };

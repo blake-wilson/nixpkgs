@@ -12,15 +12,14 @@
 
 buildPythonPackage rec {
   pname = "jupyter_console";
-  version = "6.0.0";
+  version = "6.2.0";
   disabled = pythonOlder "3.5";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "308ce876354924fb6c540b41d5d6d08acfc946984bf0c97777c1ddcb42e0b2f5";
+    sha256 = "7f6194f4f4692d292da3f501c7f343ccd5e36c6a1becf7b7515e23e66d6bf1e9";
   };
 
-  checkInputs = [ nose ];
   propagatedBuildInputs = [
     jupyter_client
     ipython
@@ -28,6 +27,12 @@ buildPythonPackage rec {
     prompt_toolkit
     pygments
   ];
+  checkInputs = [ nose ];
+
+  postPatch = ''
+    substituteInPlace setup.py \
+      --replace "prompt_toolkit>=2.0.0,<2.1.0" "prompt_toolkit"
+  '';
 
   # ValueError: underlying buffer has been detached
   doCheck = false;

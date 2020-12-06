@@ -1,7 +1,9 @@
 { stdenv, fetchurl, which, autoconf, automake, flex, yacc
 , kernel, glibc, perl, libtool_2, kerberos, fetchpatch }:
 
-with (import ./srcs.nix { inherit fetchurl; });
+with (import ./srcs.nix {
+  inherit fetchurl;
+});
 
 let
   modDestDir = "$out/lib/modules/${kernel.modDirVersion}/extra/openafs";
@@ -11,24 +13,29 @@ in stdenv.mkDerivation {
   name = "openafs-${version}-${kernel.modDirVersion}";
   inherit version src;
 
-  patches = [
-    # Linux 5.3
-    (fetchpatch {
-      name = "openafs_1_8-recurse-keyring_search.patch";
-      url = "http://git.openafs.org/?p=openafs.git;a=patch;h=02d82275c17284d04629282aa374bb39f511c989";
-      sha256 = "03pkldwf6i67yf6i1705qp18rx5b0b342ryda8vfjw9lnvpinygs";
-    })
-    (fetchpatch {
-      name = "openafs_1_8-send-sig.patch";
-      url = "http://git.openafs.org/?p=openafs.git;a=patch;h=2b7af1243f46496c0b5973b3fa2a6396243f7613";
-      sha256 = "13gyh5ncpp15dl7056gdzl5xhp2bmafc557bd2a4bwx9nyj53bag";
-    })
-  ];
-
   nativeBuildInputs = [ autoconf automake flex libtool_2 perl which yacc ]
     ++ kernel.moduleBuildDependencies;
 
   buildInputs = [ kerberos ];
+
+  patches = [
+    (fetchpatch {
+      url = "https://github.com/openafs/openafs/commit/d7fc5bf9bf031089d80703c48daf30d5b15a80ca.patch";
+      sha256 = "0469ydzgvyvrl1b2s1qbl9cd8c5c1nb99c3z52z5i685da5z6pab";
+    })
+    (fetchpatch {
+      url = "https://github.com/openafs/openafs/commit/335f37be13d2ff954e4aeea617ee66502170805e.patch";
+      sha256 = "0jr6cgplnip61cjlcd3fvgsc6n3jhfk93mm9m7ak04w1vc26dk9x";
+    })
+    (fetchpatch {
+      url = "https://github.com/openafs/openafs/commit/facff58b840a47853592510617ba7a1da2e3eaa9.patch";
+      sha256 = "0izafg6bi5iaigq3jjx0zlg1cxwaddz3238hk0s08fcb6nyhkvx1";
+    })
+    (fetchpatch {
+      url = "https://github.com/openafs/openafs/commit/e7902252f15acfc28453c531f6fa3b29c9c91b92.patch";
+      sha256 = "1jy4v8yx8p6mhma6b3h3g94mb38bw7hg7q6lnyc8bijkbnl0d1rl";
+    })
+  ];
 
   hardeningDisable = [ "pic" ];
 
@@ -64,11 +71,11 @@ in stdenv.mkDerivation {
 
   meta = with stdenv.lib; {
     description = "Open AFS client kernel module";
-    homepage = https://www.openafs.org;
+    homepage = "https://www.openafs.org";
     license = licenses.ipl10;
     platforms = platforms.linux;
     maintainers = [ maintainers.maggesi maintainers.spacefrogg ];
-    broken = versionOlder kernel.version "3.18";
+    broken = versionOlder kernel.version "3.18" || kernel.isHardened;
   };
 
 }

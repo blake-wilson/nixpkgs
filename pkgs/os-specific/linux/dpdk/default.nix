@@ -7,16 +7,15 @@
 , shared ? false }:
 
 let
-  kver = kernel.modDirVersion or null;
   mod = kernel != null;
 
 in stdenv.mkDerivation rec {
   name = "dpdk-${version}" + lib.optionalString mod "-${kernel.version}";
-  version = "19.08.2";
+  version = "20.05";
 
   src = fetchurl {
     url = "https://fast.dpdk.org/rel/dpdk-${version}.tar.xz";
-    sha256 = "141bqqy4w6nzs9z70x7yv94a4gmxjfal46pxry9bwdh3zi1jwnyd";
+    sha256 = "0h0xv2zwb91b9n29afg5ihn06a8q28in64hag2f112kc19f79jj8";
   };
 
   nativeBuildInputs = [
@@ -39,18 +38,28 @@ in stdenv.mkDerivation rec {
   ] ++ lib.optionals mod kernel.moduleBuildDependencies;
 
   postPatch = ''
-    patchShebangs config/arm
+    patchShebangs config/arm buildtools
   '';
 
   mesonFlags = [
     "-Denable_docs=true"
-    "-Denable_kmods=${if kernel != null then "true" else "false"}"
+    "-Denable_kmods=${lib.boolToString mod}"
   ]
-  ++ lib.optionals (shared == false) [
-    "-Ddefault_library=static"
-  ]
+  ++ lib.optional (!shared) "-Ddefault_library=static"
   ++ lib.optional stdenv.isx86_64 "-Dmachine=nehalem"
-  ++ lib.optional (kernel != null) "-Dkernel_dir=${kernel.dev}/lib/modules/${kernel.modDirVersion}";
+  ++ lib.optional mod "-Dkernel_dir=${placeholder "kmod"}/lib/modules/${kernel.modDirVersion}";
+
+  # dpdk meson script does not support separate kernel source and installion
+  # dirs (except via destdir), so we temporarily link the former into the latter.
+  preConfigure = lib.optionalString mod ''
+    mkdir -p $kmod/lib/modules/${kernel.modDirVersion}
+    ln -sf ${kernel.dev}/lib/modules/${kernel.modDirVersion}/build \
+      $kmod/lib/modules/${kernel.modDirVersion}
+  '';
+
+  postBuild = lib.optionalString mod ''
+    rm -f $kmod/lib/modules/${kernel.modDirVersion}/build
+  '';
 
   outputs = [ "out" ] ++ lib.optional mod "kmod";
 
@@ -58,7 +67,7 @@ in stdenv.mkDerivation rec {
 
   meta = with lib; {
     description = "Set of libraries and drivers for fast packet processing";
-    homepage = http://dpdk.org/;
+    homepage = "http://dpdk.org/";
     license = with licenses; [ lgpl21 gpl2 bsd2 ];
     platforms =  platforms.linux;
     maintainers = with maintainers; [ domenkozar magenbluten orivej ];

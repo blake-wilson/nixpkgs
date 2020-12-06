@@ -13,12 +13,12 @@
 
 buildPythonPackage rec {
   pname = "importlib-metadata";
-  version = "0.23";
+  version = "1.7.0";
 
   src = fetchPypi {
     pname = "importlib_metadata";
     inherit version;
-    sha256 = "09mdqdfv5rdrwz80jh9m379gxmvk2vhjfz0fg53hid00icvxf65a";
+    sha256 = "10vz0ydrzspdhdbxrzwr9vhs693hzh4ff71lnqsifvdzvf66bfwh";
   };
 
   nativeBuildInputs = [ setuptools_scm ];
@@ -26,14 +26,17 @@ buildPythonPackage rec {
   propagatedBuildInputs = [ zipp ]
     ++ lib.optionals (!isPy3k) [ pathlib2 contextlib2 configparser ];
 
-  checkInputs = [ importlib-resources packaging ];
+  doCheck = false; # Cyclic dependencies.
 
-  # Two failing tests: https://gitlab.com/python-devs/importlib_metadata/issues/72
-  doCheck = false;
+  # removing test_main.py - it requires 'pyflakefs'
+  # and adding `pyflakefs` to `checkInputs` causes infinite recursion.
+  preCheck = ''
+    rm importlib_metadata/tests/test_main.py
+  '';
 
   meta = with lib; {
     description = "Read metadata from Python packages";
-    homepage = https://importlib-metadata.readthedocs.io/;
+    homepage = "https://importlib-metadata.readthedocs.io/";
     license = licenses.asl20;
   };
 }

@@ -1,18 +1,18 @@
 { stdenv, lib, fetchFromGitHub, makeWrapper, autoreconfHook,
-  fuse, libmspack, openssl, pam, xercesc, icu, libdnet, procps,
+  fuse, libmspack, openssl, pam, xercesc, icu, libdnet, procps, libtirpc, rpcsvc-proto,
   libX11, libXext, libXinerama, libXi, libXrender, libXrandr, libXtst,
-  pkgconfig, glib, gtk3, gtkmm3, iproute, dbus, systemd, which,
+  pkgconfig, glib, gdk-pixbuf-xlib, gtk3, gtkmm3, iproute, dbus, systemd, which,
   withX ? true }:
 
 stdenv.mkDerivation rec {
   pname = "open-vm-tools";
-  version = "10.3.10";
+  version = "11.2.0";
 
   src = fetchFromGitHub {
     owner  = "vmware";
     repo   = "open-vm-tools";
     rev    = "stable-${version}";
-    sha256 = "0x2cyccnb4sycrw7r5mzby2d196f9jiph8vyqi0x8v8r2b4vi4yj";
+    sha256 = "125y3zdhj353dmmjmssdaib2zp1jg5aiqmvpgkrzhnh5nx2icfv6";
   };
 
   sourceRoot = "${src.name}/open-vm-tools";
@@ -20,16 +20,17 @@ stdenv.mkDerivation rec {
   outputs = [ "out" "dev" ];
 
   nativeBuildInputs = [ autoreconfHook makeWrapper pkgconfig ];
-  buildInputs = [ fuse glib icu libdnet libmspack openssl pam procps xercesc ]
-      ++ lib.optionals withX [ gtk3 gtkmm3 libX11 libXext libXinerama libXi libXrender libXrandr libXtst ];
+  buildInputs = [ fuse glib icu libdnet libmspack libtirpc openssl pam procps rpcsvc-proto xercesc ]
+      ++ lib.optionals withX [ gdk-pixbuf-xlib gtk3 gtkmm3 libX11 libXext libXinerama libXi libXrender libXrandr libXtst ];
 
-  patches = [ ./recognize_nixos.patch ];
   postPatch = ''
      # Build bugfix for 10.1.0, stolen from Arch PKGBUILD
      mkdir -p common-agent/etc/config
      sed -i 's|.*common-agent/etc/config/Makefile.*|\\|' configure.ac
 
+     sed -i 's,etc/vmware-tools,''${prefix}/etc/vmware-tools,' Makefile.am
      sed -i 's,^confdir = ,confdir = ''${prefix},' scripts/Makefile.am
+     sed -i 's,usr/bin,''${prefix}/usr/bin,' scripts/Makefile.am
      sed -i 's,etc/vmware-tools,''${prefix}/etc/vmware-tools,' services/vmtoolsd/Makefile.am
      sed -i 's,$(PAM_PREFIX),''${prefix}/$(PAM_PREFIX),' services/vmtoolsd/Makefile.am
      sed -i 's,$(UDEVRULESDIR),''${prefix}/$(UDEVRULESDIR),' udev/Makefile.am
@@ -46,9 +47,15 @@ stdenv.mkDerivation rec {
 
   enableParallelBuilding = true;
 
-  # igrone glib-2.62 deprecations
-  # Drop in next stable release.
-  NIX_CFLAGS_COMPILE = [ "-DGLIB_DISABLE_DEPRECATION_WARNINGS" ];
+  NIX_CFLAGS_COMPILE = builtins.toString [
+    # igrone glib-2.62 deprecations
+    # Drop in next stable release.
+    "-DGLIB_DISABLE_DEPRECATION_WARNINGS"
+
+    # fix build with gcc9
+    "-Wno-error=address-of-packed-member"
+    "-Wno-error=format-overflow"
+  ];
 
   postInstall = ''
     wrapProgram "$out/etc/vmware-tools/scripts/vmware/network" \
@@ -56,7 +63,7 @@ stdenv.mkDerivation rec {
   '';
 
   meta = with stdenv.lib; {
-    homepage = https://github.com/vmware/open-vm-tools;
+    homepage = "https://github.com/vmware/open-vm-tools";
     description = "Set of tools for VMWare guests to improve host-guest interaction";
     longDescription = ''
       A set of services and modules that enable several features in VMware products for

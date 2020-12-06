@@ -1,13 +1,13 @@
 { stdenv, fetchFromGitHub, cmake, check, subunit }:
 stdenv.mkDerivation rec {
   pname = "orcania";
-  version = "2.0.1";
+  version = "2.1.1";
 
   src = fetchFromGitHub {
     owner = "babelouest";
     repo = pname;
     rev = "v${version}";
-    sha256 = "1kq1cpayflh4xy442q6prrkalm8lcz2cxydrp1fv8ppq1cnq4zr7";
+    sha256 = "0l035zbzyv623h5186rk6iq1097rxx64iwnk4s2c7l9gzv9wyapp";
   };
 
   nativeBuildInputs = [ cmake ];
@@ -19,7 +19,7 @@ stdenv.mkDerivation rec {
   doCheck = true;
 
   preCheck = ''
-    export LD_LIBRARY_PATH="$(pwd):$LD_LIBRARY_PATH"
+    export LD_LIBRARY_PATH="$(pwd)''${LD_LIBRARY_PATH:+:}$LD_LIBRARY_PATH"
     export DYLD_FALLBACK_LIBRARY_PATH="$(pwd):$DYLD_FALLBACK_LIBRARY_PATH"
   '';
 
