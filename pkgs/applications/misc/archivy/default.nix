@@ -1,29 +1,27 @@
-{ stdenv, lib, python3, fetchPypi, appdirs, attrs, requests,
-beautifulsoup4, click-plugins, elasticsearch, flask_login, flask_wtf,
-pypandoc, python-dotenv, python-frontmatter, tinydb, validators,
-watchdog, wtforms }:
+{ lib, buildPythonApplication, fetchPypi, appdirs, attrs
+, beautifulsoup4, click-plugins, elasticsearch, flask-compress
+, flask_login, flask_wtf, html2text, python-dotenv, python-frontmatter
+, requests, tinydb, validators, werkzeug, wtforms }:
 
-python3.pkgs.buildPythonApplication rec {
+buildPythonApplication rec {
   pname = "archivy";
-  version = "0.9.2";
+  version = "1.1.1";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "5cb760da57dc9dcdd62c0af824993d1715ec7035915629b4046d8bf50442756c";
+    sha256 = "sha256-yUXsTPb5oJYZA9MlHz7eLowRjD/ltq5VLTHeOMqcL/M=";
   };
 
   # Relax some dependencies
   postPatch = ''
     substituteInPlace requirements.txt \
-      --replace 'validators ==' 'validators >=' \
-      --replace 'elasticsearch ==' 'elasticsearch >=' \
-      --replace 'python-dotenv ==' 'python-dotenv >=' \
-      --replace 'beautifulsoup4 ==' 'beautifulsoup4 >=' \
       --replace 'WTForms ==' 'WTForms >=' \
-      --replace 'python_dotenv ==' 'python_dotenv >=' \
       --replace 'attrs == 20.2.0' 'attrs' \
+      --replace 'elasticsearch ==' 'elasticsearch >=' \
+      --replace 'python_dotenv ==' 'python_dotenv >=' \
       --replace 'python_frontmatter == 0.5.0' 'python_frontmatter' \
-      --replace 'requests ==' 'requests >='
+      --replace 'requests ==' 'requests >=' \
+      --replace 'validators ==' 'validators >=' \
   '';
 
   propagatedBuildInputs = [
@@ -32,22 +30,23 @@ python3.pkgs.buildPythonApplication rec {
     beautifulsoup4
     click-plugins
     elasticsearch
+    flask-compress
     flask_login
     flask_wtf
-    pypandoc
+    html2text
     python-dotenv
     python-frontmatter
-    tinydb
     requests
+    tinydb
     validators
-    watchdog
+    werkzeug
     wtforms
   ];
 
   # __init__.py attempts to mkdir in read-only file system
   doCheck = false;
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Self-hosted knowledge repository";
     homepage = "https://archivy.github.io";
     license = licenses.mit;
