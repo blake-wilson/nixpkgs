@@ -1,5 +1,5 @@
-{ lib, fetchPypi, isPy27, python, buildPythonPackage, pythonOlder
-, numpy, hdf5, cython, six, pkgconfig, unittest2, fetchpatch
+{ lib, fetchPypi, isPy27, buildPythonPackage, pythonOlder
+, numpy, hdf5, cython, six, pkgconfig, unittest2
 , mpi4py ? null, openssh, pytestCheckHook, cached-property }:
 
 assert hdf5.mpiSupport -> mpi4py != null && hdf5.mpi == mpi4py.mpi;
@@ -8,13 +8,13 @@ let
   mpi = hdf5.mpi;
   mpiSupport = hdf5.mpiSupport;
 in buildPythonPackage rec {
-  version = "3.1.0";
+  version = "3.4.0";
   pname = "h5py";
   disabled = isPy27;
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "1e2516f190652beedcb8c7acfa1c6fa92d99b42331cbef5e5c7ec2d65b0fc3c2";
+    sha256 = "ee1c683d91ab010d5e85cb61e8f9e7ee0d8eab545bf3dd50a9618f1d0e8f615e";
   };
 
   # avoid strict pinning of numpy
@@ -49,6 +49,7 @@ in buildPythonPackage rec {
   meta = with lib; {
     description = "Pythonic interface to the HDF5 binary data format";
     homepage = "http://www.h5py.org/";
-    license = licenses.bsd2;
+    license = licenses.bsd3;
+    maintainers = [ ];
   };
 }

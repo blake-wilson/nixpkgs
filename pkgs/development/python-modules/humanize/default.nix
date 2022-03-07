@@ -2,23 +2,23 @@
 , buildPythonPackage
 , fetchPypi
 , isPy27
-, setuptools_scm
+, setuptools-scm
 , setuptools
 , pytestCheckHook
 , freezegun
 }:
 
 buildPythonPackage rec {
-  version = "3.2.0";
+  version = "3.12.0";
   pname = "humanize";
   disabled = isPy27; # setup.py no longer compatible
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "09ph6fd1362xdn2hgwdgh30z0zqjp3bgvr1akyvm36b8jm400sdb";
+    sha256 = "5ec1a66e230a3e31fb3f184aab9436ea13d4e37c168e0ffc345ae5bb57e58be6";
   };
 
-  nativeBuildInputs = [ setuptools_scm ];
+  nativeBuildInputs = [ setuptools-scm ];
   propagatedBuildInputs = [ setuptools ];
   checkInputs = [ pytestCheckHook freezegun ];
 

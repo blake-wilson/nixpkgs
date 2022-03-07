@@ -97,13 +97,13 @@ in
               static_root = mkOption {
                 type = types.str;
                 default = "${cfg.dataDir}/static";
-                defaultText = "\${config.services.etebase-server.dataDir}/static";
+                defaultText = literalExpression ''"''${config.services.etebase-server.dataDir}/static"'';
                 description = "The directory for static files.";
               };
               media_root = mkOption {
                 type = types.str;
                 default = "${cfg.dataDir}/media";
-                defaultText = "\${config.services.etebase-server.dataDir}/media";
+                defaultText = literalExpression ''"''${config.services.etebase-server.dataDir}/media"'';
                 description = "The media directory.";
               };
             };
@@ -126,7 +126,7 @@ in
               name = mkOption {
                 type = types.str;
                 default = "${cfg.dataDir}/db.sqlite3";
-                defaultText = "\${config.services.etebase-server.dataDir}/db.sqlite3";
+                defaultText = literalExpression ''"''${config.services.etebase-server.dataDir}/db.sqlite3"'';
                 description = "The database name.";
               };
             };
@@ -192,8 +192,8 @@ in
         # Auto-migrate on first run or if the package has changed
         versionFile="${cfg.dataDir}/src-version"
         if [[ $(cat "$versionFile" 2>/dev/null) != ${pkgs.etebase-server} ]]; then
-          ${pythonEnv}/bin/etebase-server migrate
-          ${pythonEnv}/bin/etebase-server collectstatic
+          ${pythonEnv}/bin/etebase-server migrate --no-input
+          ${pythonEnv}/bin/etebase-server collectstatic --no-input --clear
           echo ${pkgs.etebase-server} > "$versionFile"
         fi
       '';
@@ -211,6 +211,7 @@ in
 
     users = optionalAttrs (cfg.user == defaultUser) {
       users.${defaultUser} = {
+        isSystemUser = true;
         group = defaultUser;
         home = cfg.dataDir;
       };

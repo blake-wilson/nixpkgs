@@ -1,14 +1,11 @@
 { config, lib, substituteAll, stdenv, fetchurl, pkg-config, gettext, glib, atk, pango, cairo, perl, xorg
 , gdk-pixbuf, xlibsWrapper, gobject-introspection
 , xineramaSupport ? stdenv.isLinux
-, cupsSupport ? config.gtk2.cups or stdenv.isLinux, cups ? null
+, cupsSupport ? config.gtk2.cups or stdenv.isLinux, cups
 , gdktarget ? if stdenv.isDarwin then "quartz" else "x11"
 , AppKit, Cocoa
 , fetchpatch
 }:
-
-assert xineramaSupport -> xorg.libXinerama != null;
-assert cupsSupport -> cups != null;
 
 with lib;
 
@@ -24,11 +21,11 @@ in
 
 stdenv.mkDerivation rec {
   pname = "gtk+";
-  version = "2.24.32";
+  version = "2.24.33";
 
   src = fetchurl {
     url = "mirror://gnome/sources/gtk+/2.24/${pname}-${version}.tar.xz";
-    sha256 = "b6c8a93ddda5eabe3bfee1eb39636c9a03d2a56c7b62828b359bf197943c582e";
+    sha256 = "rCrHV/WULTGKMRpUsMgLXvKV8pnCpzxjL2v7H/Scxto=";
   };
 
   outputs = [ "out" "dev" "devdoc" ];
@@ -63,6 +60,10 @@ stdenv.mkDerivation rec {
     ++ optional xineramaSupport libXinerama
     ++ optionals cupsSupport [ cups ]
     ++ optionals stdenv.isDarwin [ AppKit Cocoa ];
+
+  preConfigure = if (lib.versionAtLeast stdenv.hostPlatform.darwinMinVersion "11" && stdenv.isDarwin) then ''
+    MACOSX_DEPLOYMENT_TARGET=10.16
+  '' else null;
 
   configureFlags = [
     "--with-gdktarget=${gdktarget}"

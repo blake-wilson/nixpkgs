@@ -1,50 +1,54 @@
 { lib
 , stdenv
 , fetchurl
-, fetchpatch
 , pkg-config
 , cairo
 , harfbuzz
 , libintl
 , libthai
-, gobject-introspection
 , darwin
 , fribidi
-, gnome3
+, gnome
 , gi-docgen
 , makeFontsConf
 , freefont_ttf
 , meson
 , ninja
 , glib
+, python3
 , x11Support? !stdenv.isDarwin, libXft
+, withIntrospection ? (stdenv.buildPlatform == stdenv.hostPlatform)
+, gobject-introspection
+, withDocs ? (stdenv.buildPlatform == stdenv.hostPlatform)
 }:
 
 stdenv.mkDerivation rec {
   pname = "pango";
-  version = "1.48.3";
+  version = "1.48.10";
 
-  outputs = [ "bin" "out" "dev" "devdoc" ];
+  outputs = [ "bin" "out" "dev" ]
+    ++ lib.optionals withDocs [ "devdoc" ];
 
   src = fetchurl {
     url = "mirror://gnome/sources/${pname}/${lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
-    sha256 = "0ijbkcs6217ygzphlpi0vajxkccifdbsl0jdjpy8wz11h9f19sin";
+    sha256 = "IeH1eYvN/adeq8QoBRSwiWq1b2VtTn5mAwuaJTXs3Jg=";
   };
 
-  patches = [
-    # Install developer documentation.
-    (fetchpatch {
-      url = "https://gitlab.gnome.org/GNOME/pango/commit/a2f35860115e8cd44f07d5158e2df059e8163a08.patch";
-      sha256 = "hN7O4DBk4A+TmBl6DGx6RHni5qRBg6akdjv9o3iWKDQ=";
-    })
+  strictDeps = !withIntrospection;
+
+  depsBuildBuild = [
+    pkg-config
   ];
 
   nativeBuildInputs = [
     meson ninja
     glib # for glib-mkenum
     pkg-config
+  ] ++ lib.optionals withIntrospection [
     gobject-introspection
+  ] ++ lib.optionals withDocs [
     gi-docgen
+    python3
   ];
 
   buildInputs = [
@@ -67,7 +71,8 @@ stdenv.mkDerivation rec {
   ];
 
   mesonFlags = [
-    "-Dgtk_doc=true"
+    "-Dgtk_doc=${lib.boolToString withDocs}"
+    "-Dintrospection=${if withIntrospection then "enabled" else "disabled"}"
   ] ++ lib.optionals (!x11Support) [
     "-Dxft=disabled" # only works with x11
   ];
@@ -79,7 +84,7 @@ stdenv.mkDerivation rec {
 
   doCheck = false; # test-font: FAIL
 
-  postInstall = ''
+  postInstall = lib.optionalString withDocs ''
     # So that devhelp can find this.
     # https://gitlab.gnome.org/GNOME/pango/merge_requests/293/diffs#note_1058448
     mkdir -p "$devdoc/share/devhelp"
@@ -88,8 +93,9 @@ stdenv.mkDerivation rec {
   '';
 
   passthru = {
-    updateScript = gnome3.updateScript {
+    updateScript = gnome.updateScript {
       packageName = pname;
+      versionPolicy = "odd-unstable";
     };
   };
 

@@ -1,31 +1,31 @@
-{ lib, fetchPypi, buildPythonPackage
-# buildInputs
-, six
-, setuptools
-, pyopenssl
+{ lib
+, fetchPypi
+, buildPythonPackage
 , cryptography
+, pyopenssl
+, setuptools
 , mock
 , pytestCheckHook
 }:
 
 buildPythonPackage rec {
   pname = "josepy";
-  version = "1.7.0";
+  version = "1.10.0";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "d265414fa16d7a8b7a1d1833b4ebb19a22bd0deae5d44413cf9040fd8491d85a";
+    sha256 = "e9bcaf605411cadaec04841ae2d5f77ebb178b7b6df7c9aed1d97399ac18685b";
   };
 
   postPatch = ''
     # remove coverage flags
     sed -i '/addopts/d' pytest.ini
+    sed -i '/flake8-ignore/d' pytest.ini
   '';
 
   propagatedBuildInputs = [
     pyopenssl
     cryptography
-    six
     setuptools
   ];
 

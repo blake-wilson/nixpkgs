@@ -2,12 +2,12 @@
 
 stdenv.mkDerivation rec {
    pname = "unipicker";
-   version = "unstable-2018-07-10";
+   version = "2.0.1";
 
    src = fetchFromGitHub {
       owner = "jeremija";
       repo = pname;
-      rev = "767571c87cdb1e654408d19fc4db98e5e6725c04";
+      rev = "v${version}";
       sha256 = "1k4v53pm3xivwg9vq2kndpcmah0yn4679r5jzxvg38bbkfdk86c1";
    };
 
@@ -17,8 +17,12 @@ stdenv.mkDerivation rec {
    ];
 
    preInstall = ''
-      substituteInPlace unipicker --replace "/etc/unipickerrc" "$out/etc/unipickerrc"
-      substituteInPlace unipickerrc --replace "/usr/local" "$out"
+      substituteInPlace unipicker \
+        --replace "/etc/unipickerrc" "$out/etc/unipickerrc" \
+        --replace "fzf" "${fzf}/bin/fzf"
+      substituteInPlace unipickerrc \
+        --replace "/usr/local" "$out" \
+        --replace "fzf" "${fzf}/bin/fzf"
    '';
 
    makeFlags = [
@@ -31,6 +35,6 @@ stdenv.mkDerivation rec {
     homepage = "https://github.com/jeremija/unipicker";
     license = licenses.mit;
     maintainers = with maintainers; [ kiyengar ];
-    platforms = with platforms; unix;
+    platforms = platforms.unix;
    };
 }

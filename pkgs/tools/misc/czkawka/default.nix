@@ -8,20 +8,22 @@
 , gdk-pixbuf
 , atk
 , gtk3
+, testVersion
+, czkawka
 }:
 
 rustPlatform.buildRustPackage rec {
   pname = "czkawka";
-  version = "3.0.0";
+  version = "3.3.0";
 
   src = fetchFromGitHub {
     owner = "qarmin";
-    repo = pname;
+    repo = "czkawka";
     rev = version;
-    sha256 = "1g5a9ns5lkiyk6hjsh08hgs41538dzj0a4lgn2c5cbad5psl0xa6";
+    sha256 = "0mikgnsqxj8dgapr2k7i9i8mmsza15kp4nasyd6l1vp2cqy8aki6";
   };
 
-  cargoSha256 = "11ym2d7crp12w91111s3rv0gklkg2bzlq9g24cws4h7ipi0zfx5h";
+  cargoSha256 = "009zfy4lk8y51h1wi71mrjp6kc7xnk3r8jlbxvhyqslhqd9w10fv";
 
   nativeBuildInputs = [
     pkg-config
@@ -36,10 +38,15 @@ rustPlatform.buildRustPackage rec {
     gtk3
   ];
 
+  passthru.tests.version = testVersion {
+    package = czkawka;
+    command = "czkawka_cli --version";
+  };
+
   meta = with lib; {
     description = "A simple, fast and easy to use app to remove unnecessary files from your computer";
     homepage = "https://github.com/qarmin/czkawka";
     license = with licenses; [ mit ];
-    maintainers = with maintainers; [ yanganto ];
+    maintainers = with maintainers; [ yanganto _0x4A6F ];
   };
 }

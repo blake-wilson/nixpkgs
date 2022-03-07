@@ -6,18 +6,32 @@
 
 buildPythonPackage rec {
   pname = "starkbank-ecdsa";
-  version = "1.1.0";
+  version = "2.0.2";
+  format = "setuptools";
 
   src = fetchFromGitHub {
     owner = "starkbank";
     repo = "ecdsa-python";
     rev = "v${version}";
-    sha256 = "03smk33zhmv1j1svgjnykak0jnw8yl0yv03i1gsasx71f33zmfwi";
+    sha256 = "sha256-4QFAtGqHJZSVyrGPuMdJwvF761/P6YAHjjKmCpPyGdU=";
   };
 
-  checkInputs = [ pytestCheckHook ];
-  pytestFlagsArray = [ "-v tests/*.py" ];
-  pythonImportsCheck = [ "ellipticcurve" ];
+  checkInputs = [
+    pytestCheckHook
+  ];
+
+  preCheck = ''
+    cd tests
+  '';
+
+  pytestFlagsArray = [
+    "-v"
+    "*.py"
+  ];
+
+  pythonImportsCheck = [
+    "ellipticcurve"
+  ];
 
   meta = with lib; {
     description = "Python ECDSA library";

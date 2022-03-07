@@ -1,22 +1,14 @@
-{ lib, buildPythonPackage, fetchPypi, fetchpatch, pythonOlder, blessings, mock, nose, pyte, wcwidth, typing }:
+{ lib, buildPythonPackage, fetchPypi, pythonOlder, blessings, mock, nose, pyte, cwcwidth, typing ? null}:
 
 buildPythonPackage rec {
   pname = "curtsies";
-  version = "0.3.0";
+  version = "0.3.9";
   src = fetchPypi {
     inherit pname version;
-    sha256 = "89c802ec051d01dec6fc983e9856a3706e4ea8265d2940b1f6d504a9e26ed3a9";
+    sha256 = "933b503767ce38fe32a1f77639d9a4fa3d5229d41abb31a91a6fcbdf01511a55";
   };
 
-  patches = [
-    # Fix dependency on typing. Remove with the next release
-    (fetchpatch {
-      url = "https://github.com/bpython/curtsies/commit/217b4f83e954837f8adc4c549c1f2f9f2bb272a7.patch";
-      sha256 = "1d3zwx9c7i0drb4nvydalm9mr83jrvdm75ffgisri89h337hiffs";
-    })
-  ];
-
-  propagatedBuildInputs = [ blessings wcwidth ]
+  propagatedBuildInputs = [ blessings cwcwidth ]
     ++ lib.optionals (pythonOlder "3.5") [ typing ];
 
   checkInputs = [ mock pyte nose ];

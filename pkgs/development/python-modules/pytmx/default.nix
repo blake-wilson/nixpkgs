@@ -1,34 +1,53 @@
-{ lib, fetchFromGitHub
-, python, buildPythonPackage, isPy27
-, pygame, pyglet, pysdl2, six
+{ lib
+, buildPythonPackage
+, fetchFromGitHub
+, pygame
+, pyglet
+, pysdl2
+, pytestCheckHook
+, pythonOlder
 }:
 
 buildPythonPackage rec {
   pname = "pytmx";
-  version = "3.24.0";
+  version = "3.30";
+  format = "setuptools";
 
-  disabled = isPy27;
+  disabled = pythonOlder "3.7";
 
   src = fetchFromGitHub {
-    # The release was not git tagged.
     owner = "bitcraft";
     repo = "PyTMX";
-    rev = "eb96efea30d57b731654b2a167d86b8b553b147d";
-    sha256 = "1g1j4w75zw76p5f8m5v0hdigdlva2flf0ngyk8nvqcwzcl5vq5wc";
+    rev = version;
+    sha256 = "sha256-d6VPmRdqUO6YhkOYYeXOEcrli/35IFkxK73AcZYHixw=";
   };
 
-  propagatedBuildInputs = [ pygame pyglet pysdl2 six ];
+  propagatedBuildInputs = [
+    pygame
+    pyglet
+    pysdl2
+  ];
 
-  checkPhase = ''
-    # Change into the test directory due to a relative resource path.
-    cd tests/pytmx
-    ${python.interpreter} -m unittest test_pytmx
-  '';
+  pythonImportsCheck = [
+    "pytmx.pytmx"
+    "pytmx.util_pygame"
+    "pytmx.util_pyglet"
+    "pytmx.util_pysdl2"
+  ];
+
+  checkInputs = [
+    pytestCheckHook
+  ];
+
+  disabledTests = [
+    # AssertionError on the property name
+    "test_contains_reserved_property_name"
+  ];
 
   meta = with lib; {
     homepage = "https://github.com/bitcraft/PyTMX";
     description = "Python library to read Tiled Map Editor's TMX maps";
-    license = licenses.lgpl3;
+    license = licenses.lgpl3Plus;
     maintainers = with maintainers; [ oxzi ];
   };
 }

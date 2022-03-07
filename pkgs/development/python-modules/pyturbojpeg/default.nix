@@ -1,21 +1,22 @@
 { lib
 , stdenv
-, python
 , buildPythonPackage
 , fetchPypi
-, substituteAll
 , libjpeg_turbo
 , numpy
+, python
+, substituteAll
 }:
 
 buildPythonPackage rec {
   pname = "pyturbojpeg";
-  version = "1.4.1";
+  version = "1.6.3";
+  format = "setuptools";
 
   src = fetchPypi {
     pname = "PyTurboJPEG";
     inherit version;
-    sha256 = "09688a93331281e566569b4d313e1d1a058ca32ccae1a2473847a10e4ca2f2a7";
+    sha256 = "sha256-5g9MQB7vpeuorVGExt0scHtLdrWlkuLOZMT38FhAsi4=";
   };
 
   patches = [
@@ -34,7 +35,9 @@ buildPythonPackage rec {
     ${python.interpreter} -c 'from turbojpeg import TurboJPEG; TurboJPEG()'
   '';
 
-  pythonImportsCheck = [ "turbojpeg" ];
+  pythonImportsCheck = [
+    "turbojpeg"
+  ];
 
   meta = with lib; {
     description = "A Python wrapper of libjpeg-turbo for decoding and encoding JPEG image";

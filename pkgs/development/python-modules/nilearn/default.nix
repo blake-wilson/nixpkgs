@@ -1,13 +1,13 @@
 { lib, buildPythonPackage, fetchPypi, pytestCheckHook, matplotlib
-, nibabel, numpy, pandas, scikitlearn, scipy, joblib, requests }:
+, nibabel, numpy, pandas, scikit-learn, scipy, joblib, requests }:
 
 buildPythonPackage rec {
   pname = "nilearn";
-  version = "0.7.0";
+  version = "0.8.1";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "1rhpy6na7hkhc211ri14zghvmb2fxkh995wi09pkc68klf1dzjg7";
+    sha256 = "a0489940855130f35bbc4cac0750479a6f82025215ea7b1d778faca064219298";
   };
 
   checkInputs = [ pytestCheckHook ];
@@ -20,7 +20,7 @@ buildPythonPackage rec {
     numpy
     pandas
     requests
-    scikitlearn
+    scikit-learn
     scipy
   ];
 

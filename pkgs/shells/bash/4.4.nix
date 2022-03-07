@@ -46,7 +46,7 @@ stdenv.mkDerivation rec {
     -DSSH_SOURCE_BASHRC
   '';
 
-  patchFlags = [ "-p0" "-T" ];
+  patchFlags = [ "-p0" ];
 
   patches = upstreamPatches
     ++ [ ./pgrp-pipe-4.4.patch ]
@@ -132,7 +132,6 @@ stdenv.mkDerivation rec {
 
     platforms = platforms.all;
 
-    maintainers = [ maintainers.peti ];
   };
 
   passthru = {

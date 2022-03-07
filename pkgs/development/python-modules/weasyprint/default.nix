@@ -1,49 +1,70 @@
-{ buildPythonPackage,
-  fetchPypi,
-  cairosvg,
-  pyphen,
-  cffi,
-  cssselect,
-  lxml,
-  html5lib,
-  tinycss,
-  pygobject2,
-  glib,
-  pango,
-  fontconfig,
-  lib, stdenv,
-  pytest,
-  pytestrunner,
-  pytest-isort,
-  pytest-flake8,
-  pytestcov,
-  isPy3k,
-  substituteAll
+{ buildPythonPackage
+, fetchPypi
+, fetchpatch
+, pytestCheckHook
+, brotli
+, cairosvg
+, fonttools
+, pydyf
+, pyphen
+, cffi
+, cssselect
+, lxml
+, html5lib
+, tinycss
+, zopfli
+, glib
+, harfbuzz
+, pango
+, fontconfig
+, lib
+, stdenv
+, ghostscript
+, isPy3k
+, substituteAll
 }:
 
 buildPythonPackage rec {
   pname = "weasyprint";
-  version = "52";
+  version = "53.4";
   disabled = !isPy3k;
 
-  # excluded test needs the Ahem font
-  checkPhase = ''
-    runHook preCheck
-    pytest -k 'not test_font_stretch'
-    runHook postCheck
+  src = fetchPypi {
+    inherit version;
+    pname = "weasyprint";
+    sha256 = "sha256-EMyxfVXHMJa98e3T7+WMuFWwfkwwfZutTryaPxP/RYA=";
+  };
+
+  postPatch = ''
+    substituteInPlace pyproject.toml \
+      --replace "--isort --flake8 --cov --no-cov-on-fail" ""
   '';
 
-  # ignore failing flake8-test
-  prePatch = ''
-    substituteInPlace setup.cfg \
-        --replace '[tool:pytest]' '[tool:pytest]\nflake8-ignore = E501'
-  '';
+  disabledTests = [
+    # needs the Ahem font (fails on macOS)
+    "test_font_stretch"
+  ];
 
-  checkInputs = [ pytest pytestrunner pytest-isort pytest-flake8 pytestcov ];
+  checkInputs = [
+    pytestCheckHook
+    ghostscript
+  ];
 
   FONTCONFIG_FILE = "${fontconfig.out}/etc/fonts/fonts.conf";
 
-  propagatedBuildInputs = [ cairosvg pyphen cffi cssselect lxml html5lib tinycss pygobject2 ];
+  propagatedBuildInputs = [
+    brotli
+    cairosvg
+    cffi
+    cssselect
+    fonttools
+    html5lib
+    lxml
+    pydyf
+    pyphen
+    tinycss
+    zopfli
+  ];
 
   patches = [
     (substituteAll {
@@ -53,14 +74,9 @@ buildPythonPackage rec {
       gobject = "${glib.out}/lib/libgobject-2.0${stdenv.hostPlatform.extensions.sharedLibrary}";
       pango = "${pango.out}/lib/libpango-1.0${stdenv.hostPlatform.extensions.sharedLibrary}";
       pangocairo = "${pango.out}/lib/libpangocairo-1.0${stdenv.hostPlatform.extensions.sharedLibrary}";
+      harfbuzz = "${harfbuzz.out}/lib/libharfbuzz${stdenv.hostPlatform.extensions.sharedLibrary}";
     })
   ];
-
-  src = fetchPypi {
-    inherit version;
-    pname = "WeasyPrint";
-    sha256 = "0rwf43111ws74m8b1alkkxzz57g0np3vmd8as74adwnxslfcg4gs";
-  };
 
   meta = with lib; {
     homepage = "https://weasyprint.org/";

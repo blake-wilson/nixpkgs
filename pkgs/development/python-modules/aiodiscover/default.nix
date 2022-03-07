@@ -1,46 +1,49 @@
 { lib
-, async-dns
 , buildPythonPackage
+, dnspython
 , fetchFromGitHub
-, fetchpatch
 , ifaddr
 , pyroute2
+, pytest-asyncio
+, pytestCheckHook
 , pythonOlder
 }:
 
 buildPythonPackage rec {
   pname = "aiodiscover";
-  version = "1.3.2";
+  version = "1.4.5";
   disabled = pythonOlder "3.7";
 
   src = fetchFromGitHub {
     owner = "bdraco";
     repo = pname;
     rev = "v${version}";
-    sha256 = "0qg2wm6ddsfai788chylr5ynrvakwg91q3dszz7dxzbkfdcxixj3";
+    sha256 = "sha256-QfeAEFB5WikuriBTcfFIgnJw5H4vEcGIVX47fyDb1Dk=";
   };
 
-  patches = [
-    (fetchpatch {
-      name = "remove-entry_point.patch";
-      url = "https://github.com/bdraco/aiodiscover/commit/4c497fb7d4c8685a78209c710e92e0bd17f46bb2.patch";
-      sha256 = "0py9alhg6qdncbn6a04mrnjhs4j19kg759dv69knpqzryikcfa63";
-    })
-  ];
-
   propagatedBuildInputs = [
-    async-dns
+    dnspython
     pyroute2
     ifaddr
   ];
 
   postPatch = ''
-    substituteInPlace setup.py --replace '"pytest-runner>=5.2",' ""
+    substituteInPlace setup.py \
+      --replace '"pytest-runner>=5.2",' "" \
+      --replace "pyroute2>=0.5.18,!=0.6.1" "pyroute2"
   '';
 
-  # Tests require access to /etc/resolv.conf
-  # pythonImportsCheck doesn't work as async-dns wants to create its CONFIG_DIR
-  doCheck = false;
+  checkInputs = [
+    pytest-asyncio
+    pytestCheckHook
+  ];
+
+  disabledTests = [
+    # Tests require access to /etc/resolv.conf
+    "test_async_discover_hosts"
+  ];
+
+  pythonImportsCheck = ["aiodiscover"];
 
   meta = with lib; {
     description = "Python module to discover hosts via ARP and PTR lookup";

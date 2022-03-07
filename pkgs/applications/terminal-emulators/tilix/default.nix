@@ -26,7 +26,7 @@ stdenv.mkDerivation rec {
   src = fetchFromGitHub {
     owner = "gnunn1";
     repo = "tilix";
-    rev = "${version}";
+    rev = version;
     sha256 = "sha256:020gr4q7kmqq8vnsh8rw97gf1p2n1yq4d7ncyjjh9l13zkaxqqv9";
   };
 
@@ -70,7 +70,7 @@ stdenv.mkDerivation rec {
     description = "Tiling terminal emulator following the Gnome Human Interface Guidelines";
     homepage = "https://gnunn1.github.io/tilix-web";
     license = licenses.mpl20;
-    maintainers = with maintainers; [ midchildan worldofpeace ];
+    maintainers = with maintainers; [ midchildan ];
     platforms = platforms.linux;
   };
 }

@@ -6,19 +6,20 @@
 , pytz
 , requests
 , requests_oauthlib
+, schedule
 , pythonOlder
 }:
 
 buildPythonPackage rec {
   pname = "pysmappee";
-  version = "0.2.18";
+  version = "0.2.27";
   disabled = pythonOlder "3.7";
 
   src = fetchFromGitHub {
     owner = "smappee";
     repo = pname;
     rev = version;
-    sha256 = "sha256-DnRtKr8aGZ6rcN/wTpcFNaI+EJm07nObfWyBpLkQF38=";
+    sha256 = "sha256-CzdkeC53ye+IMeGUiD1mK84h2ruC1/ZpjlDjuWMVoyQ=";
   };
 
   propagatedBuildInputs = [
@@ -27,10 +28,12 @@ buildPythonPackage rec {
     pytz
     requests
     requests_oauthlib
+    schedule
   ];
 
   # Project has no tests
   doCheck = false;
+
   pythonImportsCheck = [ "pysmappee" ];
 
   meta = with lib; {

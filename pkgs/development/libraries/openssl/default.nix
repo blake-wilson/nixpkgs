@@ -6,7 +6,7 @@
 # Used to avoid cross compiling perl, for example, in darwin bootstrap tools.
 # This will cause c_rehash to refer to perl via the environment, but otherwise
 # will produce a perfectly functional openssl binary and library.
-, withPerl ? true
+, withPerl ? stdenv.hostPlatform == stdenv.buildPlatform
 }:
 
 assert (
@@ -42,8 +42,10 @@ let
         substituteInPlace "$a" \
           --replace /bin/rm rm
       done
-    '' + optionalString (versionAtLeast version "1.1.1") ''
-      substituteInPlace config --replace '/usr/bin/env' '${coreutils}/bin/env'
+    ''
+    # config is a configure script which is not installed.
+    + optionalString (versionAtLeast version "1.1.1") ''
+      substituteInPlace config --replace '/usr/bin/env' '${buildPackages.coreutils}/bin/env'
     '' + optionalString (versionAtLeast version "1.1.0" && stdenv.hostPlatform.isMusl) ''
       substituteInPlace crypto/async/arch/async_posix.h \
         --replace '!defined(__ANDROID__) && !defined(__OpenBSD__)' \
@@ -52,7 +54,10 @@ let
 
     outputs = [ "bin" "dev" "out" "man" ] ++ optional withDocs "doc";
     setOutputFlags = false;
-    separateDebugInfo = !(stdenv.hostPlatform.useLLVM or false) && stdenv.cc.isGNU;
+    separateDebugInfo =
+      !stdenv.hostPlatform.isDarwin &&
+      !(stdenv.hostPlatform.useLLVM or false) &&
+      stdenv.cc.isGNU;
 
     nativeBuildInputs = [ perl ];
     buildInputs = lib.optional withCryptodev cryptodev
@@ -67,25 +72,33 @@ let
         armv6l-linux = "./Configure linux-armv4 -march=armv6";
         armv7l-linux = "./Configure linux-armv4 -march=armv7-a";
         x86_64-darwin  = "./Configure darwin64-x86_64-cc";
+        aarch64-darwin = "./Configure darwin64-arm64-cc";
         x86_64-linux = "./Configure linux-x86_64";
         x86_64-solaris = "./Configure solaris64-x86_64-gcc";
+        riscv64-linux = "./Configure linux64-riscv64";
       }.${stdenv.hostPlatform.system} or (
         if stdenv.hostPlatform == stdenv.buildPlatform
           then "./config"
+        else if stdenv.hostPlatform.isBSD && stdenv.hostPlatform.isx86_64
+          then "./Configure BSD-x86_64"
+        else if stdenv.hostPlatform.isBSD && stdenv.hostPlatform.isx86_32
+          then "./Configure BSD-x86" + lib.optionalString (stdenv.hostPlatform.parsed.kernel.execFormat.name == "elf") "-elf"
+        else if stdenv.hostPlatform.isBSD
+          then "./Configure BSD-generic${toString stdenv.hostPlatform.parsed.cpu.bits}"
         else if stdenv.hostPlatform.isMinGW
           then "./Configure mingw${optionalString
                                      (stdenv.hostPlatform.parsed.cpu.bits != 32)
                                      (toString stdenv.hostPlatform.parsed.cpu.bits)}"
         else if stdenv.hostPlatform.isLinux
-          then (if stdenv.hostPlatform.isx86_64
-            then "./Configure linux-x86_64"
-            else "./Configure linux-generic${toString stdenv.hostPlatform.parsed.cpu.bits}")
+          then "./Configure linux-generic${toString stdenv.hostPlatform.parsed.cpu.bits}"
         else if stdenv.hostPlatform.isiOS
           then "./Configure ios${toString stdenv.hostPlatform.parsed.cpu.bits}-cross"
         else
           throw "Not sure what configuration to use for ${stdenv.hostPlatform.config}"
       );
 
+    # OpenSSL doesn't like the `--enable-static` / `--disable-shared` flags.
+    dontAddStaticConfigureFlags = true;
     configureFlags = [
       "shared" # "shared" builds both shared and static libraries
       "--libdir=lib"
@@ -119,8 +132,6 @@ let
       if [ -n "$(echo $out/lib/*.so $out/lib/*.dylib $out/lib/*.dll)" ]; then
           rm "$out/lib/"*.a
       fi
-
-      mkdir -p $bin
     '' + lib.optionalString (!stdenv.hostPlatform.isWindows)
       # Fix bin/c_rehash's perl interpreter line
       #
@@ -134,9 +145,9 @@ let
       # "#!/usr/bin/env perl"
     ''
       substituteInPlace $out/bin/c_rehash --replace ${buildPackages.perl}/bin/perl "/usr/bin/env perl"
-    '' +
-    ''
-      mv $out/bin $bin/
+    '' + ''
+      mkdir -p $bin
+      mv $out/bin $bin/bin
 
       mkdir $dev
       mv $out/include $dev/
@@ -160,7 +171,6 @@ let
       description = "A cryptographic library that implements the SSL and TLS protocols";
       license = licenses.openssl;
       platforms = platforms.all;
-      maintainers = [ maintainers.peti ];
     } // extraMeta;
   };
 
@@ -175,20 +185,46 @@ in {
       (if stdenv.hostPlatform.isDarwin
        then ./1.0.2/use-etc-ssl-certs-darwin.patch
        else ./1.0.2/use-etc-ssl-certs.patch)
+    ] ++ lib.optionals (stdenv.hostPlatform.system == "aarch64-darwin") [
+      ./1.0.2/darwin64-arm64.patch
     ];
     extraMeta.knownVulnerabilities = [ "Support for OpenSSL 1.0.2 ended with 2019." ];
   };
 
   openssl_1_1 = common {
-    version = "1.1.1k";
-    sha256 = "1rdfzcrxy9y38wqdw5942vmdax9hjhgrprzxm42csal7p5shhal9";
+    version = "1.1.1l";
+    sha256 = "sha256-C3o+XlnDSCf+DDp0t+yLrvMCuY+oAIjX+RU6oW+na9E=";
     patches = [
       ./1.1/nix-ssl-cert-file.patch
 
       (if stdenv.hostPlatform.isDarwin
-       then ./1.1/use-etc-ssl-certs-darwin.patch
-       else ./1.1/use-etc-ssl-certs.patch)
+       then ./use-etc-ssl-certs-darwin.patch
+       else ./use-etc-ssl-certs.patch)
+    ] ++ lib.optionals (stdenv.isDarwin) [
+      ./1.1/macos-yosemite-compat.patch
     ];
     withDocs = true;
+  };
+
+  openssl_3_0 = common {
+    version = "3.0.0";
+    sha256 = "sha256-We7fy0bCUhTJvTftYHgpe03wHQEiZ/6enu4x9hvHBTY=";
+    patches = [
+      ./3.0/nix-ssl-cert-file.patch
+
+      # openssl will only compile in KTLS if the current kernel supports it.
+      # This patch disables build-time detection.
+      ./3.0/openssl-disable-kernel-detection.patch
+
+      (if stdenv.hostPlatform.isDarwin
+       then ./use-etc-ssl-certs-darwin.patch
+       else ./use-etc-ssl-certs.patch)
+    ];
+
+    withDocs = true;
+
+    extraMeta = with lib; {
+      license = licenses.asl20;
+    };
   };
 }

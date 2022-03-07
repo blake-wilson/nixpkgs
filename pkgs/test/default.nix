@@ -22,8 +22,7 @@ with pkgs;
   cc-wrapper-libcxx-9 = callPackage ./cc-wrapper { stdenv = llvmPackages_9.libcxxStdenv; };
   stdenv-inputs = callPackage ./stdenv-inputs { };
 
-  haskell-shellFor = callPackage ./haskell-shellFor { };
-  haskell-documentationTarball = callPackage ./haskell-documentationTarball { };
+  haskell = callPackage ./haskell { };
 
   cc-multilib-gcc = callPackage ./cc-wrapper/multilib.nix { stdenv = gccMultiStdenv; };
   cc-multilib-clang = callPackage ./cc-wrapper/multilib.nix { stdenv = clangMultiStdenv; };
@@ -38,8 +37,13 @@ with pkgs;
 
   cross = callPackage ./cross {};
 
+  php = recurseIntoAttrs (callPackages ./php {});
+
   rustCustomSysroot = callPackage ./rust-sysroot {};
   buildRustCrate = callPackage ../build-support/rust/build-rust-crate/test { };
+  importCargoLock = callPackage ../build-support/rust/test/import-cargo-lock { };
+
+  vim = callPackage ./vim {};
 
   nixos-functions = callPackage ./nixos-functions {};
 
@@ -49,5 +53,13 @@ with pkgs;
 
   cuda = callPackage ./cuda { };
 
+  trivial-builders = recurseIntoAttrs {
+    writeStringReferencesToFile = callPackage ../build-support/trivial-builders/test/writeStringReferencesToFile.nix {};
+    references = callPackage ../build-support/trivial-builders/test/references.nix {};
+    overriding = callPackage ../build-support/trivial-builders/test-overriding.nix {};
+  };
+
   writers = callPackage ../build-support/writers/test.nix {};
+
+  dhall = callPackage ./dhall { };
 }

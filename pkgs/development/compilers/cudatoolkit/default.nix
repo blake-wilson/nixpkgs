@@ -1,76 +1,15 @@
-{ lib
-, callPackage
+{ callPackage
 , fetchurl
-, gcc48
-, gcc6
 , gcc7
 , gcc9
+, gcc10
+, lib
 }:
 
 let
   common = callPackage ./common.nix;
-in rec {
-  cudatoolkit_9_0 = common {
-    version = "9.0.176.1";
-    url = "https://developer.nvidia.com/compute/cuda/9.0/Prod/local_installers/cuda_9.0.176_384.81_linux-run";
-    sha256 = "0308rmmychxfa4inb1ird9bpgfppgr9yrfg1qp0val5azqik91ln";
-    runPatches = [
-      (fetchurl {
-        url = "https://developer.nvidia.com/compute/cuda/9.0/Prod/patches/1/cuda_9.0.176.1_linux-run";
-        sha256 = "1vbqg97pq9z9c8nqvckiwmq3ljm88m7gaizikzxbvz01izh67gx4";
-      })
-      (fetchurl {
-        url = "https://developer.nvidia.com/compute/cuda/9.0/Prod/patches/2/cuda_9.0.176.2_linux-run";
-        sha256 = "1sz5dijbx9yf7drfipdxav5a5g6sxy4w6vi9xav0lb6m2xnmyd7c";
-      })
-      (fetchurl {
-        url = "https://developer.nvidia.com/compute/cuda/9.0/Prod/patches/3/cuda_9.0.176.3_linux-run";
-        sha256 = "1jm83bxpscpjhzs5q3qijdgjm0r8qrdlgkj7y08fq8c0v8q2r7j2";
-      })
-      (fetchurl {
-        url = "https://developer.nvidia.com/compute/cuda/9.0/Prod/patches/4/cuda_9.0.176.4_linux-run";
-        sha256 = "0pymg3mymsa2n48y0njz3spzlkm15lvjzw8fms1q83zslz4x0lwk";
-      })
-    ];
-    gcc = gcc6;
-  };
-
-  cudatoolkit_9_1 = common {
-    version = "9.1.85.3";
-    url = "https://developer.nvidia.com/compute/cuda/9.1/Prod/local_installers/cuda_9.1.85_387.26_linux";
-    sha256 = "0lz9bwhck1ax4xf1fyb5nicb7l1kssslj518z64iirpy2qmwg5l4";
-    runPatches = [
-      (fetchurl {
-        url = "https://developer.nvidia.com/compute/cuda/9.1/Prod/patches/1/cuda_9.1.85.1_linux";
-        sha256 = "1f53ij5nb7g0vb5pcpaqvkaj1x4mfq3l0mhkfnqbk8sfrvby775g";
-      })
-      (fetchurl {
-        url = "https://developer.nvidia.com/compute/cuda/9.1/Prod/patches/2/cuda_9.1.85.2_linux";
-        sha256 = "16g0w09h3bqmas4hy1m0y6j5ffyharslw52fn25gql57bfihg7ym";
-      })
-      (fetchurl {
-        url = "https://developer.nvidia.com/compute/cuda/9.1/Prod/patches/3/cuda_9.1.85.3_linux";
-        sha256 = "12mcv6f8z33z8y41ja8bv5p5iqhv2vx91mv3b5z6fcj7iqv98422";
-      })
-    ];
-    gcc = gcc6;
-  };
-
-  cudatoolkit_9_2 = common {
-    version = "9.2.148.1";
-    url = "https://developer.nvidia.com/compute/cuda/9.2/Prod2/local_installers/cuda_9.2.148_396.37_linux";
-    sha256 = "04c6v9b50l4awsf9w9zj5vnxvmc0hk0ypcfjksbh4vnzrz14wigm";
-    runPatches = [
-      (fetchurl {
-        url = "https://developer.nvidia.com/compute/cuda/9.2/Prod2/patches/1/cuda_9.2.148.1_linux";
-        sha256 = "1kx6l4yzsamk6q1f4vllcpywhbfr2j5wfl4h5zx8v6dgfpsjm2lw";
-      })
-    ];
-    gcc = gcc7;
-  };
-
-  cudatoolkit_9 = cudatoolkit_9_2;
-
+in
+rec {
   cudatoolkit_10_0 = common {
     version = "10.0.130";
     url = "https://developer.nvidia.com/compute/cuda/10.0/Prod/local_installers/cuda_10.0.130_410.48_linux";
@@ -119,5 +58,26 @@ in rec {
     gcc = gcc9;
   };
 
-  cudatoolkit_11 = cudatoolkit_11_2;
+  cudatoolkit_11_3 = common {
+    version = "11.3.1";
+    url = "https://developer.download.nvidia.com/compute/cuda/11.3.1/local_installers/cuda_11.3.1_465.19.01_linux.run";
+    sha256 = "0d19pwcqin76scbw1s5kgj8n0z1p4v1hyfldqmamilyfxycfm4xd";
+    gcc = gcc9;
+  };
+
+  cudatoolkit_11_4 = common {
+    version = "11.4.2";
+    url = "https://developer.download.nvidia.com/compute/cuda/11.4.2/local_installers/cuda_11.4.2_470.57.02_linux.run";
+    sha256 = "sha256-u9h8oOkT+DdFSnljZ0c1E83e9VUILk2G7Zo4ZZzIHwo=";
+    gcc = gcc10; # can bump to 11 along with stdenv.cc
+  };
+
+  cudatoolkit_11_5 = common {
+    version = "11.5.0";
+    url = "https://developer.download.nvidia.com/compute/cuda/11.5.0/local_installers/cuda_11.5.0_495.29.05_linux.run";
+    sha256 = "sha256-rgoWk9lJfPPYHmlIlD43lGNpANtxyY1Y7v2sr38aHkw=";
+    gcc = gcc10; # can bump to 11 along with stdenv.cc
+  };
+
+  cudatoolkit_11 = cudatoolkit_11_4;
 }

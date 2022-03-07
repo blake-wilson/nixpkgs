@@ -6,38 +6,38 @@
   },
   "ATBinHex-Lazarus": {
     "owner": "Alexey-T",
-    "rev": "2021.02.13",
-    "sha256": "1p2r2q1al6rcsdbbg8ilm4xn6w48bj348khxdmpak7vfwx9741h8"
+    "rev": "2021.07.02",
+    "sha256": "sha256-XSt2XfHMiF/ZIf07M65u+k5FjacyToL0rWbpcflKcuY="
   },
   "ATFlatControls": {
     "owner": "Alexey-T",
-    "rev": "2021.03.05",
-    "sha256": "1p2pzha5dd4p23j2bv6jxphj596dlb5v8ixjzg4x2zglz2hir6yz"
+    "rev": "2021.10.19",
+    "sha256": "sha256-NO1q4qDXZ0x0G6AtcRP9xnFDWuBzOvxq8G7I76LgaBw="
   },
   "ATSynEdit": {
     "owner": "Alexey-T",
-    "rev": "2021.03.16",
-    "sha256": "1sq9j2zaif019gl6nf391lyp8k9s38f5s6ci7k3z5v90hkz1dcql"
+    "rev": "2021.10.27",
+    "sha256": "sha256-7DlnO7IeCFLU1A+HJt4CFXoHWfhAr52tBvfPNHieXMM="
   },
   "ATSynEdit_Cmp": {
     "owner": "Alexey-T",
-    "rev": "2021.03.08",
-    "sha256": "0xvnvx4qzp6nxi912i4zlnal91k6vbcsyfbz05ib73sz68xqd5qv"
+    "rev": "2021.09.14",
+    "sha256": "sha256-6eC75zAtWbM1XEI9OM3iqy/a8Vj1l5WU7HGJBpmoQsA="
   },
   "EControl": {
     "owner": "Alexey-T",
-    "rev": "2021.03.16",
-    "sha256": "159s1rpl829bmaa4bllqhjm8z0vji1ncsd6hw2s8z8hz28n905k8"
+    "rev": "2021.10.21",
+    "sha256": "sha256-RyRpHihmmr/EeVWk9CR0S3pvKy0FzqLZNGti33+4fkI="
   },
   "ATSynEdit_Ex": {
     "owner": "Alexey-T",
-    "rev": "2021.03.16",
-    "sha256": "1a4mxcwjm9naxh4piqm5y93w2xd5rgl0vcn108wy1pkr221agg2q"
+    "rev": "2021.09.03",
+    "sha256": "sha256-XYFnTfRa0n9XF9l/hL6z5RFZgdpVP9o1If4qln905Yc="
   },
   "Python-for-Lazarus": {
     "owner": "Alexey-T",
-    "rev": "2021.02.18",
-    "sha256": "0fy6bmpdcl2aa8pb7zban6midkfwdj99x14hdghrv7cp8l4gcsg5"
+    "rev": "2021.10.27",
+    "sha256": "sha256-ikXdDUMJ9MxRejEVAhwUsXYVh0URVFHzEpnXuN5NGpA="
   },
   "Emmet-Pascal": {
     "owner": "Alexey-T",
@@ -46,12 +46,12 @@
   },
   "CudaText-lexers": {
     "owner": "Alexey-T",
-    "rev": "2021.02.01",
-    "sha256": "051jnrhfpl9n5pgrssf68lj732zxhvjbvna4746ngmdyxvw6dqfd"
+    "rev": "2021.07.09",
+    "sha256": "sha256-OyC85mTMi9m5kbtx8TAK2V4voL1i+J+TFoLVwxlHiD4="
   },
   "bgrabitmap": {
     "owner": "bgrabitmap",
-    "rev": "v11.3.1",
-    "sha256": "1f95rdpfwqy9fipzybi17nbhq46zj45yjps21p2hplhinrr49n2p"
+    "rev": "v11.4",
+    "sha256": "sha256-jZL8lzjua033E76IL0HIk/fihC73ifCb4LqMni7vvb0="
   }
 }

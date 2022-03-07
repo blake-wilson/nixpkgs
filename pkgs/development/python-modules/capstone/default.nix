@@ -1,9 +1,7 @@
-{ stdenv
-, lib
+{ lib
 , buildPythonPackage
 , capstone
-, fetchpatch
-, fetchPypi
+, stdenv
 , setuptools
 }:
 
@@ -33,5 +31,7 @@ buildPythonPackage rec {
     license = licenses.bsdOriginal;
     description = "Python bindings for Capstone disassembly engine";
     maintainers = with maintainers; [ bennofs ris ];
+    # creates a manylinux2014-x86_64 wheel
+    broken = !stdenv.isx86_64;
   };
 }

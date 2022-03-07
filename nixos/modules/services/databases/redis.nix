@@ -5,6 +5,8 @@ with lib;
 let
   cfg = config.services.redis;
 
+  ulimitNofile = cfg.maxclients + 32;
+
   mkValueString = value:
     if value == true then "yes"
     else if value == false then "no"
@@ -14,8 +16,8 @@ let
     listsAsDuplicateKeys = true;
     mkKeyValue = generators.mkKeyValueDefault { inherit mkValueString; } " ";
   } cfg.settings);
-in
-{
+
+in {
   imports = [
     (mkRemovedOptionModule [ "services" "redis" "user" ] "The redis module now is hardcoded to the redis user.")
     (mkRemovedOptionModule [ "services" "redis" "dbpath" ] "The redis module now uses /var/lib/redis as data directory.")
@@ -45,12 +47,12 @@ in
       package = mkOption {
         type = types.package;
         default = pkgs.redis;
-        defaultText = "pkgs.redis";
+        defaultText = literalExpression "pkgs.redis";
         description = "Which Redis derivation to use.";
       };
 
       port = mkOption {
-        type = types.int;
+        type = types.port;
         default = 6379;
         description = "The port for Redis to listen to.";
       };
@@ -88,6 +90,13 @@ in
         example = "/run/redis/redis.sock";
       };
 
+      unixSocketPerm = mkOption {
+        type = types.int;
+        default = 750;
+        description = "Change permissions for the socket";
+        example = 700;
+      };
+
       logLevel = mkOption {
         type = types.str;
         default = "notice"; # debug, verbose, notice, warning
@@ -114,11 +123,16 @@ in
         description = "Set the number of databases.";
       };
 
+      maxclients = mkOption {
+        type = types.int;
+        default = 10000;
+        description = "Set the max number of connected clients at the same time.";
+      };
+
       save = mkOption {
         type = with types; listOf (listOf int);
         default = [ [900 1] [300 10] [60 10000] ];
         description = "The schedule in which data is persisted to disk, represented as a list of lists where the first element represent the amount of seconds and the second the number of changes.";
-        example = [ [900 1] [300 10] [60 10000] ];
       };
 
       slaveOf = mkOption {
@@ -202,9 +216,8 @@ in
           <link xlink:href="https://redis.io/topics/config"/>
           for details on supported values.
         '';
-        example = literalExample ''
+        example = literalExpression ''
           {
-            unixsocketperm = "700";
             loadmodule = [ "/path/to/my_module.so" "/path/to/other_module.so" ];
           }
         '';
@@ -232,6 +245,7 @@ in
 
     users.users.redis = {
       description = "Redis database user";
+      group = "redis";
       isSystemUser = true;
     };
     users.groups.redis = {};
@@ -247,6 +261,7 @@ in
         logfile = cfg.logfile;
         syslog-enabled = cfg.syslog;
         databases = cfg.databases;
+        maxclients = cfg.maxclients;
         save = map (d: "${toString (builtins.elemAt d 0)} ${toString (builtins.elemAt d 1)}") cfg.save;
         dbfilename = "dump.rdb";
         dir = "/var/lib/redis";
@@ -256,8 +271,8 @@ in
         slowlog-max-len = cfg.slowLogMaxLen;
       }
       (mkIf (cfg.bind != null) { bind = cfg.bind; })
-      (mkIf (cfg.unixSocket != null) { unixsocket = cfg.unixSocket; })
-      (mkIf (cfg.slaveOf != null) { slaveof = "${cfg.slaveOf.ip} ${cfg.slaveOf.port}"; })
+      (mkIf (cfg.unixSocket != null) { unixsocket = cfg.unixSocket; unixsocketperm = "${toString cfg.unixSocketPerm}"; })
+      (mkIf (cfg.slaveOf != null) { slaveof = "${cfg.slaveOf.ip} ${toString cfg.slaveOf.port}"; })
       (mkIf (cfg.masterAuth != null) { masterauth = cfg.masterAuth; })
       (mkIf (cfg.requirePass != null) { requirepass = cfg.requirePass; })
     ];
@@ -277,11 +292,46 @@ in
 
       serviceConfig = {
         ExecStart = "${cfg.package}/bin/redis-server /run/redis/redis.conf";
-        RuntimeDirectory = "redis";
-        StateDirectory = "redis";
         Type = "notify";
+        # User and group
         User = "redis";
         Group = "redis";
+        # Runtime directory and mode
+        RuntimeDirectory = "redis";
+        RuntimeDirectoryMode = "0750";
+        # State directory and mode
+        StateDirectory = "redis";
+        StateDirectoryMode = "0700";
+        # Access write directories
+        UMask = "0077";
+        # Capabilities
+        CapabilityBoundingSet = "";
+        # Security
+        NoNewPrivileges = true;
+        # Process Properties
+        LimitNOFILE = "${toString ulimitNofile}";
+        # Sandboxing
+        ProtectSystem = "strict";
+        ProtectHome = true;
+        PrivateTmp = true;
+        PrivateDevices = true;
+        PrivateUsers = true;
+        ProtectClock = true;
+        ProtectHostname = true;
+        ProtectKernelLogs = true;
+        ProtectKernelModules = true;
+        ProtectKernelTunables = true;
+        ProtectControlGroups = true;
+        RestrictAddressFamilies = [ "AF_UNIX" "AF_INET" "AF_INET6" ];
+        RestrictNamespaces = true;
+        LockPersonality = true;
+        MemoryDenyWriteExecute = true;
+        RestrictRealtime = true;
+        RestrictSUIDSGID = true;
+        PrivateMounts = true;
+        # System Call Filtering
+        SystemCallArchitectures = "native";
+        SystemCallFilter = "~@cpu-emulation @debug @keyring @memlock @mount @obsolete @privileged @resources @setuid";
       };
     };
   };
